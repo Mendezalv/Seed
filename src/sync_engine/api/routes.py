@@ -49,11 +49,62 @@ async def pull_sync(
     stmt = select(SyncVersion).where(SyncVersion.propriedade_id == propriedade_id)
     result = await session.execute(stmt)
     version = result.scalar_one_or_none()
+    current_ver = version.current_version if version else 0
+
+    changes: list[dict] = []
+
+    # Se a versão do dispositivo já está na versão corrente do servidor, não há novos deltas
+    if since_version < current_ver:
+        # Busca registros atualizados/criados na propriedade
+        # 1. Ocorrencias Sanitarias
+        from src.epidemiologico.domain.models import OcorrenciaSanitaria
+        stmt_oco = select(OcorrenciaSanitaria).where(
+            OcorrenciaSanitaria.propriedade_id == propriedade_id
+        ).order_by(OcorrenciaSanitaria.updated_at.desc()).limit(50)
+        res_oco = await session.execute(stmt_oco)
+        for oco in res_oco.scalars().all():
+            changes.append({
+                "entity_type": "ocorrencia_sanitaria",
+                "entity_id": str(oco.id),
+                "operation": "UPSERT",
+                "data": {
+                    "tipo_cultura": oco.tipo_cultura,
+                    "agente_identificado": oco.agente_identificado,
+                    "severidade": oco.severidade,
+                    "latitude": oco.latitude,
+                    "longitude": oco.longitude,
+                    "observado_em": oco.observado_em.isoformat() if oco.observado_em else None,
+                },
+                "updated_at": oco.updated_at.isoformat() if oco.updated_at else None,
+            })
+
+        # 2. Alertas Epidemiologicos
+        from src.epidemiologico.domain.models import AlertaEpidemiologico
+        stmt_ale = select(AlertaEpidemiologico).where(
+            AlertaEpidemiologico.propriedade_id == propriedade_id
+        ).order_by(AlertaEpidemiologico.updated_at.desc()).limit(20)
+        res_ale = await session.execute(stmt_ale)
+        for ale in res_ale.scalars().all():
+            changes.append({
+                "entity_type": "alerta_epidemiologico",
+                "entity_id": str(ale.id),
+                "operation": "UPSERT",
+                "data": {
+                    "tipo_alerta": ale.tipo_alerta,
+                    "agente": ale.agente,
+                    "risco_score": ale.risco_score,
+                    "latitude_centro": ale.latitude_centro,
+                    "longitude_centro": ale.longitude_centro,
+                    "raio_km": ale.raio_km,
+                },
+                "updated_at": ale.updated_at.isoformat() if ale.updated_at else None,
+            })
 
     return {
-        "current_server_version": version.current_version if version else 0,
+        "current_server_version": current_ver,
         "since_version": since_version,
-        "changes": [],  # Será populado com delta de mudanças na implementação completa
+        "total_changes": len(changes),
+        "changes": changes,
     }
 
 

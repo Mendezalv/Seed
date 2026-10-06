@@ -1,3 +1,7 @@
+# Documents & temporary scripts
+*.docx
+generate_*.py
+
 # Python
 __pycache__/
 *.py[cod]

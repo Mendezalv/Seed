@@ -38,12 +38,18 @@ async def gerar_relatorio_esg(
 ):
     return await EnergiaService.gerar_relatorio_esg(propriedade_id, periodo, session)
 
-@router.get("/relatorios", response_model=List[RelatorioESGResponse])
+from src.shared.utils.pagination import PaginationParams, PaginatedResponse, paginate
+
+@router.get("/relatorios", response_model=PaginatedResponse[RelatorioESGResponse])
 async def listar_relatorios(
+    pagination: PaginationParams = Depends(),
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
 ):
-    return await EnergiaService.listar_relatorios(propriedade_id, session)
+    from sqlalchemy import select
+    from src.energetico.domain.models import RelatorioESG
+    stmt = select(RelatorioESG).where(RelatorioESG.propriedade_id == propriedade_id).order_by(RelatorioESG.created_at.desc())
+    return await paginate(session, stmt, pagination)
 
 @router.patch("/relatorios/{id}/publicar", response_model=RelatorioESGResponse)
 async def publicar_relatorio(

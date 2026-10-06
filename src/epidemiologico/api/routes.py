@@ -21,14 +21,22 @@ async def registrar_ocorrencia(
 ):
     return await VigilanciaService.registrar_ocorrencia(ocorrencia, propriedade_id, session)
 
-@router.get("/ocorrencias", response_model=List[OcorrenciaSanitariaResponse])
+from src.shared.utils.pagination import PaginationParams, PaginatedResponse, paginate
+
+@router.get("/ocorrencias", response_model=PaginatedResponse[OcorrenciaSanitariaResponse])
 async def listar_ocorrencias(
     agente: Optional[str] = None,
+    pagination: PaginationParams = Depends(),
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
 ):
-    filtros = {'agente': agente} if agente else {}
-    return await VigilanciaService.listar_ocorrencias(propriedade_id, filtros, session)
+    from sqlalchemy import select
+    from src.epidemiologico.domain.models import OcorrenciaSanitaria
+    stmt = select(OcorrenciaSanitaria).where(OcorrenciaSanitaria.propriedade_id == propriedade_id)
+    if agente:
+        stmt = stmt.where(OcorrenciaSanitaria.agente_identificado == agente)
+    stmt = stmt.order_by(OcorrenciaSanitaria.observado_em.desc())
+    return await paginate(session, stmt, pagination)
 
 @router.get("/alertas", response_model=List[AlertaEpidemiologicoResponse])
 async def listar_alertas(

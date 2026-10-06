@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash agrohub
+RUN useradd -m -s /bin/bash seed
 
 WORKDIR /app
 
@@ -32,9 +32,9 @@ COPY workers /app/workers
 COPY migrations /app/migrations
 COPY alembic.ini /app/alembic.ini
 
-RUN chown -R agrohub:agrohub /app
+RUN chown -R seed:seed /app
 
-USER agrohub
+USER seed
 
 EXPOSE 8000
 

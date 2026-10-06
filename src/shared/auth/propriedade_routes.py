@@ -28,6 +28,10 @@ async def criar_propriedade(
     session.add(nova_propriedade)
     await session.commit()
     await session.refresh(nova_propriedade)
+    
+    from src.shared.database.seed_data import seed_fontes_energia
+    await seed_fontes_energia(session, nova_propriedade.id)
+    
     return PropriedadeResponse.model_validate(nova_propriedade)
 
 @router.get("/minha", response_model=PropriedadeResponse)

@@ -66,13 +66,22 @@ async def atualizar_horimetro(
 ):
     return await ManutencaoService.atualizar_horimetro(id, horas, propriedade_id, session)
 
-@router.get("/manutencao/ordens", response_model=List[OrdemManutencaoResponse])
+from src.shared.utils.pagination import PaginationParams, PaginatedResponse, paginate
+
+@router.get("/manutencao/ordens", response_model=PaginatedResponse[OrdemManutencaoResponse])
 async def listar_ordens(
     status: Optional[str] = None,
+    pagination: PaginationParams = Depends(),
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
 ):
-    return await ManutencaoService.listar_ordens(propriedade_id, status, session)
+    from sqlalchemy import select
+    from src.operacional.domain.models import OrdemManutencao
+    stmt = select(OrdemManutencao).where(OrdemManutencao.propriedade_id == propriedade_id)
+    if status:
+        stmt = stmt.where(OrdemManutencao.status == status)
+    stmt = stmt.order_by(OrdemManutencao.created_at.desc())
+    return await paginate(session, stmt, pagination)
 
 @router.patch("/manutencao/ordens/{id}/concluir", response_model=OrdemManutencaoResponse)
 async def concluir_ordem(

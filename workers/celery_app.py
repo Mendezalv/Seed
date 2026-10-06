@@ -14,7 +14,7 @@ from workers.config import CELERY_BEAT_SCHEDULE
 # Usa variáveis de ambiente com fallback para desenvolvimento local
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6380/0")
 
-app = Celery("agrohub_workers")
+app = Celery("seed_workers")
 
 app.conf.update(
     broker_url=REDIS_URL,

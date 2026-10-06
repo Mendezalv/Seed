@@ -41,7 +41,7 @@ target_metadata = Base.metadata
 # ... etc.
 
 def get_url():
-    return os.getenv("DATABASE_URL", "postgresql+asyncpg://agrohub:agrohub_dev@localhost:5433/agrohub")
+    return os.getenv("DATABASE_URL", "postgresql+asyncpg://seed:seed_dev@localhost:5433/seed")
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

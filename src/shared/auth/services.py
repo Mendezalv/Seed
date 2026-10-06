@@ -26,6 +26,10 @@ class AuthService:
             session.add(nova_propriedade)
             await session.flush()
             prop_id = nova_propriedade.id
+            
+            # Popula fontes de energia padrão para a nova propriedade
+            from src.shared.database.seed_data import seed_fontes_energia
+            await seed_fontes_energia(session, prop_id)
         
         novo_usuario = Usuario(
             email=usuario_in.email,
