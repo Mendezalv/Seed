@@ -1,0 +1,82 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agrohub_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+    networks:
+      - agrohub-network
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: agrohub_postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: agrohub
+      POSTGRES_USER: agrohub
+      POSTGRES_PASSWORD: agrohub_dev
+    networks:
+      - agrohub-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: agrohub_redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - agrohub-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agrohub_worker
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+    networks:
+      - agrohub-network
+    command: celery -A workers.celery_app worker --loglevel=info
+
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agrohub_beat
+    depends_on:
+      - worker
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./workers:/app/workers
+    networks:
+      - agrohub-network
+    command: celery -A workers.celery_app beat --loglevel=info
+
+networks:
+  agrohub-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
