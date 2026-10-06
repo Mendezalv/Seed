@@ -24,7 +24,7 @@ class EnergiaService:
 
     @staticmethod
     async def listar_relatorios(propriedade_id: UUID, session: AsyncSession) -> list[RelatorioESG]:
-        stmt = select(RelatorioESG).where(RelatorioESG.propriedade_id == propriedade_id).order_by(RelatorioESG.criado_em.desc())
+        stmt = select(RelatorioESG).where(RelatorioESG.propriedade_id == propriedade_id).order_by(RelatorioESG.created_at.desc())
         result = await session.execute(stmt)
         return list(result.scalars().all())
 

@@ -58,3 +58,16 @@ async def publicar_relatorio(
     session: AsyncSession = Depends(get_session)
 ):
     return await EnergiaService.publicar_relatorio(id, propriedade_id, session)
+
+@router.get("/relatorios/{id}/laudo-credito-verde")
+async def obter_laudo_credito_verde(
+    id: UUID = Path(...),
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Gera o Laudo Técnico e Parecer de Elegibilidade para Crédito Rural Verde (Plano ABC+).
+    Retorna indicadores consolidados de transição energética, rating ESG e bônus de juros.
+    """
+    from src.energetico.application.export_service import RelatorioESGExportService
+    return await RelatorioESGExportService.gerar_laudo_credito_verde(id, propriedade_id, session)
