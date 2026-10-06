@@ -1,10 +1,5 @@
 from celery import shared_task
-from sqlalchemy import create_engine
-from datetime import datetime, timedelta
-import random
-
-# Engine sync specifically for celery tasks
-engine = create_engine('sqlite:///agrohub.db')
+from workers.db import engine, SessionLocal
 
 @shared_task(name='workers.clima.fetch_dados_inmet')
 def fetch_dados_inmet():

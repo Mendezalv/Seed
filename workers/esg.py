@@ -1,7 +1,5 @@
 from celery import shared_task
-from sqlalchemy import create_engine
-
-engine = create_engine('sqlite:///agrohub.db')
+from workers.db import engine, SessionLocal
 
 @shared_task(name='workers.esg.gerar_relatorios_mensais')
 def gerar_relatorios_mensais():

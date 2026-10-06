@@ -24,14 +24,29 @@ class ViabilidadeService:
 
         custo_total = custo_insumos + request.custo_mao_obra + request.custo_frete + request.custo_impostos
         
-        # Get market price
+        # Obtenção de cotação de mercado em tempo real (CEPEA / Fallback)
         preco_mercado = request.preco_mercado_saca
         if preco_mercado is None:
-            # Mocking CEPEA integration
-            preco_mercado = Decimal('150.00')
+            try:
+                from src.shared.integrations.cotacoes.cepea import CEPEAClient
+                cepea = CEPEAClient()
+                cultura_normalizada = (safra.cultura or "").lower()
+                if "soja" in cultura_normalizada:
+                    cot = await cepea.obter_cotacao_soja()
+                    preco_mercado = Decimal(str(cot.preco_brl)) if cot.preco_brl > 0 else Decimal('135.00')
+                elif "milho" in cultura_normalizada:
+                    cot = await cepea.obter_cotacao_milho()
+                    preco_mercado = Decimal(str(cot.preco_brl)) if cot.preco_brl > 0 else Decimal('62.00')
+                elif "cafe" in cultura_normalizada or "café" in cultura_normalizada:
+                    cot = await cepea.obter_cotacao_cafe()
+                    preco_mercado = Decimal(str(cot.preco_brl)) if cot.preco_brl > 0 else Decimal('1100.00')
+                else:
+                    preco_mercado = Decimal('140.00')
+            except Exception:
+                preco_mercado = Decimal('140.00')
 
         produtividade = safra.produtividade_estimada or safra.produtividade_real or Decimal('1')
-        sacas_totais = produtividade # simplificando, assumindo que produtividade ja e total de sacas
+        sacas_totais = produtividade
 
         custo_por_saca = custo_total / sacas_totais if sacas_totais > 0 else Decimal('0')
         break_even = custo_total / preco_mercado if preco_mercado > 0 else Decimal('0')
