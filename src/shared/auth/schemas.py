@@ -21,6 +21,18 @@ class UsuarioCreate(BaseModel):
     propriedade_id: UUID | None = None
     role: str = "OPERADOR"
 
+class MembroCreate(BaseModel):
+    email: EmailStr
+    nome_completo: str
+    senha: str = Field(min_length=8)
+    role: str = Field(default="OPERADOR", pattern="^(ADMIN|GESTOR|OPERADOR|CONSULTOR)$")
+
+class MembroUpdate(BaseModel):
+    nome_completo: str | None = None
+    role: str | None = Field(default=None, pattern="^(ADMIN|GESTOR|OPERADOR|CONSULTOR)$")
+    ativo: bool | None = None
+    senha: str | None = Field(default=None, min_length=8)
+
 class LoginRequest(BaseModel):
     email: EmailStr
     senha: str

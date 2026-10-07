@@ -5,7 +5,11 @@ from sqlalchemy import select, func, update
 
 from src.shared.database.session import get_session
 from src.shared.database.models import Propriedade
-from src.shared.auth.schemas import PropriedadeCreate, PropriedadeResponse, PropriedadeUpdate
+from src.shared.auth.schemas import (
+    PropriedadeCreate, PropriedadeResponse, PropriedadeUpdate,
+    UsuarioResponse, UsuarioCreate, MembroCreate, MembroUpdate
+)
+from src.shared.auth.services import AuthService
 from src.shared.auth.dependencies import get_current_user
 from src.shared.auth.rbac import require_permission
 from src.shared.api.dependencies import get_current_propriedade_id
@@ -108,3 +112,50 @@ async def obter_dashboard(
         "alertas_epidemiologicos": alertas_count or 0,
         "relatorios_esg": relatorios_count or 0,
     }
+
+@router.get("/minha/membros", response_model=list[UsuarioResponse], dependencies=[Depends(require_permission("read:dashboard"))])
+async def listar_membros(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """Lista todos os membros cadastrados na propriedade do usuário."""
+    usuarios = await AuthService.listar_usuarios(propriedade_id, session)
+    return [UsuarioResponse.model_validate(u) for u in usuarios]
+
+@router.post("/minha/membros", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("admin:users"))])
+async def adicionar_membro(
+    membro_in: MembroCreate,
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """Adiciona um novo membro à equipe da propriedade (apenas administradores)."""
+    usuario_create = UsuarioCreate(
+        email=membro_in.email,
+        nome_completo=membro_in.nome_completo,
+        senha=membro_in.senha,
+        role=membro_in.role,
+        propriedade_id=propriedade_id
+    )
+    return await AuthService.registrar_usuario(usuario_create, session)
+
+@router.patch("/minha/membros/{user_id}", response_model=UsuarioResponse, dependencies=[Depends(require_permission("admin:users"))])
+async def atualizar_membro(
+    user_id: UUID,
+    membro_in: MembroUpdate,
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """Atualiza dados, papel ou status de um membro da propriedade."""
+    dados = membro_in.model_dump(exclude_unset=True)
+    usuario = await AuthService.atualizar_usuario(user_id, dados, propriedade_id, session)
+    return UsuarioResponse.model_validate(usuario)
+
+@router.delete("/minha/membros/{user_id}", response_model=UsuarioResponse, dependencies=[Depends(require_permission("admin:users"))])
+async def desativar_membro(
+    user_id: UUID,
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """Desativa o acesso de um membro da propriedade."""
+    usuario = await AuthService.desativar_usuario(user_id, propriedade_id, session)
+    return UsuarioResponse.model_validate(usuario)

@@ -59,3 +59,15 @@ class AlertaEpidemiologicoResponse(AlertaEpidemiologicoBase):
     id: UUID
     propriedade_id: UUID
     model_config = ConfigDict(from_attributes=True)
+
+class MapaCalorPontoResponse(BaseModel):
+    latitude: float
+    longitude: float
+    intensidade: int
+    peso_severidade: float
+    agentes: List[str] = Field(default_factory=list)
+
+class MapaCalorResponse(BaseModel):
+    total_pontos: int
+    total_ocorrencias: int
+    pontos: List[MapaCalorPontoResponse]
