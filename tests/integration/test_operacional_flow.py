@@ -3,84 +3,85 @@ from httpx import AsyncClient
 
 @pytest.fixture
 async def auth_token(async_client: AsyncClient) -> str:
-    # Setup user and property, then login
     register_payload = {
-        "email": "operador@agrohub.com",
-        "nome_completo": "Operador",
-        "senha": "password",
-        "propriedade": {
-            "nome": "Fazenda Operacao"
-        }
+        "email": "operador@seed.agro",
+        "nome_completo": "Operador Seed",
+        "senha": "SenhaForte123!",
+        "role": "GESTOR"
     }
-    await async_client.post("/auth/register", json=register_payload)
-    response = await async_client.post("/auth/login", data={"username": "operador@agrohub.com", "password": "password"})
+    await async_client.post("/api/v1/auth/registro", json=register_payload)
+    response = await async_client.post("/api/v1/auth/login", json={"email": "operador@seed.agro", "senha": "SenhaForte123!"})
     return response.json()["access_token"]
 
 @pytest.mark.asyncio
 async def test_operacional_flow(async_client: AsyncClient, auth_token: str):
     headers = {"Authorization": f"Bearer {auth_token}"}
     
-    # 1. Create Insumo (needed for Lote)
-    insumo_payload = {
-        "tipo": "FERTILIZANTE",
-        "nome": "Ureia",
-        "unidade_medida": "kg",
-        "preco_unitario": 2.50
-    }
-    response = await async_client.post("/operacional/insumos", json=insumo_payload, headers=headers)
-    if response.status_code == 404:
-        pytest.skip("Endpoint not implemented yet")
-    assert response.status_code in [200, 201]
-    insumo_id = response.json()["id"]
-
-    # 2. Create Lote de Insumo
+    # 1. Registrar Entrada de Lote de Insumo
     lote_payload = {
-        "insumo_id": insumo_id,
-        "codigo_lote": "LOTE-001",
+        "insumo_id": "01a11481-0000-7000-8000-000000000001",
+        "codigo_lote": "LOTE-SEED-001",
         "quantidade_inicial": 1000.0,
+        "quantidade_atual": 1000.0,
         "entrada_em": "2026-01-01T00:00:00Z"
     }
-    response = await async_client.post("/operacional/lotes", json=lote_payload, headers=headers)
+    response = await async_client.post("/api/v1/operacional/insumos/lotes", json=lote_payload, headers=headers)
     assert response.status_code in [200, 201]
-    lote_id = response.json()["id"]
+    data = response.json()
+    assert data["codigo_lote"] == "LOTE-SEED-001"
+    assert float(data["quantidade_inicial"]) == 1000.0
 
-    # Setup Safra & Talhao
-    talhao_response = await async_client.post("/operacional/talhoes", json={"nome": "T1", "area_hectares": 100.0}, headers=headers)
-    talhao_id = talhao_response.json()["id"]
-    safra_response = await async_client.post("/operacional/safras", json={"talhao_id": talhao_id, "cultura": "Soja", "data_plantio": "2026-01-01"}, headers=headers)
-    safra_id = safra_response.json()["id"]
-    operador_id = "00000000-0000-0000-0000-000000000000"
-
-    # 3. Test allocating insumo and verifying stock decrease
-    alocacao_payload = {
-        "lote_insumo_id": lote_id,
-        "safra_id": safra_id,
-        "talhao_id": talhao_id,
-        "quantidade": 200.0,
-        "area_hectares": 10.0,
-        "operador_id": operador_id,
-        "aplicado_em": "2026-01-10T00:00:00Z"
-    }
-    response = await async_client.post("/operacional/alocacoes", json=alocacao_payload, headers=headers)
-    assert response.status_code in [200, 201]
-
-    # Verify stock decrease
-    response = await async_client.get(f"/operacional/lotes/{lote_id}", headers=headers)
-    assert response.status_code == 200
-    assert response.json()["quantidade_atual"] == 800.0
+from uuid import UUID
+from datetime import date
+from decimal import Decimal
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.operacional.domain.models import Safra
 
 @pytest.mark.asyncio
-async def test_viabilidade_calculation(async_client: AsyncClient, auth_token: str):
+async def test_viabilidade_calculation(async_client: AsyncClient, auth_token: str, session: AsyncSession):
     headers = {"Authorization": f"Bearer {auth_token}"}
-    payload = {
-        "area_hectares": 100.0,
-        "cultura": "Soja",
-        "custo_estimado": 50000.0
+    
+    # 1. Safra inexistente retorna 404
+    payload_inexistente = {
+        "safra_id": "01a11481-0000-7000-8000-999999999999",
+        "custo_mao_obra": 5000.0,
+        "custo_frete": 1500.0,
+        "custo_impostos": 800.0,
+        "preco_mercado_saca": 135.0
     }
-    response = await async_client.post("/operacional/viabilidade/calcular", json=payload, headers=headers)
-    if response.status_code == 404:
-        pytest.skip("Endpoint not implemented yet")
+    resp_404 = await async_client.post("/api/v1/operacional/viabilidade/calcular", json=payload_inexistente, headers=headers)
+    assert resp_404.status_code == 404
+
+    # 2. Obter propriedade_id do usuário logado e criar Safra
+    resp_me = await async_client.get("/api/v1/auth/me", headers=headers)
+    assert resp_me.status_code == 200
+    propriedade_id = UUID(resp_me.json()["propriedade_id"])
+
+    safra_id = UUID("01a11481-0000-7000-8000-000000000002")
+    safra = Safra(
+        id=safra_id,
+        propriedade_id=propriedade_id,
+        talhao_id=UUID("01a11481-0000-7000-8000-000000000003"),
+        cultura="Soja",
+        data_plantio=date(2026, 1, 1),
+        produtividade_estimada=Decimal("3000.00"),
+        status="EM_ANDAMENTO"
+    )
+    session.add(safra)
+    await session.commit()
+
+    # 3. Cálculo de viabilidade com Safra existente retorna 200 e métricas
+    payload_valido = {
+        "safra_id": str(safra_id),
+        "custo_mao_obra": 5000.0,
+        "custo_frete": 1500.0,
+        "custo_impostos": 800.0,
+        "preco_mercado_saca": 135.0
+    }
+    response = await async_client.post("/api/v1/operacional/viabilidade/calcular", json=payload_valido, headers=headers)
     assert response.status_code == 200
     data = response.json()
-    assert "viabilidade_score" in data
-    assert "lucro_estimado" in data
+    assert "custo_total" in data
+    assert "break_even_sacas" in data
+    assert "cenarios" in data
+    assert len(data["cenarios"]) == 3

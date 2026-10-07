@@ -32,8 +32,8 @@ async def obter_usuario_logado(
     current_user = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
-    """Obtém dados do usuário atual logado."""
-    return await AuthService.obter_usuario(UUID(current_user.sub), session)
+    user_id = current_user.sub if isinstance(current_user.sub, UUID) else UUID(str(current_user.sub))
+    return await AuthService.obter_usuario(user_id, session)
 
 @router.get("/usuarios", response_model=list[UsuarioResponse], dependencies=[Depends(require_permission("admin:users"))])
 async def listar_usuarios(

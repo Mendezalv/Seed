@@ -4,13 +4,11 @@ from decimal import Decimal
 from sqlalchemy import String, Integer, Date, DateTime, Numeric, JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from geoalchemy2 import Geometry
-from uuid_utils import uuid7
-
-from src.shared.database.base import Base, TimestampMixin, TenantMixin
+from src.shared.database.base import Base, TimestampMixin, TenantMixin, generate_uuid7
 
 class Insumo(Base, TimestampMixin):
     __tablename__ = 'insumos'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     tipo: Mapped[str] = mapped_column(String(50))
     nome: Mapped[str] = mapped_column(String(255))
     unidade_medida: Mapped[str] = mapped_column(String(20))
@@ -18,7 +16,7 @@ class Insumo(Base, TimestampMixin):
 
 class LoteInsumo(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'lotes_insumo'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     insumo_id: Mapped[UUID] = mapped_column(ForeignKey('insumos.id'))
     codigo_lote: Mapped[str] = mapped_column(String(100))
     quantidade_inicial: Mapped[Decimal] = mapped_column(Numeric(12, 3))
@@ -31,7 +29,7 @@ class LoteInsumo(Base, TimestampMixin, TenantMixin):
 
 class Talhao(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'talhoes'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     nome: Mapped[str] = mapped_column(String(255))
     area_hectares: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     geometria = mapped_column(Geometry('POLYGON'), nullable=True)
@@ -40,7 +38,7 @@ class Talhao(Base, TimestampMixin, TenantMixin):
 
 class Safra(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'safras'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     talhao_id: Mapped[UUID] = mapped_column(ForeignKey('talhoes.id'))
     cultura: Mapped[str] = mapped_column(String(100))
     variedade: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -54,7 +52,7 @@ class Safra(Base, TimestampMixin, TenantMixin):
 
 class AlocacaoInsumo(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'alocacoes_insumo'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     lote_insumo_id: Mapped[UUID] = mapped_column(ForeignKey('lotes_insumo.id'))
     safra_id: Mapped[UUID] = mapped_column(ForeignKey('safras.id'))
     talhao_id: Mapped[UUID] = mapped_column(ForeignKey('talhoes.id'))
@@ -71,7 +69,7 @@ class AlocacaoInsumo(Base, TimestampMixin, TenantMixin):
 
 class Maquinario(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'maquinarios'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     nome: Mapped[str] = mapped_column(String(255))
     tipo: Mapped[str] = mapped_column(String(50))
     modelo: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -83,7 +81,7 @@ class Maquinario(Base, TimestampMixin, TenantMixin):
 
 class OrdemManutencao(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'ordens_manutencao'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     maquinario_id: Mapped[UUID] = mapped_column(ForeignKey('maquinarios.id'))
     tipo: Mapped[str] = mapped_column(String(50))
     descricao: Mapped[str | None] = mapped_column(String(1000), nullable=True)

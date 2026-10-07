@@ -55,7 +55,11 @@ async def calcular_viabilidade(
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
 ):
-    return await ViabilidadeService.calcular_viabilidade(request, propriedade_id, session)
+    from fastapi import HTTPException
+    try:
+        return await ViabilidadeService.calcular_viabilidade(request, propriedade_id, session)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 @router.patch("/maquinarios/{id}/horimetro", response_model=MaquinarioResponse)
 async def atualizar_horimetro(

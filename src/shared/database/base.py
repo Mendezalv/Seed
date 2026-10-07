@@ -10,12 +10,16 @@ class Base(DeclarativeBase):
     """
     pass
 
+def generate_uuid7() -> uuid.UUID:
+    """Gera UUIDv7 compatível com a biblioteca padrão uuid.UUID."""
+    return uuid.UUID(str(uuid_utils.uuid7()))
+
 class IdMixin:
     """
     Mixin para gerar chaves primárias usando UUIDv7.
     """
     id: Mapped[uuid.UUID] = mapped_column(
-        primary_key=True, default=uuid_utils.uuid7
+        primary_key=True, default=generate_uuid7
     )
 
 class TimestampMixin:

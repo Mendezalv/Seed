@@ -30,11 +30,16 @@ async def engine():
         "sqlite+aiosqlite:///:memory:",
         echo=False,
     )
+    # Exclui tabelas com colunas Geometry (PostGIS) se rodando em SQLite puro
+    sqlite_tables = [
+        t for t in Base.metadata.sorted_tables
+        if not any(hasattr(col.type, "name") and "GEOMETRY" in str(col.type).upper() for col in t.columns)
+    ]
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, tables=sqlite_tables))
     yield engine
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(lambda sync_conn: Base.metadata.drop_all(sync_conn, tables=sqlite_tables))
     await engine.dispose()
 
 
@@ -58,9 +63,15 @@ async def client(session):
 
     app.dependency_overrides[get_session] = override_get_session
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        yield client
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        yield c
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def async_client(client):
+    """Alias para client para compatibilidade com testes de integração."""
+    yield client
 
 
 @pytest.fixture

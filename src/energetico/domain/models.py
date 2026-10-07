@@ -3,13 +3,11 @@ from datetime import date
 from decimal import Decimal
 from sqlalchemy import String, Date, Float, Numeric, JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-from uuid_utils import uuid7
-
-from src.shared.database.base import Base, TimestampMixin, TenantMixin
+from src.shared.database.base import Base, TimestampMixin, TenantMixin, generate_uuid7
 
 class FonteEnergia(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'fontes_energia'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     tipo: Mapped[str] = mapped_column(String(50)) # DIESEL|GASOLINA|ETANOL|SOLAR|BIOMASSA|EOLICA|REDE_ELETRICA
     categoria: Mapped[str] = mapped_column(String(50)) # FOSSIL|RENOVAVEL
     unidade_medida: Mapped[str] = mapped_column(String(20)) # litros|kWh|kg|m3
@@ -18,7 +16,7 @@ class FonteEnergia(Base, TimestampMixin, TenantMixin):
 
 class ConsumoEnergia(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'consumos_energia'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     fonte_id: Mapped[UUID] = mapped_column(ForeignKey('fontes_energia.id'))
     periodo_inicio: Mapped[date] = mapped_column(Date)
     periodo_fim: Mapped[date] = mapped_column(Date)
@@ -30,7 +28,7 @@ class ConsumoEnergia(Base, TimestampMixin, TenantMixin):
 
 class RelatorioESG(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'relatorios_esg'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     periodo: Mapped[str] = mapped_column(String(20))
     emissao_total_co2e_ton: Mapped[Decimal] = mapped_column(Numeric(12, 3))
     emissao_por_hectare: Mapped[Decimal] = mapped_column(Numeric(10, 3))

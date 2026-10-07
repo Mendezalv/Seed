@@ -10,7 +10,22 @@ from src.shared.auth.schemas import UsuarioCreate, UsuarioResponse, LoginRequest
 from src.shared.auth.jwt import create_access_token
 from src.shared.auth.rbac import ROLE_PERMISSIONS, Role
 
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+import bcrypt
+
+def hash_password(password: str) -> str:
+    """Gera hash seguro da senha com bcrypt."""
+    pw_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pw_bytes, salt).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verifica se a senha coincide com o hash armazenado."""
+    try:
+        pw_bytes = plain_password.encode('utf-8')[:72]
+        hash_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(pw_bytes, hash_bytes)
+    except Exception:
+        return False
 
 class AuthService:
     @staticmethod
@@ -34,7 +49,7 @@ class AuthService:
         novo_usuario = Usuario(
             email=usuario_in.email,
             nome_completo=usuario_in.nome_completo,
-            senha_hash=pwd_context.hash(usuario_in.senha),
+            senha_hash=hash_password(usuario_in.senha),
             propriedade_id=prop_id,
             role=usuario_in.role
         )
@@ -50,7 +65,7 @@ class AuthService:
         result = await session.execute(query)
         usuario = result.scalar_one_or_none()
         
-        if not usuario or not pwd_context.verify(login.senha, usuario.senha_hash):
+        if not usuario or not verify_password(login.senha, usuario.senha_hash):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais inválidas")
             
         if not usuario.ativo:
@@ -98,7 +113,7 @@ class AuthService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado nesta propriedade")
             
         if "senha" in data:
-            data["senha_hash"] = pwd_context.hash(data.pop("senha"))
+            data["senha_hash"] = hash_password(data.pop("senha"))
             
         for key, value in data.items():
             if hasattr(usuario, key):

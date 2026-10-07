@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from uuid_utils import uuid7
 
-from src.shared.database.base import Base, TimestampMixin
+from src.shared.database.base import Base, TimestampMixin, generate_uuid7
 
 
 class Propriedade(Base, TimestampMixin):
@@ -25,7 +25,7 @@ class Propriedade(Base, TimestampMixin):
 
     __tablename__ = "propriedades"
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     cnpj_cpf: Mapped[str | None] = mapped_column(String(18), unique=True, nullable=True)
     inscricao_estadual: Mapped[str | None] = mapped_column(String(20), nullable=True)
@@ -41,7 +41,7 @@ class Propriedade(Base, TimestampMixin):
 
 class Usuario(Base, TimestampMixin):
     __tablename__ = 'usuarios'
-    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid7)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     nome_completo: Mapped[str] = mapped_column(String(255), nullable=False)
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
