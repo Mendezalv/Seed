@@ -23,23 +23,31 @@ SAMPLE_PROPRIEDADE_ID = UUID("12345678-1234-5678-1234-567812345678")
 SAMPLE_USER_ID = UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
 
 
+from sqlalchemy import event
+
 @pytest_asyncio.fixture
 async def engine():
-    """Cria engine SQLite async em memória para testes."""
+    """Cria engine SQLite async em memória para testes com suporte mock a GeoAlchemy2."""
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
     )
-    # Exclui tabelas com colunas Geometry (PostGIS) se rodando em SQLite puro
-    sqlite_tables = [
-        t for t in Base.metadata.sorted_tables
-        if not any(hasattr(col.type, "name") and "GEOMETRY" in str(col.type).upper() for col in t.columns)
-    ]
+    
+    @event.listens_for(engine.sync_engine, "connect")
+    def register_sqlite_spatial_mocks(dbapi_connection, connection_record):
+        dbapi_connection.create_function("GeomFromEWKT", 1, lambda x: x)
+        dbapi_connection.create_function("RecoverGeometryColumn", 5, lambda a, b, c, d, e: 1)
+        dbapi_connection.create_function("CreateSpatialIndex", 2, lambda a, b: 1)
+        dbapi_connection.create_function("CheckSpatialIndex", 2, lambda a, b: None)
+        dbapi_connection.create_function("DisableSpatialIndex", 2, lambda a, b: 1)
+        dbapi_connection.create_function("DiscardGeometryColumn", 2, lambda a, b: 1)
+        dbapi_connection.create_function("AsEWKB", 1, lambda x: x)
+
     async with engine.begin() as conn:
-        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, tables=sqlite_tables))
+        await conn.run_sync(Base.metadata.create_all)
     yield engine
     async with engine.begin() as conn:
-        await conn.run_sync(lambda sync_conn: Base.metadata.drop_all(sync_conn, tables=sqlite_tables))
+        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 

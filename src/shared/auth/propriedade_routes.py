@@ -18,6 +18,8 @@ from src.shared.api.dependencies import get_current_propriedade_id
 from src.operacional.domain.models import Talhao, Safra, Maquinario, OrdemManutencao
 from src.epidemiologico.domain.models import AlertaEpidemiologico
 from src.energetico.domain.models import RelatorioESG
+from src.shared.dashboard.schemas import DashboardConsolidadoResponse
+from src.shared.dashboard.service import DashboardService
 
 router = APIRouter(prefix="/propriedades", tags=["Propriedades"])
 
@@ -112,6 +114,21 @@ async def obter_dashboard(
         "alertas_epidemiologicos": alertas_count or 0,
         "relatorios_esg": relatorios_count or 0,
     }
+
+@router.get(
+    "/minha/dashboard/consolidado",
+    response_model=DashboardConsolidadoResponse,
+    dependencies=[Depends(require_permission("read:dashboard"))]
+)
+async def obter_dashboard_consolidado(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Obtém visão executiva consolidada da fazenda, unificando indicadores
+    operacionais, financeiros, alertas epidemiológicos, clima e sustentabilidade ESG.
+    """
+    return await DashboardService.obter_consolidado(propriedade_id, session)
 
 @router.get("/minha/membros", response_model=list[UsuarioResponse], dependencies=[Depends(require_permission("read:dashboard"))])
 async def listar_membros(
