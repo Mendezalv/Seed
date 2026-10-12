@@ -33,8 +33,7 @@ O projeto segue os princípios de Domain-Driven Design (DDD):
 *   `src/application/services.py`: Serviços da aplicação e regras de negócio.
 *   `src/api/routes.py`: Endpoints do FastAPI, tratamento de requisições e injeção de dependências.
 
-## Stack Tecnológica
-
+*   **Frontend**: React 19, Vite, TypeScript, React Router, Design System Oficial Seed (Dark Zinc & Emerald)
 *   **Backend**: Python 3.12+, FastAPI, Uvicorn
 *   **Banco de Dados**: PostgreSQL 16 com PostGIS (via asyncpg e SQLAlchemy 2.0+)
 *   **Filas / Background Jobs**: Celery e Redis
@@ -42,6 +41,18 @@ O projeto segue os princípios de Domain-Driven Design (DDD):
 *   **Validação de Dados**: Pydantic v2
 *   **Testes**: pytest, pytest-asyncio, factory-boy
 *   **Outros**: uuid-utils (uuid7), structlog
+
+## Executando o Frontend
+
+Para iniciar o servidor de desenvolvimento do frontend:
+
+```bash
+make frontend-dev
+# ou diretamente:
+cd frontend && npm run dev
+```
+
+A interface web estará disponível em `http://localhost:5173`, com proxy reverso configurado para a API em `http://localhost:8000`.
 
 ## Licença
 

@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seed — Viabilidade Econômica, Comercialização & Sensibilidade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Variáveis Oficiais Seed (Dark Zinc / Emerald) ── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      /* Superfícies */
+      --bg-primary: #09090b;
+      --bg-elevated: #111215;
+      --bg-surface: #18181b;
+      --bg-hover: #222226;
+      
+      /* Bordas */
+      --border: #27272a;
+      --border-subtle: #1f1f23;
+      
+      /* Tipografia */
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      
+      /* Cores de Marca / Semânticas */
+      --accent: #10b981;
+      --accent-muted: rgba(16, 185, 129, 0.12);
+      --accent-text: #34d399;
+      
+      --warning: #f59e0b;
+      --warning-muted: rgba(245, 158, 11, 0.12);
+      
+      --danger: #ef4444;
+      --danger-muted: rgba(239, 68, 68, 0.12);
+      
+      --info: #3b82f6;
+      --info-muted: rgba(59, 130, 246, 0.12);
+
+      --purple: #a855f7;
+      --purple-muted: rgba(168, 85, 247, 0.12);
+      
+      /* Fontes */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      /* Geometria */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Scrollbars elegantes */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+    /* ── Layout Shell ─────────────────────────────────── */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* ── Sidebar Canônica Unificada (260px Fixa) ────── */
+    .sidebar {
+      width: 260px;
+      border-right: 1px solid var(--border);
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 30;
+      transition: transform 300ms var(--ease-out);
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-brand .logo-mark, .sidebar-brand .brand-logo {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 14px;
+      color: #000;
+    }
+    .sidebar-brand .brand-text, .sidebar-brand .brand-meta {
+      display: flex; flex-direction: column; gap: 1px;
+    }
+    .sidebar-brand .brand-name, .sidebar-brand .brand-title { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
+    .sidebar-brand .brand-sub, .sidebar-brand .brand-subtitle { font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+    .nav-group { margin-bottom: 24px; }
+    .nav-group-label {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      padding: 0 10px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
+      user-select: none;
+      text-decoration: none;
+    }
+    .nav-item:active { transform: scale(0.97); }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active {
+      background: var(--accent-muted);
+      color: var(--accent-text);
+      font-weight: 500;
+    }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+    .nav-item.active svg { opacity: 1; }
+    .nav-badge {
+      margin-left: auto;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      padding: 1px 7px;
+      border-radius: 100px;
+      background: var(--danger-muted);
+      color: var(--danger);
+    }
+    .nav-badge.warn {
+      background: var(--warning-muted);
+      color: var(--warning);
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-footer .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--bg-hover);
+      display: grid; place-items: center;
+      font-size: 12px; font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .sidebar-footer .user-info { flex: 1; min-width: 0; }
+    .sidebar-footer .user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-footer .user-role { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Main Content Container ───────────────────────── */
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
+      width: calc(100% - 260px);
+      min-width: 0;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Topbar Sticky ────────────────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      height: 56px;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .topbar-breadcrumb, .topbar-breadcrumbs {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .topbar-breadcrumb a, .topbar-breadcrumbs a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 140ms ease;
+    }
+    .topbar-breadcrumb a:hover, .topbar-breadcrumbs a:hover {
+      color: var(--text-secondary);
+    }
+    .topbar-breadcrumb .sep, .topbar-breadcrumbs .sep {
+      color: var(--border);
+    }
+    .topbar-breadcrumb .current, .topbar-breadcrumbs .current {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Ticker de Cotações de Mercado em Tempo Real */
+    .market-ticker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .ticker-item .label { color: var(--text-muted); font-size: 10px; font-weight: 600; }
+    .ticker-item .val { color: var(--text-primary); font-weight: 600; }
+    .ticker-item .delta-up { color: var(--accent-text); font-size: 10px; }
+    .ticker-item .delta-down { color: var(--danger); font-size: 10px; }
+    .ticker-sep { color: var(--border); font-size: 10px; }
+
+    /* ── Page Layout: 100% Full Width ─────────────────── */
+    .page {
+      padding: 24px 32px 40px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* ── Page Header & Ações Principais ──────────────── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .page-heading { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+    .page-subheading { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 140ms ease, transform 120ms var(--ease-out), border-color 140ms ease;
+      user-select: none;
+      text-decoration: none;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+    .btn-primary:hover { background: #059669; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .btn-outline:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: #3f3f46;
+    }
+
+    .btn svg { width: 15px; height: 15px; }
+
+    /* ── Master KPIs Bar (4 Cards Executivos) ────────── */
+    .kpi-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .kpi-cell {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color 140ms ease, transform 140ms var(--ease-out);
+    }
+    .kpi-cell:hover {
+      border-color: #3f3f46;
+      transform: translateY(-1px);
+    }
+
+    .kpi-cell-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kpi-cell-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .kpi-cell-val {
+      font-family: var(--font-mono);
+      font-size: 23px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+    }
+    .kpi-cell-val .curr {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+    .kpi-cell-val .decimals {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .kpi-cell-val .unit {
+      font-family: var(--font-sans);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-left: 5px;
+    }
+
+    .kpi-cell-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kpi-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .kpi-tag.good { background: var(--accent-muted); color: var(--accent-text); }
+    .kpi-tag.warn { background: var(--warning-muted); color: var(--warning); }
+    .kpi-tag.danger { background: var(--danger-muted); color: var(--danger); }
+    .kpi-tag.info { background: var(--info-muted); color: var(--info); }
+
+    /* ── Banner Inteligente de Oportunidade de Fixação ─── */
+    .market-alert-banner {
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .market-alert-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .market-alert-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--accent-muted);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .market-alert-icon svg { width: 18px; height: 18px; }
+    .market-alert-text { display: flex; flex-direction: column; gap: 2px; }
+    .market-alert-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .market-alert-desc { font-size: 12px; color: var(--text-secondary); }
+    .market-alert-desc strong { color: var(--accent-text); }
+    .market-alert-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    /* ── SEÇÃO 1: SIMULADOR PROFUNDO DE SENSIBILIDADE FINANCEIRA ── */
+    .sim-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sim-card-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: #0e0e11;
+    }
+    .sim-header-titles { display: flex; flex-direction: column; gap: 2px; }
+    .sim-title { font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+    .sim-subtitle { font-size: 11.5px; color: var(--text-muted); }
+
+    .sim-body-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: 480px;
+    }
+
+    /* Coluna Esquerda: Controles de Modelagem */
+    .sim-controls-panel {
+      padding: 20px;
+      border-right: 1px solid var(--border);
+      background: #121216;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .param-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .param-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .param-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .param-badge-val {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* Sliders personalizados de luxo */
+    .custom-range {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 3px;
+      background: #27272a;
+      outline: none;
+      cursor: pointer;
+      transition: background 120ms;
+    }
+    .custom-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+      border: 2px solid #000;
+      transition: transform 120ms;
+    }
+    .custom-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    .range-limits {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Painel de Resultados do Cenário Selecionado */
+    .scenario-results-box {
+      margin-top: auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .scenario-box-title {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .scenario-stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .scenario-stat-row .stat-name { color: var(--text-secondary); }
+    .scenario-stat-row .stat-value {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .scenario-stat-row .stat-value.highlight { color: var(--accent-text); font-size: 13.5px; }
+
+    .breakeven-indicator {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+    }
+    .breakeven-indicator .be-label { color: var(--warning); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .breakeven-indicator .be-val { font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); }
+
+    /* Coluna Direita: Matriz de Sensibilidade Cruzada */
+    .sim-matrix-panel {
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg-elevated);
+      overflow-x: auto;
+    }
+
+    .matrix-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .matrix-legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+    .legend-swatch.high { background: rgba(16, 185, 129, 0.35); border: 1px solid var(--accent); }
+    .legend-swatch.med { background: rgba(59, 130, 246, 0.2); border: 1px solid var(--info); }
+    .legend-swatch.low { background: rgba(245, 158, 11, 0.2); border: 1px solid var(--warning); }
+    .legend-swatch.neg { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); }
+
+    /* Grid da Matriz de Sensibilidade */
+    .matrix-table-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: #0f1013;
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: center;
+    }
+    .matrix-table th, .matrix-table td {
+      padding: 10px 8px;
+      border: 1px solid var(--border-subtle);
+    }
+    .matrix-table th {
+      background: #14151a;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+    }
+    .matrix-table th.axis-corner {
+      background: #101014;
+      color: var(--text-secondary);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      width: 120px;
+    }
+    .matrix-table th.col-price {
+      color: var(--text-primary);
+    }
+    .matrix-table td.row-prod {
+      background: #14151a;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-align: left;
+      padding-left: 14px;
+    }
+
+    .matrix-cell {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 120ms ease;
+      position: relative;
+    }
+    .matrix-cell:hover {
+      filter: brightness(1.2);
+      transform: scale(1.03);
+      z-index: 2;
+    }
+
+    /* Termografia das Células */
+    .cell-super { background: rgba(16, 185, 129, 0.22); color: #6ee7b7; }
+    .cell-high { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+    .cell-mid { background: rgba(59, 130, 246, 0.12); color: #93c5fd; }
+    .cell-low { background: rgba(245, 158, 11, 0.12); color: #fcd34d; }
+    .cell-neg { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+    /* Célula do Cenário Atual Ativo */
+    .cell-current-active {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.5) inset;
+      font-weight: 800;
+      background: rgba(16, 185, 129, 0.28) !important;
+      color: #fff !important;
+    }
+
+    /* ── SEÇÃO 2: DUAL CARDS (Contratos de Hedge & Decomposição DRE) ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 20px;
+    }
+
+    .card-block {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-block-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: #0e0e11;
+    }
+    .card-block-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Barra de Travamento de Safra */
+    .hedge-progress-card {
+      padding: 14px 20px;
+      background: #141418;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hedge-progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+    }
+    .hedge-progress-bar-bg {
+      height: 8px;
+      border-radius: 100px;
+      background: #27272a;
+      overflow: hidden;
+      display: flex;
+    }
+    .hedge-fill-locked {
+      background: var(--accent);
+      height: 100%;
+      border-radius: 100px 0 0 100px;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+    }
+    .hedge-fill-open {
+      background: #3f3f46;
+      height: 100%;
+      border-radius: 0 100px 100px 0;
+    }
+    .hedge-progress-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Tabela de Contratos de Comercialização */
+    .contracts-table-wrap {
+      flex: 1;
+      overflow-x: auto;
+    }
+    .contracts-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      text-align: left;
+    }
+    .contracts-table th {
+      background: #14151a;
+      color: var(--text-muted);
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .contracts-table td {
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .contracts-table tr:hover td {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .contract-code-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .trading-name { font-weight: 600; color: var(--text-primary); }
+    .trading-type { font-size: 11px; color: var(--text-muted); }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 0 10px;
+      height: 24px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      line-height: 24px;
+    }
+    .status-badge.executed { background: var(--accent-muted); color: var(--accent-text); }
+    .status-badge.active { background: var(--info-muted); color: var(--info); }
+    .status-badge.open { background: var(--warning-muted); color: var(--warning); }
+
+    #talhaoModal .modal-card {
+      max-width: 800px;
+    }
+    #talhaoModal .contracts-table th,
+    #talhaoModal .contracts-table td {
+      padding: 10px 14px;
+      white-space: nowrap;
+    }
+
+    /* Decomposição do COT (Custo Operacional Total) */
+    .cost-breakdown-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cost-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .cost-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .cost-item-name { color: var(--text-secondary); font-weight: 500; }
+    .cost-item-val {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .cost-bar-bg {
+      height: 6px;
+      background: #27272a;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .cost-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    /* Totalizador de Custo */
+    .cost-total-summary {
+      margin-top: 6px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cost-total-label { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .cost-total-val {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* ── Modais Interativos (Estilo Opus Dark) ────────── */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-card {
+      background: #141418;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 580px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: modal-pop 160ms var(--ease-out);
+    }
+    @keyframes modal-pop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+    .modal-header {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0f1013;
+    }
+    .modal-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      transition: color 120ms;
+    }
+    .modal-close:hover { color: var(--text-primary); background: var(--bg-hover); }
+    .modal-close svg { width: 18px; height: 18px; }
+
+    .modal-body {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      max-height: 75vh;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* Custom Stepper & Inputs sem setas nativas */
+    .stepper-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .stepper-wrap input[type="number"]::-webkit-inner-spin-button,
+    .stepper-wrap input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .stepper-wrap input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 38px 8px 12px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 140ms ease;
+    }
+    .stepper-wrap input[type="number"]:focus { border-color: var(--accent); }
+
+    .stepper-btns {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      background: #18181b;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      width: 20px;
+      height: 28px;
+    }
+    .stepper-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0;
+      transition: background 120ms ease, color 120ms ease;
+    }
+    .stepper-btn:first-child {
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .stepper-btn:hover {
+      background: var(--bg-hover);
+      color: var(--accent-text);
+    }
+    .stepper-btn:active {
+      background: var(--accent-muted);
+    }
+    .stepper-btn svg {
+      width: 9px;
+      height: 9px;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 140ms;
+    }
+    .form-input:focus { border-color: var(--accent); }
+
+    /* Custom Select Component */
+    .custom-select-wrapper { position: relative; width: 100%; }
+    .custom-select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .custom-options-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #18181b;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .custom-options-menu.open { display: flex; }
+    .custom-opt {
+      padding: 9px 12px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 120ms, color 120ms;
+    }
+    .custom-opt:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .custom-opt.selected { background: var(--accent-muted); color: var(--accent-text); font-weight: 600; }
+
+    .modal-footer {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      background: #0f1013;
+    }
+
+    /* Container de Toasts */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 28px;
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: #18181b;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toast-in 180ms var(--ease-out);
+    }
+    @keyframes toast-in { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Responsividade */
+    @media (max-width: 1280px) {
+      .kpi-bar { grid-template-columns: repeat(2, 1fr); }
+      .sim-body-layout { grid-template-columns: 1fr; }
+      .sim-controls-panel { border-right: none; border-bottom: 1px solid var(--border); }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ============================================================ -->
+  <!-- SIDEBAR CANÔNICA UNIFICADA                                   -->
+  <!-- ============================================================ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-mark">S</div>
+      <div class="brand-text">
+        <span class="brand-name">Seed</span>
+        <span class="brand-sub">Agro Intelligence</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-label">Geral</div>
+        <a href="tela-01-dashboard.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" /></svg>
+          Dashboard
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Operacional</div>
+        <a href="tela-03-talhoes-gis.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" /></svg>
+          Talhões & GIS
+        </a>
+        <a href="tela-04-safras-planejamento.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+          Ciclo de Safras
+        </a>
+        <a href="tela-05-insumos-estoque.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+          Insumos & Lotes
+          <span class="nav-badge warn">3</span>
+        </a>
+        <a href="tela-06-maquinarios.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>
+          Maquinários
+        </a>
+        <a href="tela-07-viabilidade.html" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg>
+          Viabilidade Econômica
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Epidemiológico</div>
+        <a href="tela-08-vigilancia-sanitaria.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+          Vigilância Sanitária
+          <span class="nav-badge">1</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Sustentabilidade</div>
+        <a href="tela-09-energia-esg.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>
+          Energia & ESG
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="avatar">RC</div>
+      <div class="user-info">
+        <div class="user-name">Rafael Costa</div>
+        <div class="user-role">Fazenda Santa Maria</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================ -->
+  <!-- CONTEÚDO PRINCIPAL: VIABILIDADE ECONÔMICA                    -->
+  <!-- ============================================================ -->
+  <div class="main-content">
+    
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">
+          <a href="tela-01-dashboard.html">Seed</a>
+          <span class="sep">/</span>
+          <span>Operacional</span>
+          <span class="sep">/</span>
+          <span style="color: var(--text-primary); font-weight: 500;">Viabilidade Econômica</span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Market Ticker ao Vivo -->
+        <div class="market-ticker">
+          <div class="ticker-item">
+            <span class="label">SOJA CBOT:</span>
+            <span class="val">US$ 10,24/bu</span>
+            <span class="delta-up">+0.8%</span>
+          </div>
+          <span class="ticker-sep">|</span>
+          <div class="ticker-item">
+            <span class="label">MILHO B3:</span>
+            <span class="val">R$ 64,20/sc</span>
+            <span class="delta-up">+1.1%</span>
+          </div>
+          <span class="ticker-sep">|</span>
+          <div class="ticker-item">
+            <span class="label">DÓLAR PTAX:</span>
+            <span class="val">R$ 5,742</span>
+            <span class="delta-down">-0.3%</span>
+          </div>
+          <span class="ticker-sep">|</span>
+          <div class="ticker-item">
+            <span class="label">PRÊMIO PNG:</span>
+            <span class="val" style="color: var(--accent-text);">+115 ¢/bu</span>
+          </div>
+        </div>
+
+        <button class="btn btn-outline" onclick="exportDRE()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+          Exportar DRE
+        </button>
+        <button class="btn btn-primary" onclick="openHedgeModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          Simular Contrato Hedge
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page">
+      
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-heading">Viabilidade Econômica & Comercialização</h1>
+          <p class="page-subheading">Modelagem de sensibilidade financeira, margem EBITDA, ponto de equilíbrio e gestão de travas de hedge</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="openTalhaoBreakevenModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0h-10.5m10.5 0a1.5 1.5 0 0 1-3 0m-4.5 0a1.5 1.5 0 0 1-3 0" /></svg>
+            Breakeven por Talhão
+          </button>
+        </div>
+      </div>
+
+      <!-- Master Financial KPIs Bar (4 Cards) -->
+      <div class="kpi-bar">
+        <!-- KPI 1 -->
+        <div class="kpi-cell">
+          <div class="kpi-cell-top">
+            <span class="kpi-cell-label">Receita Bruta Projetada</span>
+            <span class="kpi-tag good">+5.8% META</span>
+          </div>
+          <div class="kpi-cell-val">
+            <span class="curr">R$</span>21.480.000<span class="decimals">,00</span>
+          </div>
+          <div class="kpi-cell-sub">
+            <span>Safra 2024/25 • 3.200 ha (Soja + Milho)</span>
+          </div>
+        </div>
+
+        <!-- KPI 2 -->
+        <div class="kpi-cell">
+          <div class="kpi-cell-top">
+            <span class="kpi-cell-label">Margem EBITDA Agrícola</span>
+            <span class="kpi-tag good">+3.2 p.p.</span>
+          </div>
+          <div class="kpi-cell-val">
+            38,4%
+            <span class="unit">R$ 8.248.320,00</span>
+          </div>
+          <div class="kpi-cell-sub">
+            <span>Margem líquida após COT e fixos</span>
+          </div>
+        </div>
+
+        <!-- KPI 3 -->
+        <div class="kpi-cell">
+          <div class="kpi-cell-top">
+            <span class="kpi-cell-label">Custo Operacional Total (COT)</span>
+            <span class="kpi-tag info">PLANEJADO</span>
+          </div>
+          <div class="kpi-cell-val">
+            <span class="curr">R$</span>4.135<span class="decimals">,00</span>
+            <span class="unit">/ ha</span>
+          </div>
+          <div class="kpi-cell-sub">
+            <span>Insumos 54% • Frotas 21% • Fixos 25%</span>
+          </div>
+        </div>
+
+        <!-- KPI 4 -->
+        <div class="kpi-cell">
+          <div class="kpi-cell-top">
+            <span class="kpi-cell-label">Comercialização Travada (Hedge)</span>
+            <span class="kpi-tag good">64,5% FIXADO</span>
+          </div>
+          <div class="kpi-cell-val">
+            135.000
+            <span class="unit">sacas</span>
+          </div>
+          <div class="kpi-cell-sub">
+            <span>Preço Médio Ponderado: <strong>R$ 138,50 / sc</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Banner Inteligente de Oportunidade de Mercado -->
+      <div class="market-alert-banner">
+        <div class="market-alert-left">
+          <div class="market-alert-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg>
+          </div>
+          <div class="market-alert-text">
+            <span class="market-alert-title">Oportunidade de Arbitragem & Fixação de Margem</span>
+            <span class="market-alert-desc">A alta na CBOT (+0.8%) e dólar em R$ 5,74 elevaram a paridade de exportação em Paranaguá para <strong>R$ 141,80 / saca</strong> (+R$ 3,30 acima do preço médio contratado). Recomendado fixar mais 15.000 sacas para atingir 70% de cobertura pré-colheita.</span>
+          </div>
+        </div>
+        <div class="market-alert-actions">
+          <button class="btn btn-outline" style="padding: 6px 12px; font-size: 11.5px;" onclick="showToast('Abrindo monitor de paridade cambial Paranaguá...')">Ver Paridade</button>
+          <button class="btn btn-primary" style="padding: 6px 14px; font-size: 11.5px;" onclick="openHedgeModalWithParams('Cargill Agrícola', 15000, 141.80)">Fixar Lote Agora</button>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- SEÇÃO 1: SIMULADOR PROFUNDO DE SENSIBILIDADE FINANCEIRA      -->
+      <!-- ============================================================ -->
+      <div class="sim-card">
+        <div class="sim-card-header">
+          <div class="sim-header-titles">
+            <div class="sim-title">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 17px; height: 17px; color: var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+              Simulador Profundo de Sensibilidade Financeira
+            </div>
+            <div class="sim-subtitle">Modelagem em tempo real de preço, produtividade, custo operacional e sensibilidade da margem líquida</div>
+          </div>
+          <button class="btn btn-outline" style="padding: 5px 12px; font-size: 11.5px;" onclick="resetSimulationParams()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+            Restaurar Padrão
+          </button>
+        </div>
+
+        <div class="sim-body-layout">
+          
+          <!-- Lado Esquerdo: Controles Interativos -->
+          <div class="sim-controls-panel">
+            
+            <!-- Controle 1: Produtividade -->
+            <div class="param-group">
+              <div class="param-header">
+                <span class="param-label">Produtividade Esperada</span>
+                <span class="param-badge-val" id="dispYield">68 sc/ha</span>
+              </div>
+              <input type="range" class="custom-range" id="inputYield" min="50" max="85" step="1" value="68" oninput="updateSimulation('yield')" />
+              <div class="range-limits">
+                <span>50 sc/ha</span>
+                <span>Média: 68</span>
+                <span>85 sc/ha</span>
+              </div>
+            </div>
+
+            <!-- Controle 2: Preço da Saca -->
+            <div class="param-group">
+              <div class="param-header">
+                <span class="param-label">Preço Médio de Venda</span>
+                <span class="param-badge-val" id="dispPrice">R$ 138,00 / sc</span>
+              </div>
+              <input type="range" class="custom-range" id="inputPrice" min="110" max="170" step="1" value="138" oninput="updateSimulation('price')" />
+              <div class="range-limits">
+                <span>R$ 110</span>
+                <span>Spot: R$ 138</span>
+                <span>R$ 170</span>
+              </div>
+            </div>
+
+            <!-- Controle 3: Custo COT por hectare -->
+            <div class="param-group">
+              <div class="param-header">
+                <span class="param-label">Custo Operacional (COT)</span>
+                <span class="param-badge-val" id="dispCost">R$ 4.135,00 / ha</span>
+              </div>
+              <input type="range" class="custom-range" id="inputCost" min="3200" max="5200" step="50" value="4135" oninput="updateSimulation('cost')" />
+              <div class="range-limits">
+                <span>R$ 3.200</span>
+                <span>Base: R$ 4.135</span>
+                <span>R$ 5.200</span>
+              </div>
+            </div>
+
+            <!-- Controle 4: Dólar Câmbio -->
+            <div class="param-group">
+              <div class="param-header">
+                <span class="param-label">Dólar Médio Projetado</span>
+                <span class="param-badge-val" id="dispUsd">R$ 5,75</span>
+              </div>
+              <input type="range" class="custom-range" id="inputUsd" min="4.80" max="6.50" step="0.05" value="5.75" oninput="updateSimulation('usd')" />
+              <div class="range-limits">
+                <span>R$ 4,80</span>
+                <span id="cbotParityHint" style="color: var(--accent-text); font-weight: 600;">Paridade CBOT: US$ 24,00 × 5,75 = R$ 138,00</span>
+                <span>R$ 6,50</span>
+              </div>
+            </div>
+
+            <!-- Card de Resultados Vivos do Cenário -->
+            <div class="scenario-results-box">
+              <div class="scenario-box-title">
+                <span>Resultado do Cenário</span>
+                <span class="kpi-tag good" id="dispScenarioTag">ALTAMENTE VIÁVEL</span>
+              </div>
+
+              <div class="scenario-stat-row">
+                <span class="stat-name">Receita Bruta / ha:</span>
+                <span class="stat-value" id="dispGrossPerHa">R$ 9.384,00</span>
+              </div>
+
+              <div class="scenario-stat-row">
+                <span class="stat-name">Custo COT / ha:</span>
+                <span class="stat-value" id="dispCostPerHa">R$ 4.135,00</span>
+              </div>
+
+              <div class="scenario-stat-row">
+                <span class="stat-name">Margem Líquida / ha:</span>
+                <span class="stat-value highlight" id="dispNetPerHa">R$ 5.249,00</span>
+              </div>
+
+              <div class="scenario-stat-row">
+                <span class="stat-name">Margem Líquida (%):</span>
+                <span class="stat-value" style="color: var(--accent-text);" id="dispMarginPct">55,9%</span>
+              </div>
+
+              <!-- Ponto de Equilíbrio (Breakeven) -->
+              <div class="breakeven-indicator">
+                <span class="be-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                  Breakeven:
+                </span>
+                <span class="be-val" id="dispBreakeven">29,9 sc/ha (R$ 60,81/sc)</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Lado Direito: Matriz Bidirecional de Sensibilidade -->
+          <div class="sim-matrix-panel">
+            <div class="matrix-toolbar">
+              <div style="font-size: 12.5px; font-weight: 600; color: var(--text-primary);">
+                Matriz de Margem Líquida (R$ / ha) — Produtividade vs. Preço
+              </div>
+              <div class="matrix-legend">
+                <div class="legend-item"><span class="legend-swatch high"></span> > R$ 4.000</div>
+                <div class="legend-item"><span class="legend-swatch med"></span> R$ 2.500 a R$ 4.000</div>
+                <div class="legend-item"><span class="legend-swatch low"></span> R$ 1.000 a R$ 2.500</div>
+                <div class="legend-item"><span class="legend-swatch neg"></span> < R$ 1.000 (Risco)</div>
+              </div>
+            </div>
+
+            <div class="matrix-table-wrap">
+              <table class="matrix-table" id="sensitivityMatrix">
+                <thead>
+                  <tr>
+                    <th class="axis-corner">Produtividade \ Preço</th>
+                    <th class="col-price">R$ 120,00</th>
+                    <th class="col-price">R$ 128,00</th>
+                    <th class="col-price">R$ 135,00</th>
+                    <th class="col-price">R$ 142,00</th>
+                    <th class="col-price">R$ 150,00</th>
+                    <th class="col-price">R$ 160,00</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Linha 58 sc/ha -->
+                  <tr data-yield="58">
+                    <td class="row-prod">58 sc/ha</td>
+                    <td class="matrix-cell cell-low" data-price="120" data-val="2825">R$ 2.825</td>
+                    <td class="matrix-cell cell-med" data-price="128" data-val="3289">R$ 3.289</td>
+                    <td class="matrix-cell cell-med" data-price="135" data-val="3695">R$ 3.695</td>
+                    <td class="matrix-cell cell-super" data-price="142" data-val="4101">R$ 4.101</td>
+                    <td class="matrix-cell cell-super" data-price="150" data-val="4565">R$ 4.565</td>
+                    <td class="matrix-cell cell-super" data-price="160" data-val="5145">R$ 5.145</td>
+                  </tr>
+
+                  <!-- Linha 62 sc/ha -->
+                  <tr data-yield="62">
+                    <td class="row-prod">62 sc/ha</td>
+                    <td class="matrix-cell cell-med" data-price="120" data-val="3305">R$ 3.305</td>
+                    <td class="matrix-cell cell-med" data-price="128" data-val="3801">R$ 3.801</td>
+                    <td class="matrix-cell cell-super" data-price="135" data-val="4235">R$ 4.235</td>
+                    <td class="matrix-cell cell-super" data-price="142" data-val="4669">R$ 4.669</td>
+                    <td class="matrix-cell cell-super" data-price="150" data-val="5165">R$ 5.165</td>
+                    <td class="matrix-cell cell-super" data-price="160" data-val="5785">R$ 5.785</td>
+                  </tr>
+
+                  <!-- Linha 66 sc/ha -->
+                  <tr data-yield="66">
+                    <td class="row-prod">66 sc/ha</td>
+                    <td class="matrix-cell cell-med" data-price="120" data-val="3785">R$ 3.785</td>
+                    <td class="matrix-cell cell-super" data-price="128" data-val="4313">R$ 4.313</td>
+                    <td class="matrix-cell cell-super" data-price="135" data-val="4775">R$ 4.775</td>
+                    <td class="matrix-cell cell-super" data-price="142" data-val="5237">R$ 5.237</td>
+                    <td class="matrix-cell cell-super" data-price="150" data-val="5765">R$ 5.765</td>
+                    <td class="matrix-cell cell-super" data-price="160" data-val="6425">R$ 6.425</td>
+                  </tr>
+
+                  <!-- Linha 70 sc/ha -->
+                  <tr data-yield="70">
+                    <td class="row-prod">70 sc/ha</td>
+                    <td class="matrix-cell cell-super" data-price="120" data-val="4265">R$ 4.265</td>
+                    <td class="matrix-cell cell-super" data-price="128" data-val="4825">R$ 4.825</td>
+                    <td class="matrix-cell cell-super cell-current-active" data-price="135" data-val="5315">R$ 5.315 ★</td>
+                    <td class="matrix-cell cell-super" data-price="142" data-val="5805">R$ 5.805</td>
+                    <td class="matrix-cell cell-super" data-price="150" data-val="6365">R$ 6.365</td>
+                    <td class="matrix-cell cell-super" data-price="160" data-val="7065">R$ 7.065</td>
+                  </tr>
+
+                  <!-- Linha 74 sc/ha -->
+                  <tr data-yield="74">
+                    <td class="row-prod">74 sc/ha</td>
+                    <td class="matrix-cell cell-super" data-price="120" data-val="4745">R$ 4.745</td>
+                    <td class="matrix-cell cell-super" data-price="128" data-val="5337">R$ 5.337</td>
+                    <td class="matrix-cell cell-super" data-price="135" data-val="5855">R$ 5.855</td>
+                    <td class="matrix-cell cell-super" data-price="142" data-val="6373">R$ 6.373</td>
+                    <td class="matrix-cell cell-super" data-price="150" data-val="6965">R$ 6.965</td>
+                    <td class="matrix-cell cell-super" data-price="160" data-val="7705">R$ 7.705</td>
+                  </tr>
+
+                  <!-- Linha 78 sc/ha -->
+                  <tr data-yield="78">
+                    <td class="row-prod">78 sc/ha</td>
+                    <td class="matrix-cell cell-super" data-price="120" data-val="5225">R$ 5.225</td>
+                    <td class="matrix-cell cell-super" data-price="128" data-val="5849">R$ 5.849</td>
+                    <td class="matrix-cell cell-super" data-price="135" data-val="6395">R$ 6.395</td>
+                    <td class="matrix-cell cell-super" data-price="142" data-val="6941">R$ 6.941</td>
+                    <td class="matrix-cell cell-super" data-price="150" data-val="7565">R$ 7.565</td>
+                    <td class="matrix-cell cell-super" data-price="160" data-val="8345">R$ 8.345</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
+              <span>* Valores calculados com COT base de R$ 4.135,00/ha. Célula com borda destacada representa a aproximação do cenário ativo.</span>
+              <span style="font-family: var(--font-mono); color: var(--accent-text);">Margem EBITDA > 35% em 88% da matriz</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- SEÇÃO 2: DUAL CARDS (Contratos de Hedge & Decomposição COT)  -->
+      <!-- ============================================================ -->
+      <div class="bottom-grid">
+        
+        <!-- Bloco 1: Gestão de Contratos de Hedge & Comercialização -->
+        <div class="card-block">
+          <div class="card-block-header">
+            <div class="card-block-title">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px; color: var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+              Livro de Contratos de Comercialização & Hedge
+            </div>
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px;" onclick="openHedgeModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+              Novo Contrato
+            </button>
+          </div>
+
+          <!-- Barra de Travamento de Safra -->
+          <div class="hedge-progress-card">
+            <div class="hedge-progress-top">
+              <span style="font-weight: 600; color: var(--text-primary);">Progresso de Fixação da Safra (Soja)</span>
+              <span style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-text);">64,5% Concluído</span>
+            </div>
+            <div class="hedge-progress-bar-bg">
+              <div class="hedge-fill-locked" style="width: 64.5%;"></div>
+              <div class="hedge-fill-open" style="width: 35.5%;"></div>
+            </div>
+            <div class="hedge-progress-meta">
+              <span>Fixado: <strong>135.000 sc</strong> (Méd. R$ 138,50)</span>
+              <span>Aberto (Spot): <strong>75.000 sc</strong> (Meta R$ 142,00)</span>
+            </div>
+          </div>
+
+          <!-- Tabela de Contratos -->
+          <div class="contracts-table-wrap">
+            <table class="contracts-table">
+              <thead>
+                <tr>
+                  <th>Contrato</th>
+                  <th>Comprador / Trading</th>
+                  <th>Volume (sc)</th>
+                  <th>Preço Líquido</th>
+                  <th>Modalidade</th>
+                  <th>Vencimento</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="contract-code-tag">CTR-2025-01</span></td>
+                  <td>
+                    <div class="trading-name">Cargill Agrícola</div>
+                    <div class="trading-type">Unidade Sorriso / MT</div>
+                  </td>
+                  <td><span style="font-family: var(--font-mono); font-weight: 700;">45.000 sc</span></td>
+                  <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-text);">R$ 140,00</span></td>
+                  <td>Barter Adubo (Fosfatados)</td>
+                  <td>30/03/2025</td>
+                  <td><span class="status-badge executed">Quitado / Entregue</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="contract-code-tag">CTR-2025-02</span></td>
+                  <td>
+                    <div class="trading-name">Bunge Brasil</div>
+                    <div class="trading-type">Porto Paranaguá CIF</div>
+                  </td>
+                  <td><span style="font-family: var(--font-mono); font-weight: 700;">60.000 sc</span></td>
+                  <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-text);">R$ 138,50</span></td>
+                  <td>Venda a Termo (Preço Fechado)</td>
+                  <td>15/04/2025</td>
+                  <td><span class="status-badge active">Contrato Ativo</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="contract-code-tag">CTR-2025-03</span></td>
+                  <td>
+                    <div class="trading-name">Amaggi Exportação</div>
+                    <div class="trading-type">Terminal Fluvial Miritituba</div>
+                  </td>
+                  <td><span style="font-family: var(--font-mono); font-weight: 700;">30.000 sc</span></td>
+                  <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-text);">R$ 136,00</span></td>
+                  <td>Hedge Sintético B3 (Opções Put)</td>
+                  <td>30/05/2025</td>
+                  <td><span class="status-badge active">Travado com Put</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="contract-code-tag">CTR-SPOT-01</span></td>
+                  <td>
+                    <div class="trading-name">Armazém Próprio (Silo 02)</div>
+                    <div class="trading-type">Disponível p/ Comercialização</div>
+                  </td>
+                  <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--warning);">75.000 sc</span></td>
+                  <td><span style="font-family: var(--font-mono); font-weight: 600; color: var(--text-muted);">Aberto (R$ 141,80 est.)</span></td>
+                  <td>Mercado Físico Spot</td>
+                  <td>Pós-Colheita</td>
+                  <td><span class="status-badge open">Aguardando Preço</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bloco 2: Decomposição do COT (Custo Operacional Total) -->
+        <div class="card-block">
+          <div class="card-block-header">
+            <div class="card-block-title">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px; color: var(--info);"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /></svg>
+              Composição do COT (Custo / ha)
+            </div>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">Base: 3.200 ha</span>
+          </div>
+
+          <div class="cost-breakdown-body">
+            
+            <!-- Insumo: Fertilizantes -->
+            <div class="cost-item">
+              <div class="cost-item-top">
+                <span class="cost-item-name">Fertilizantes & Corretivos de Solo</span>
+                <span class="cost-item-val">R$ 1.340,00 <span style="font-size: 11px; color: var(--text-muted);">(32,4%)</span></span>
+              </div>
+              <div class="cost-bar-bg">
+                <div class="cost-bar-fill" style="width: 32.4%; background: #10b981;"></div>
+              </div>
+            </div>
+
+            <!-- Insumo: Defensivos -->
+            <div class="cost-item">
+              <div class="cost-item-top">
+                <span class="cost-item-name">Defensivos (Fungicidas & Herbicidas)</span>
+                <span class="cost-item-val">R$ 980,00 <span style="font-size: 11px; color: var(--text-muted);">(23,7%)</span></span>
+              </div>
+              <div class="cost-bar-bg">
+                <div class="cost-bar-fill" style="width: 23.7%; background: #3b82f6;"></div>
+              </div>
+            </div>
+
+            <!-- Frotas: Combustível -->
+            <div class="cost-item">
+              <div class="cost-item-top">
+                <span class="cost-item-name">Diesel S10 & Lubrificantes (Frotas)</span>
+                <span class="cost-item-val">R$ 480,00 <span style="font-size: 11px; color: var(--text-muted);">(11,6%)</span></span>
+              </div>
+              <div class="cost-bar-bg">
+                <div class="cost-bar-fill" style="width: 11.6%; background: #f59e0b;"></div>
+              </div>
+            </div>
+
+            <!-- Insumo: Sementes -->
+            <div class="cost-item">
+              <div class="cost-item-top">
+                <span class="cost-item-name">Sementes Certificadas (Tratamento Industrial)</span>
+                <span class="cost-item-val">R$ 420,00 <span style="font-size: 11px; color: var(--text-muted);">(10,2%)</span></span>
+              </div>
+              <div class="cost-bar-bg">
+                <div class="cost-bar-fill" style="width: 10.2%; background: #a855f7;"></div>
+              </div>
+            </div>
+
+            <!-- Máquinas: Manutenção -->
+            <div class="cost-item">
+              <div class="cost-item-top">
+                <span class="cost-item-name">Manutenção Mecânica & Peças (OS)</span>
+                <span class="cost-item-val">R$ 390,00 <span style="font-size: 11px; color: var(--text-muted);">(9,4%)</span></span>
+              </div>
+              <div class="cost-bar-bg">
+                <div class="cost-bar-fill" style="width: 9.4%; background: #06b6d4;"></div>
+              </div>
+            </div>
+
+            <!-- Fixos: Mão de Obra -->
+            <div class="cost-item">
+              <div class="cost-item-top">
+                <span class="cost-item-name">Mão de Obra, Energia & Encargos</span>
+                <span class="cost-item-val">R$ 525,00 <span style="font-size: 11px; color: var(--text-muted);">(12,7%)</span></span>
+              </div>
+              <div class="cost-bar-bg">
+                <div class="cost-bar-fill" style="width: 12.7%; background: #71717a;"></div>
+              </div>
+            </div>
+
+            <!-- Resumo Totalizador -->
+            <div class="cost-total-summary">
+              <div>
+                <div class="cost-total-label">Custo Operacional Total (COT)</div>
+                <div style="font-size: 11px; color: var(--text-muted);">Investimento consolidado por hectare</div>
+              </div>
+              <div class="cost-total-val" style="color: var(--accent-text);">
+                R$ 4.135,00 <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">/ ha</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: SIMULAR CONTRATO DE HEDGE / BARTER                    -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="hedgeModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Simular Novo Contrato de Hedge / Comercialização</div>
+      <button class="modal-close" onclick="closeHedgeModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form onsubmit="handleCreateHedge(event)">
+      <div class="modal-body">
+        
+        <!-- Comprador / Trading -->
+        <div class="form-group">
+          <label class="form-label">Comprador / Trading Destino</label>
+          <div class="custom-select-wrapper">
+            <div class="custom-select-trigger" onclick="toggleCustomSelect('tradingMenu')">
+              <span id="selectedTradingText">Cargill Agrícola (Sorriso / MT)</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </div>
+            <div class="custom-options-menu" id="tradingMenu">
+              <div class="custom-opt selected" onclick="pickOption('selectedTradingText', 'Cargill Agrícola (Sorriso / MT)', 'tradingMenu')">Cargill Agrícola (Sorriso / MT)</div>
+              <div class="custom-opt" onclick="pickOption('selectedTradingText', 'Bunge Brasil (CIF Paranaguá)', 'tradingMenu')">Bunge Brasil (CIF Paranaguá)</div>
+              <div class="custom-opt" onclick="pickOption('selectedTradingText', 'Amaggi Exportação (Miritituba)', 'tradingMenu')">Amaggi Exportação (Miritituba)</div>
+              <div class="custom-opt" onclick="pickOption('selectedTradingText', 'ADM do Brasil (Santos FOB)', 'tradingMenu')">ADM do Brasil (Santos FOB)</div>
+              <div class="custom-opt" onclick="pickOption('selectedTradingText', 'Louis Dreyfus Commodities (LDC)', 'tradingMenu')">Louis Dreyfus Commodities (LDC)</div>
+              <div class="custom-opt" onclick="pickOption('selectedTradingText', 'Mercado Spot Local (Venda Física)', 'tradingMenu')">Mercado Spot Local (Venda Física)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- Volume em Sacas -->
+          <div class="form-group">
+            <label class="form-label">Volume Negociado (sacas 60kg)</label>
+            <div class="stepper-wrap">
+              <input type="number" step="1000" class="form-input" id="inputHedgeVolume" value="15000" required />
+              <div class="stepper-btns">
+                <button type="button" class="stepper-btn" onclick="stepVal('inputHedgeVolume', 1000)" title="Aumentar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" /></svg>
+                </button>
+                <button type="button" class="stepper-btn" onclick="stepVal('inputHedgeVolume', -1000)" title="Diminuir">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preço Negociado R$/sc -->
+          <div class="form-group">
+            <label class="form-label">Preço Fechado (R$ / saca)</label>
+            <div class="stepper-wrap">
+              <input type="number" step="0.50" class="form-input" id="inputHedgePrice" value="141.80" required />
+              <div class="stepper-btns">
+                <button type="button" class="stepper-btn" onclick="stepVal('inputHedgePrice', 0.50, 2)" title="Aumentar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" /></svg>
+                </button>
+                <button type="button" class="stepper-btn" onclick="stepVal('inputHedgePrice', -0.50, 2)" title="Diminuir">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- Modalidade -->
+          <div class="form-group">
+            <label class="form-label">Modalidade de Operação</label>
+            <div class="custom-select-wrapper">
+              <div class="custom-select-trigger" onclick="toggleCustomSelect('modalityMenu')">
+                <span id="selectedModalityText">Venda Física a Termo (Preço Fixo)</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 14px; height: 14px;"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+              </div>
+              <div class="custom-options-menu" id="modalityMenu">
+                <div class="custom-opt selected" onclick="pickOption('selectedModalityText', 'Venda Física a Termo (Preço Fixo)', 'modalityMenu')">Venda Física a Termo (Preço Fixo)</div>
+                <div class="custom-opt" onclick="pickOption('selectedModalityText', 'Barter Insumo (Troca Adubo/Químico)', 'modalityMenu')">Barter Insumo (Troca Adubo/Químico)</div>
+                <div class="custom-opt" onclick="pickOption('selectedModalityText', 'Hedge Futuro B3 (Trava Financeira)', 'modalityMenu')">Hedge Futuro B3 (Trava Financeira)</div>
+                <div class="custom-opt" onclick="pickOption('selectedModalityText', 'Opção de Venda (Put B3 / CBOT)', 'modalityMenu')">Opção de Venda (Put B3 / CBOT)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data de Vencimento -->
+          <div class="form-group">
+            <label class="form-label">Data Limite de Liquidação / Entrega</label>
+            <input type="text" class="form-input" id="inputHedgeDate" value="30/04/2025" required />
+          </div>
+        </div>
+
+        <!-- Card de Simulação Financeira -->
+        <div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Receita Bruta do Contrato</div>
+            <div style="font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--accent-text);" id="modalTotalRevenue">R$ 2.127.000,00</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Margem Líquida Estimada</div>
+            <div style="font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--text-primary);">+48,5%</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeHedgeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Registrar Contrato de Hedge</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: DETALHAMENTO DE BREAKEVEN POR TALHÃO                  -->
+<!-- ============================================================ -->
+<div class="modal-overlay" id="talhaoModal">
+  <div class="modal-card" style="max-width: 800px;">
+    <div class="modal-header">
+      <div class="modal-title">Ponto de Equilíbrio (Breakeven) por Talhão</div>
+      <button class="modal-close" onclick="closeTalhaoBreakevenModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p style="font-size: 12px; color: var(--text-secondary);">Análise de viabilidade por unidade geográfica de manejo. Considera a produtividade histórica e os investimentos específicos de cada pivô/sequeiro.</p>
+
+      <div class="matrix-table-wrap" style="overflow-x: auto;">
+        <table class="contracts-table" style="width: 100%;">
+          <thead>
+            <tr>
+              <th style="white-space: nowrap;">Talhão</th>
+              <th style="white-space: nowrap;">Área</th>
+              <th style="white-space: nowrap;">COT / ha</th>
+              <th style="white-space: nowrap;">Breakeven</th>
+              <th style="white-space: nowrap;">Produtividade Est.</th>
+              <th style="white-space: nowrap; text-align: right;">Margem Líquida / ha</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="white-space: nowrap;"><span class="contract-code-tag">Talhão 01</span></td>
+              <td style="white-space: nowrap;">120 ha</td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono);">R$ 4.050,00</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--warning); font-weight: 700;">29,3 sc/ha</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">72 sc/ha</span></td>
+              <td style="white-space: nowrap; text-align: right;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">+R$ 5.886,00</span></td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap;"><span class="contract-code-tag">Talhão 02</span></td>
+              <td style="white-space: nowrap;">140 ha (Pivô)</td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono);">R$ 4.380,00</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--warning); font-weight: 700;">31,7 sc/ha</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">78 sc/ha</span></td>
+              <td style="white-space: nowrap; text-align: right;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">+R$ 6.384,00</span></td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap;"><span class="contract-code-tag">Talhão 03</span></td>
+              <td style="white-space: nowrap;">95 ha</td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono);">R$ 3.980,00</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--warning); font-weight: 700;">28,8 sc/ha</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">65 sc/ha</span></td>
+              <td style="white-space: nowrap; text-align: right;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">+R$ 4.990,00</span></td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap;"><span class="contract-code-tag">Talhão 04</span></td>
+              <td style="white-space: nowrap;">160 ha</td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono);">R$ 4.220,00</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--warning); font-weight: 700;">30,5 sc/ha</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">68 sc/ha</span></td>
+              <td style="white-space: nowrap; text-align: right;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">+R$ 5.164,00</span></td>
+            </tr>
+            <tr>
+              <td style="white-space: nowrap;"><span class="contract-code-tag">Talhão 05</span></td>
+              <td style="white-space: nowrap;">110 ha</td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono);">R$ 4.100,00</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--warning); font-weight: 700;">29,7 sc/ha</span></td>
+              <td style="white-space: nowrap;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">67 sc/ha</span></td>
+              <td style="white-space: nowrap; text-align: right;"><span style="font-family: var(--font-mono); color: var(--accent-text); font-weight: 700;">+R$ 5.146,00</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" onclick="closeTalhaoBreakevenModal()">Fechar Detalhamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Container de Toasts -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT: SIMULADOR DE SENSIBILIDADE & MODAIS              -->
+<!-- ============================================================ -->
+<script>
+  // Cálculo e Atualização Dinâmica da Simulação
+  function updateSimulation(source) {
+    let yieldVal = parseFloat(document.getElementById('inputYield').value) || 68;
+    let priceVal = parseFloat(document.getElementById('inputPrice').value) || 138;
+    let costVal = parseFloat(document.getElementById('inputCost').value) || 4135;
+    let usdVal = parseFloat(document.getElementById('inputUsd').value) || 5.75;
+
+    // Se o usuário mexeu no slider do Dólar:
+    // Vincula diretamente à Paridade de Exportação (CBOT FOB base US$ 24,00/sc):
+    // Preço (R$/sc) = Dólar (R$/US$) × US$ 24,00/sc
+    if (source === 'usd') {
+      priceVal = Math.round(usdVal * 24.0);
+      priceVal = Math.max(110, Math.min(170, priceVal));
+      document.getElementById('inputPrice').value = priceVal;
+    } else if (source === 'price') {
+      // Se alterou o Preço diretamente, recalcula o câmbio implícito
+      usdVal = +(priceVal / 24.0).toFixed(2);
+      if (usdVal >= 4.80 && usdVal <= 6.50) {
+        document.getElementById('inputUsd').value = usdVal;
+      }
+    }
+
+    // Atualiza badges dos sliders
+    document.getElementById('dispYield').innerText = yieldVal + ' sc/ha';
+    document.getElementById('dispPrice').innerText = 'R$ ' + priceVal.toFixed(2).replace('.', ',') + ' / sc';
+    document.getElementById('dispCost').innerText = 'R$ ' + costVal.toLocaleString('pt-BR') + ',00 / ha';
+    document.getElementById('dispUsd').innerText = 'R$ ' + usdVal.toFixed(2).replace('.', ',');
+
+    // Badge explicativo de Paridade CBOT
+    const cbotHint = document.getElementById('cbotParityHint');
+    if (cbotHint) {
+      cbotHint.innerText = `Paridade CBOT: US$ 24,00 × ${usdVal.toFixed(2).replace('.', ',')} = R$ ${priceVal},00`;
+    }
+
+    // Cálculos econômicos
+    const grossPerHa = yieldVal * priceVal;
+    const netPerHa = grossPerHa - costVal;
+    const marginPct = (netPerHa / grossPerHa) * 100;
+    const beYield = costVal / priceVal;
+    const bePrice = costVal / yieldVal;
+
+    // Atualiza card de resultados
+    document.getElementById('dispGrossPerHa').innerText = 'R$ ' + grossPerHa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    document.getElementById('dispCostPerHa').innerText = 'R$ ' + costVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    const netEl = document.getElementById('dispNetPerHa');
+    netEl.innerText = (netPerHa >= 0 ? '+R$ ' : '-R$ ') + Math.abs(netPerHa).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    netEl.style.color = netPerHa >= 0 ? 'var(--accent-text)' : 'var(--danger)';
+
+    const marginEl = document.getElementById('dispMarginPct');
+    marginEl.innerText = marginPct.toFixed(1).replace('.', ',') + '%';
+    marginEl.style.color = marginPct >= 30 ? 'var(--accent-text)' : (marginPct >= 0 ? 'var(--warning)' : 'var(--danger)');
+
+    const tagEl = document.getElementById('dispScenarioTag');
+    if (netPerHa >= 3500) {
+      tagEl.innerText = 'ALTAMENTE VIÁVEL';
+      tagEl.className = 'kpi-tag good';
+    } else if (netPerHa >= 1500) {
+      tagEl.innerText = 'MODERADO';
+      tagEl.className = 'kpi-tag info';
+    } else if (netPerHa >= 0) {
+      tagEl.innerText = 'BREAKEVEN JUSTO';
+      tagEl.className = 'kpi-tag warn';
+    } else {
+      tagEl.innerText = 'CENÁRIO DEFICITÁRIO';
+      tagEl.className = 'kpi-tag danger';
+    }
+
+    document.getElementById('dispBreakeven').innerText = `${beYield.toFixed(1).replace('.', ',')} sc/ha (R$ ${bePrice.toFixed(2).replace('.', ',')}/sc)`;
+
+    // Recalcula matriz cruzada dinamicamente (atualiza valores pelo COT e posiciona o destaque ★)
+    recalculateMatrix(costVal, yieldVal, priceVal);
+  }
+
+  // Recálculo dinâmico das células da Matriz
+  function recalculateMatrix(cost, curYield, curPrice) {
+    const table = document.getElementById('sensitivityMatrix');
+    const rows = table.querySelectorAll('tbody tr');
+    let closestCell = null;
+    let minDistance = Infinity;
+
+    rows.forEach(row => {
+      const y = parseFloat(row.getAttribute('data-yield'));
+      const cells = row.querySelectorAll('.matrix-cell');
+
+      cells.forEach(cell => {
+        const p = parseFloat(cell.getAttribute('data-price'));
+        const net = (y * p) - cost;
+        cell.innerText = (net >= 0 ? 'R$ ' : '-R$ ') + Math.abs(Math.round(net)).toLocaleString('pt-BR');
+
+        // Color coding termográfico
+        cell.className = 'matrix-cell';
+        if (net >= 4000) cell.classList.add('cell-super');
+        else if (net >= 2500) cell.classList.add('cell-high');
+        else if (net >= 1000) cell.classList.add('cell-mid');
+        else if (net >= 0) cell.classList.add('cell-low');
+        else cell.classList.add('cell-neg');
+
+        // Distância até o ponto ativo
+        const dist = Math.abs(y - curYield) + (Math.abs(p - curPrice) / 3);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestCell = cell;
+        }
+      });
+    });
+
+    if (closestCell) {
+      closestCell.classList.add('cell-current-active');
+      closestCell.innerText += ' ★';
+    }
+  }
+
+  function resetSimulationParams() {
+    document.getElementById('inputYield').value = 68;
+    document.getElementById('inputPrice').value = 138;
+    document.getElementById('inputCost').value = 4135;
+    document.getElementById('inputUsd').value = 5.75;
+    updateSimulation();
+    showToast('Parâmetros da simulação restaurados para a safra base.');
+  }
+
+  // Custom Stepper Value Helper
+  function stepVal(id, step, decimals = 0) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = parseFloat(el.value) || 0;
+    const next = Math.max(0, cur + step);
+    el.value = decimals > 0 ? next.toFixed(decimals) : next;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+
+    // Atualiza receita no modal se for os campos de hedge
+    if (id === 'inputHedgeVolume' || id === 'inputHedgePrice') {
+      updateModalRevenue();
+    }
+  }
+
+  function updateModalRevenue() {
+    const vol = parseFloat(document.getElementById('inputHedgeVolume').value) || 0;
+    const prc = parseFloat(document.getElementById('inputHedgePrice').value) || 0;
+    const total = vol * prc;
+    document.getElementById('modalTotalRevenue').innerText = 'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Custom Select Toggle
+  function toggleCustomSelect(menuId) {
+    const menu = document.getElementById(menuId);
+    const isOpen = menu.classList.contains('open');
+    closeAllSelectMenus();
+    if (!isOpen) menu.classList.add('open');
+  }
+
+  function pickOption(textElementId, value, menuId) {
+    document.getElementById(textElementId).innerText = value;
+    const menu = document.getElementById(menuId);
+    menu.querySelectorAll('.custom-opt').forEach(opt => {
+      if (opt.innerText === value) opt.classList.add('selected');
+      else opt.classList.remove('selected');
+    });
+    menu.classList.remove('open');
+  }
+
+  function closeAllSelectMenus() {
+    document.querySelectorAll('.custom-options-menu').forEach(m => m.classList.remove('open'));
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-select-wrapper')) {
+      closeAllSelectMenus();
+    }
+  });
+
+  // Modais
+  function openHedgeModal() {
+    document.getElementById('hedgeModal').classList.add('open');
+    updateModalRevenue();
+  }
+  function closeHedgeModal() {
+    document.getElementById('hedgeModal').classList.remove('open');
+  }
+
+  function openHedgeModalWithParams(trading, vol, price) {
+    document.getElementById('selectedTradingText').innerText = trading;
+    document.getElementById('inputHedgeVolume').value = vol;
+    document.getElementById('inputHedgePrice').value = price.toFixed(2);
+    openHedgeModal();
+  }
+
+  function openTalhaoBreakevenModal() {
+    document.getElementById('talhaoModal').classList.add('open');
+  }
+  function closeTalhaoBreakevenModal() {
+    document.getElementById('talhaoModal').classList.remove('open');
+  }
+
+  function handleCreateHedge(e) {
+    e.preventDefault();
+    const trading = document.getElementById('selectedTradingText').innerText;
+    const vol = document.getElementById('inputHedgeVolume').value;
+    const prc = document.getElementById('inputHedgePrice').value;
+    closeHedgeModal();
+    showToast(`Contrato de Hedge registrado com sucesso: ${trading} • ${Number(vol).toLocaleString('pt-BR')} sc @ R$ ${prc}/sc`);
+  }
+
+  function exportDRE() {
+    showToast('Gerando Demonstração de Resultado do Exercício (DRE 2024/25) em PDF/XLS...');
+  }
+
+  function showToast(msg) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px; color: var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+      <span>${msg}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      toast.style.transition = 'opacity 200ms ease, transform 200ms ease';
+      setTimeout(() => toast.remove(), 200);
+    }, 3500);
+  }
+
+  // Teclado ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeHedgeModal();
+      closeTalhaoBreakevenModal();
+      closeAllSelectMenus();
+    }
+  });
+
+  // Inicialização
+  updateSimulation();
+</script>
+
+</body>
+</html>

@@ -35,3 +35,10 @@ shell:
 
 clean:
 	docker compose down -v --remove-orphans
+
+frontend-dev:
+	cd frontend && npm run dev
+
+frontend-build:
+	cd frontend && npm run build
+

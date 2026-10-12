@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seed — Acesso à Plataforma Agro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Tokens Oficiais Seed (Padrão Dark Zinc / Emerald) ─────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #09090b;
+      --bg-elevated: #18181b;
+      --bg-surface: #1c1c21;
+      --bg-hover: #27272a;
+      --border: #27272a;
+      --border-subtle: #1f1f23;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent: #10b981;
+      --accent-muted: rgba(16, 185, 129, 0.12);
+      --accent-text: #34d399;
+      --warning: #f59e0b;
+      --warning-muted: rgba(245, 158, 11, 0.12);
+      --danger: #ef4444;
+      --danger-muted: rgba(239, 68, 68, 0.12);
+      --info: #3b82f6;
+      --info-muted: rgba(59, 130, 246, 0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Layout Split Elegante ─────────────────────────── */
+    .auth-container {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      min-height: 100dvh;
+    }
+
+    /* ── Lado Esquerdo: Brand Showcase Minimalista (Sem glow/luzes) ─ */
+    .auth-brand-side {
+      background: #09090b;
+      border-right: 1px solid var(--border);
+      padding: 56px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .brand-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #000;
+      flex-shrink: 0;
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-tag {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-hero {
+      max-width: 520px;
+      margin: auto 0;
+    }
+    .hero-heading {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+    .hero-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    /* Cards de Destaque Técnico Agro */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .feature-item {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      transition: border-color 160ms ease;
+    }
+    .feature-item:hover {
+      border-color: #3f3f46;
+    }
+    .feature-item-num {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent-text);
+      margin-bottom: 4px;
+    }
+    .feature-item-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ── Lado Direito: Formulário de Autenticação ─────────────── */
+    .auth-form-side {
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 32px;
+    }
+    .form-wrapper {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .form-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+    .form-subtitle {
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+
+    /* Tabs de Alternância (Entrar / Registro) */
+    .auth-tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+    }
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 7px 12px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: all 160ms var(--ease-out);
+    }
+    .auth-tab.active {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Formulário e Campos */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .form-label a {
+      color: var(--accent-text);
+      text-decoration: none;
+      font-size: 11.5px;
+      text-transform: none;
+      font-weight: 500;
+    }
+    .form-label a:hover { opacity: 0.8; }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .form-input {
+      width: 100%;
+      height: 40px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0 12px;
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      transition: border-color 160ms ease;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+    }
+    .form-input::placeholder {
+      color: #52525b;
+    }
+
+    /* ── Dropdown Customizado de Fazenda (Adequado ao Design System) ── */
+    .custom-select-container {
+      position: relative;
+      width: 100%;
+    }
+    .custom-select-trigger {
+      width: 100%;
+      min-height: 44px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+    .custom-select-trigger:hover {
+      border-color: #3f3f46;
+      background: #1f1f24;
+    }
+    .custom-select-trigger.open {
+      border-color: var(--accent);
+    }
+
+    .trigger-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .trigger-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--accent-muted);
+      color: var(--accent);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .trigger-icon svg { width: 15px; height: 15px; }
+
+    .trigger-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      text-align: left;
+      min-width: 0;
+    }
+    .trigger-title {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .trigger-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .trigger-chevron {
+      color: var(--text-muted);
+      transition: transform 200ms var(--ease-out);
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .custom-select-trigger.open .trigger-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Menu Flutuante do Dropdown */
+    .custom-select-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #151518;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04);
+      animation: menu-in 140ms var(--ease-out);
+    }
+    .custom-select-menu.open {
+      display: flex;
+    }
+    @keyframes menu-in {
+      from { opacity: 0; transform: translateY(-4px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .custom-select-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 120ms ease;
+    }
+    .custom-select-option:hover {
+      background: var(--bg-hover);
+    }
+    .custom-select-option.selected {
+      background: var(--accent-muted);
+    }
+
+    .option-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left;
+    }
+    .option-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .custom-select-option.selected .option-name {
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+    .option-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .option-check {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+      opacity: 0;
+      flex-shrink: 0;
+    }
+    .custom-select-option.selected .option-check {
+      opacity: 1;
+    }
+
+    /* Botão Principal */
+    .btn-submit {
+      width: 100%;
+      height: 42px;
+      background: var(--accent);
+      color: #000;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 160ms ease, transform 120ms var(--ease-out);
+      margin-top: 8px;
+    }
+    .btn-submit:hover { background: #0ea574; }
+    .btn-submit:active { transform: scale(0.98); }
+
+    /* Indicador de Segurança */
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-top: 12px;
+    }
+    .security-badge svg { width: 13px; height: 13px; color: var(--text-secondary); }
+
+    /* Responsividade Mobile */
+    @media (max-width: 900px) {
+      .auth-container { grid-template-columns: 1fr; }
+      .auth-brand-side { display: none; }
+      .auth-form-side { padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-container">
+  
+  <!-- ============================================================ -->
+  <!-- LADO ESQUERDO: SHOWCASE LIMPO & DIRETO (SEM GLOW / SEM TEXTO EXTRA) -->
+  <!-- ============================================================ -->
+  <aside class="auth-brand-side">
+    <div class="brand-top">
+      <div class="brand-logo-mark">S</div>
+      <div>
+        <div class="brand-title">Seed</div>
+        <div class="brand-tag">Agro Intelligence</div>
+      </div>
+    </div>
+
+    <div class="brand-hero">
+      <h1 class="hero-heading">Inteligência Operacional e Sustentabilidade para o Agronegócio.</h1>
+      <p class="hero-desc">
+        Rastreabilidade total de insumos, vigilância fitossanitária com previsão climática em tempo real e cálculo automatizado para acesso ao Crédito Rural Verde.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-item-num">1.850 ha</div>
+          <div class="feature-item-label">Monitoramento GIS ativo</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-item-num">0.88 Max</div>
+          <div class="feature-item-label">Alerta preditivo de pragas</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-item-num">68.3%</div>
+          <div class="feature-item-label">Matriz renovável auditada</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-item-num">-1.5% a.a.</div>
+          <div class="feature-item-label">Bônus taxa Crédito Verde</div>
+        </div>
+      </div>
+    </div>
+
+    <div></div>
+  </aside>
+
+  <!-- ============================================================ -->
+  <!-- LADO DIREITO: FORMULÁRIO COM DROPDOWN CUSTOMIZADO NOBRE      -->
+  <!-- ============================================================ -->
+  <main class="auth-form-side">
+    <div class="form-wrapper">
+      
+      <div class="form-header">
+        <h2 class="form-title">Acessar Propriedade</h2>
+        <p class="form-subtitle">Informe suas credenciais para entrar no hub de gestão</p>
+      </div>
+
+      <!-- Alternador de Modos -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="setMode('login')">Entrar</button>
+        <button class="auth-tab" id="tabRegister" onclick="setMode('register')">Cadastrar Fazenda</button>
+      </div>
+
+      <!-- Formulário -->
+      <form onsubmit="handleAuth(event)" style="display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- Campo: Seleção Customizada de Fazenda (Tenant) -->
+        <div class="form-group" id="groupTenant">
+          <label class="form-label">
+            <span>Propriedade Rural (Tenant)</span>
+          </label>
+          
+          <div class="custom-select-container">
+            <!-- Gatilho do Dropdown -->
+            <div class="custom-select-trigger" id="tenantTrigger" onclick="toggleTenantDropdown()">
+              <div class="trigger-content">
+                <div class="trigger-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                  </svg>
+                </div>
+                <div class="trigger-info">
+                  <span class="trigger-title" id="selectedTitle">Fazenda Santa Maria</span>
+                  <span class="trigger-meta" id="selectedMeta">Sorriso, MT • 1.850 ha</span>
+                </div>
+              </div>
+              <svg class="trigger-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+
+            <!-- Lista de Opções Customizada -->
+            <div class="custom-select-menu" id="tenantMenu">
+              <div class="custom-select-option selected" onclick="selectTenantOption('Fazenda Santa Maria', 'Sorriso, MT • 1.850 ha', this)">
+                <div class="option-details">
+                  <span class="option-name">Fazenda Santa Maria</span>
+                  <span class="option-meta">Sorriso, MT • 1.850 ha</span>
+                </div>
+                <svg class="option-check" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              </div>
+
+              <div class="custom-select-option" onclick="selectTenantOption('Fazenda Santa Clara', 'Ribeirão Preto, SP • 1.240 ha', this)">
+                <div class="option-details">
+                  <span class="option-name">Fazenda Santa Clara</span>
+                  <span class="option-meta">Ribeirão Preto, SP • 1.240 ha</span>
+                </div>
+                <svg class="option-check" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              </div>
+
+              <div class="custom-select-option" onclick="selectTenantOption('Estância Vista Alegre', 'Rio Verde, GO • 920 ha', this)">
+                <div class="option-details">
+                  <span class="option-name">Estância Vista Alegre</span>
+                  <span class="option-meta">Rio Verde, GO • 920 ha</span>
+                </div>
+                <svg class="option-check" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campo Extra no Cadastro: Nome da Propriedade & CAR -->
+        <div class="form-group" id="groupNewFarm" style="display: none;">
+          <label class="form-label">
+            <span>Nome da Nova Fazenda</span>
+          </label>
+          <div class="input-wrapper">
+            <input type="text" class="form-input" placeholder="Ex: Fazenda Bela Vista" />
+          </div>
+        </div>
+
+        <!-- Campo: E-mail -->
+        <div class="form-group">
+          <label class="form-label">
+            <span>E-mail Corporativo</span>
+          </label>
+          <div class="input-wrapper">
+            <input type="email" class="form-input" id="inputEmail" placeholder="agronomo@fazenda.com.br" required value="rafael.costa@santaclara.agro.br" />
+          </div>
+        </div>
+
+        <!-- Campo: Senha -->
+        <div class="form-group">
+          <label class="form-label">
+            <span>Senha de Acesso</span>
+            <a href="#" tabindex="-1">Esqueceu?</a>
+          </label>
+          <div class="input-wrapper">
+            <input type="password" class="form-input" id="inputPassword" placeholder="••••••••••••" required value="••••••••••••" />
+          </div>
+        </div>
+
+        <!-- Botão de Login / Cadastro -->
+        <button type="submit" class="btn-submit" id="btnSubmit">
+          <span id="btnText">Entrar no Sistema</span>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 15px; height: 15px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </button>
+
+      </form>
+
+      <!-- Badge de Segurança -->
+      <div class="security-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+        </svg>
+        <span>Isolamento Seguro por Tenant via RBAC & JWT</span>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  let mode = 'login';
+
+  // Toggle do Dropdown Customizado de Fazenda
+  function toggleTenantDropdown() {
+    const trigger = document.getElementById('tenantTrigger');
+    const menu = document.getElementById('tenantMenu');
+    const isOpen = menu.classList.contains('open');
+
+    if (isOpen) {
+      menu.classList.remove('open');
+      trigger.classList.remove('open');
+    } else {
+      menu.classList.add('open');
+      trigger.classList.add('open');
+    }
+  }
+
+  // Seleção de uma opção do dropdown
+  function selectTenantOption(name, meta, optionEl) {
+    document.getElementById('selectedTitle').innerText = name;
+    document.getElementById('selectedMeta').innerText = meta;
+
+    document.querySelectorAll('.custom-select-option').forEach(el => el.classList.remove('selected'));
+    optionEl.classList.add('selected');
+
+    // Fechar menu
+    document.getElementById('tenantMenu').classList.remove('open');
+    document.getElementById('tenantTrigger').classList.remove('open');
+  }
+
+  // Fechar dropdown ao clicar fora
+  document.addEventListener('click', function(e) {
+    const container = document.querySelector('.custom-select-container');
+    if (container && !container.contains(e.target)) {
+      document.getElementById('tenantMenu').classList.remove('open');
+      document.getElementById('tenantTrigger').classList.remove('open');
+    }
+  });
+
+  // Alternador de Modos (Entrar / Cadastrar)
+  function setMode(newMode) {
+    mode = newMode;
+    const tabLogin = document.getElementById('tabLogin');
+    const tabRegister = document.getElementById('tabRegister');
+    const groupTenant = document.getElementById('groupTenant');
+    const groupNewFarm = document.getElementById('groupNewFarm');
+    const btnText = document.getElementById('btnText');
+
+    if (mode === 'login') {
+      tabLogin.classList.add('active');
+      tabRegister.classList.remove('active');
+      groupTenant.style.display = 'flex';
+      groupNewFarm.style.display = 'none';
+      btnText.innerText = 'Entrar no Sistema';
+    } else {
+      tabRegister.classList.add('active');
+      tabLogin.classList.remove('active');
+      groupTenant.style.display = 'none';
+      groupNewFarm.style.display = 'flex';
+      btnText.innerText = 'Cadastrar e Criar Tenant';
+    }
+  }
+
+  function handleAuth(event) {
+    event.preventDefault();
+    const btn = document.getElementById('btnSubmit');
+    btn.style.opacity = '0.7';
+    btn.innerText = 'Autenticando...';
+    setTimeout(() => {
+      window.location.href = 'tela-01-dashboard.html';
+    }, 450);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seed — Insumos, Lotes & Estoque Agrícola</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Tokens Oficiais Seed (Padrão Dark Zinc / Emerald) ─────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #09090b;
+      --bg-elevated: #18181b;
+      --bg-surface: #1c1c21;
+      --bg-hover: #27272a;
+      --border: #27272a;
+      --border-subtle: #1f1f23;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --accent: #10b981;
+      --accent-muted: rgba(16, 185, 129, 0.12);
+      --accent-text: #34d399;
+      --warning: #f59e0b;
+      --warning-muted: rgba(245, 158, 11, 0.12);
+      --danger: #ef4444;
+      --danger-muted: rgba(239, 68, 68, 0.12);
+      --info: #3b82f6;
+      --info-muted: rgba(59, 130, 246, 0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html { font-size: 15px; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100dvh;
+    }
+
+    /* ── Scrollbar ───────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Layout Shell ────────────────────────────────── */
+    .shell { display: flex; min-height: 100dvh; }
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    .sidebar {
+      width: 260px;
+      border-right: 1px solid var(--border);
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 30;
+      transition: transform 300ms var(--ease-out);
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-brand .logo-mark {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 14px;
+      color: #000;
+    }
+    .sidebar-brand .brand-text { display: flex; flex-direction: column; gap: 1px; }
+    .sidebar-brand .brand-name { font-weight: 700; font-size: 15px; letter-spacing: -0.02em; }
+    .sidebar-brand .brand-sub { font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+    .nav-group { margin-bottom: 24px; }
+    .nav-group-label {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      padding: 0 10px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, transform 160ms var(--ease-out);
+      user-select: none;
+      text-decoration: none;
+    }
+    .nav-item:active { transform: scale(0.97); }
+    .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .nav-item.active {
+      background: var(--accent-muted);
+      color: var(--accent-text);
+      font-weight: 500;
+    }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+    .nav-item.active svg { opacity: 1; }
+    .nav-badge {
+      margin-left: auto;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      padding: 1px 7px;
+      border-radius: 100px;
+      background: var(--danger-muted);
+      color: var(--danger);
+    }
+    .nav-badge.warn { background: var(--warning-muted); color: var(--warning); }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-footer .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--bg-hover);
+      display: grid; place-items: center;
+      font-size: 12px; font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .sidebar-footer .user-info { flex: 1; min-width: 0; }
+    .sidebar-footer .user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-footer .user-role { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Main Content Shell ──────────────────────────── */
+    .main-content {
+      flex: 1;
+      margin-left: 260px;
+      width: calc(100% - 260px);
+      min-width: 0;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Topbar ──────────────────────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(12px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .topbar-breadcrumb { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .topbar-breadcrumb .sep { color: var(--border); }
+    .topbar-breadcrumb a { color: var(--text-muted); text-decoration: none; }
+    .topbar-breadcrumb a:hover { color: var(--text-secondary); }
+
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    
+    /* Ticker Simbólico Soja / Milho / Diesel CEPEA */
+    .ticker-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 12px;
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+    }
+    .ticker-item { display: flex; align-items: center; gap: 6px; }
+    .ticker-item .sym { color: var(--text-muted); }
+    .ticker-item .val { color: var(--text-primary); font-weight: 500; }
+    .ticker-item .up { color: var(--accent-text); }
+    .ticker-item .down { color: #f87171; }
+
+    .sync-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--accent-text);
+      padding: 4px 10px;
+      background: var(--accent-muted);
+      border-radius: 100px;
+    }
+    .sync-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* ── Page Layout ─────────────────────────────────── */
+    .page {
+      padding: 24px 32px 40px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* ── Page Header ─────────────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .page-heading { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+    .page-subheading { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+
+    /* Botões Padrão Seed */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease, transform 120ms ease;
+      user-select: none;
+      text-decoration: none;
+      border: 1px solid transparent;
+      outline: none;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+    .btn-primary:hover { background: #059669; color: #fff; }
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { background: var(--bg-hover); border-color: #3f3f46; }
+    .btn-outline {
+      background: transparent;
+      color: var(--text-secondary);
+      border-color: var(--border);
+    }
+    .btn-outline:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .btn svg { width: 16px; height: 16px; }
+
+    /* ── 4 Master KPI Cards Agronômicos ──────────────── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .kpi-cell {
+      padding: 18px 22px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: background 160ms ease;
+    }
+    .kpi-cell:last-child { border-right: none; }
+    .kpi-cell:hover { background: rgba(255, 255, 255, 0.015); }
+    .kpi-cell-label {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+    .kpi-cell-val {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: baseline;
+    }
+    .kpi-cell-val .cents {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-left: 0;
+    }
+    .kpi-cell-val .unit-text {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+    .kpi-cell-val .unit { font-size: 13px; font-weight: 400; color: var(--text-muted); margin-left: 2px; }
+    .kpi-cell-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kpi-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .kpi-tag.good { background: var(--accent-muted); color: var(--accent-text); }
+    .kpi-tag.warn { background: var(--warning-muted); color: var(--warning); }
+    .kpi-tag.danger { background: var(--danger-muted); color: var(--danger); }
+
+    /* ── Banner de Alerta Crítico de Estoque & Fitossanitário ─ */
+    .alert-banner {
+      background: rgba(245, 158, 11, 0.05);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .alert-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .alert-icon-wrap {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .alert-icon-wrap svg { width: 18px; height: 18px; }
+    .alert-text-group { display: flex; flex-direction: column; gap: 2px; }
+    .alert-headline { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .alert-subline { font-size: 12px; color: var(--text-secondary); }
+    .alert-subline strong { color: #fcd34d; font-weight: 500; }
+    .alert-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    /* ── Visual dos Depósitos Físicos & Tanques (Galpões) ─ */
+    .warehouses-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: -6px;
+    }
+    .warehouses-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    .warehouse-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+    .warehouse-card:hover {
+      border-color: #3f3f46;
+      transform: translateY(-1px);
+    }
+    .wh-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .wh-icon-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      color: var(--text-secondary);
+    }
+    .wh-icon-box.emerald { color: var(--accent); background: var(--accent-muted); border-color: rgba(16, 185, 129, 0.3); }
+    .wh-icon-box.amber { color: var(--warning); background: var(--warning-muted); border-color: rgba(245, 158, 11, 0.3); }
+    .wh-icon-box.blue { color: var(--info); background: var(--info-muted); border-color: rgba(59, 130, 246, 0.3); }
+    .wh-icon-box.cyan { color: #06b6d4; background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.3); }
+    .wh-icon-box svg { width: 17px; height: 17px; }
+
+    .wh-status-badge {
+      font-size: 10.5px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .wh-status-badge.ok { color: var(--accent-text); background: var(--accent-muted); border-color: rgba(16, 185, 129, 0.25); }
+    .wh-status-badge.high { color: var(--warning); background: var(--warning-muted); border-color: rgba(245, 158, 11, 0.25); }
+
+    .wh-info { display: flex; flex-direction: column; gap: 2px; }
+    .wh-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+    .wh-type { font-size: 11.5px; color: var(--text-muted); }
+
+    .wh-gauge-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: auto;
+    }
+    .wh-gauge-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+    .wh-progress-bg {
+      height: 6px;
+      background: var(--bg-surface);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .wh-progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: var(--accent);
+      transition: width 300ms ease;
+    }
+    .wh-progress-fill.amber { background: var(--warning); }
+    .wh-progress-fill.blue { background: var(--info); }
+    .wh-progress-fill.cyan { background: #06b6d4; }
+
+    /* ── Card Principal: Tabela de Insumos & Lotes ─────── */
+    .inventory-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .inventory-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Tabs de Categoria */
+    .cat-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .cat-tab {
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+    .cat-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .cat-tab.active {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border-color: var(--border);
+      font-weight: 600;
+    }
+    .cat-tab .count {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--bg-hover);
+      color: var(--text-muted);
+    }
+    .cat-tab.active .count { background: var(--border); color: var(--accent-text); }
+
+    /* Barra de Busca e Filtros Instantâneos */
+    .table-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 280px;
+      max-width: 440px;
+    }
+    .search-input-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 12px 7px 34px;
+      font-size: 12.5px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 140ms ease;
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--accent); }
+
+    .status-filters {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-pill-filter {
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 140ms ease, color 140ms ease;
+    }
+    .status-pill-filter:hover { color: var(--text-secondary); }
+    .status-pill-filter.active {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+
+    /* ── Tabela Estilo Data-Grid ─────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .data-table th {
+      background: #111215;
+      padding: 9px 12px;
+      font-size: 10.5px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.015);
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    /* Células de Dados Especiais */
+    .item-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      color: var(--text-secondary);
+    }
+    .item-icon.chem { color: #f87171; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); }
+    .item-icon.fert { color: #34d399; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25); }
+    .item-icon.seed { color: #fcd34d; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); }
+    .item-icon.fuel { color: #60a5fa; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.25); }
+    .item-icon.bio  { color: #a78bfa; background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.25); }
+    .item-icon svg { width: 16px; height: 16px; }
+
+    .item-info { display: flex; flex-direction: column; gap: 2px; }
+    .item-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .item-sub { font-size: 11px; color: var(--text-muted); }
+
+    .mono-batch {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-primary);
+      font-weight: 500;
+      background: var(--bg-surface);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      display: inline-block;
+    }
+
+    .stock-meter-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 125px;
+    }
+    .stock-values {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+    }
+    .stock-cur { font-weight: 600; color: var(--text-primary); }
+    .stock-max { color: var(--text-muted); }
+    .stock-bar-bg {
+      height: 5px;
+      background: var(--bg-surface);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .stock-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: var(--accent);
+    }
+    .stock-bar-fill.warn { background: var(--warning); }
+    .stock-bar-fill.crit { background: var(--danger); }
+
+    .price-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      font-family: var(--font-mono);
+    }
+    .price-total { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .price-unit { font-size: 11px; color: var(--text-muted); }
+
+    .expiry-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .expiry-date { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
+    .expiry-status { font-size: 10.5px; font-weight: 500; }
+    .expiry-status.good { color: var(--text-muted); }
+    .expiry-status.warn { color: var(--warning); font-weight: 600; }
+    .expiry-status.crit { color: var(--danger); font-weight: 700; }
+
+    /* Badges de Status de Estoque */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+    .status-badge.regular {
+      background: var(--accent-muted);
+      color: var(--accent-text);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .status-badge.low {
+      background: var(--warning-muted);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .status-badge.critical {
+      background: var(--danger-muted);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .action-btn-sm {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+    .action-btn-sm:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border-color: #3f3f46;
+    }
+    .action-btn-sm.alloc:hover {
+      background: var(--accent-muted);
+      color: var(--accent-text);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    /* ── Modais Customizados ─────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 200ms ease;
+    }
+    .modal-backdrop.open {
+      display: grid;
+      opacity: 1;
+    }
+    .modal-card {
+      background: #141417;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 580px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      animation: modal-pop 200ms var(--ease-out);
+    }
+    @keyframes modal-pop {
+      from { transform: scale(0.96) translateY(8px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      transition: color 140ms ease;
+    }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-close svg { width: 18px; height: 18px; }
+
+    .modal-body {
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      background: #0d0d0f;
+    }
+
+    /* Formulários nos Modais */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .form-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      font-size: 13px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 140ms ease;
+      font-family: inherit;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--text-muted); }
+
+    /* Oculta as setas padronizadas nativas do navegador */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    /* Stepper Customizado no padrão Dark Opus */
+    .stepper-wrap {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+    }
+    .stepper-wrap .form-input {
+      width: 100%;
+      padding-right: 34px;
+    }
+    .stepper-btns {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      background: #18181b;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      width: 20px;
+      height: 28px;
+    }
+    .stepper-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0;
+      transition: background 120ms ease, color 120ms ease;
+    }
+    .stepper-btn:first-child {
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .stepper-btn:hover {
+      background: var(--bg-hover);
+      color: var(--accent-text);
+    }
+    .stepper-btn:active {
+      background: var(--accent-muted);
+    }
+    .stepper-btn svg {
+      width: 9px;
+      height: 9px;
+    }
+
+    /* Custom Dropdown dentro dos Modais */
+    .custom-select-wrapper { position: relative; width: 100%; }
+    .custom-select-trigger {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      font-size: 13px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 140ms ease;
+    }
+    .custom-select-trigger:hover { border-color: #3f3f46; }
+    .custom-select-trigger svg { width: 15px; height: 15px; color: var(--text-muted); transition: transform 160ms ease; }
+    .custom-options-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #18181b;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      z-index: 120;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .custom-options-menu.open { display: flex; }
+    .custom-opt {
+      padding: 9px 12px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 140ms ease, color 140ms ease;
+    }
+    .custom-opt:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .custom-opt.selected { color: var(--accent-text); font-weight: 500; background: var(--accent-muted); }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: #1c1c21;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      color: var(--text-primary);
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+      animation: toast-in 200ms var(--ease-out);
+    }
+    @keyframes toast-in {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Modal de Detalhes do Lote (Drawer/Ficha Fitossanitária) */
+    .detail-hero {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .detail-hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .detail-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      font-size: 12px;
+    }
+    .detail-box {
+      background: #111215;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .detail-box-label { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-mono); }
+    .detail-box-val { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .history-item-left { display: flex; flex-direction: column; gap: 2px; }
+    .history-title { font-weight: 500; color: var(--text-primary); }
+    .history-sub { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+    .history-qty { font-family: var(--font-mono); font-weight: 600; color: #f87171; }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  
+  <!-- ============================================================ -->
+  <!-- SIDEBAR FIXA OFICIAL (Dark Zinc / Emerald)                   -->
+  <!-- ============================================================ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-mark">S</div>
+      <div class="brand-text">
+        <span class="brand-name">Seed</span>
+        <span class="brand-sub">Agro Intelligence</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-label">Geral</div>
+        <a href="tela-01-dashboard.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" /></svg>
+          Dashboard
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Operacional</div>
+        <a href="tela-03-talhoes-gis.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" /></svg>
+          Talhões & GIS
+        </a>
+        <a href="tela-04-safras-planejamento.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+          Ciclo de Safras
+        </a>
+        <a href="tela-05-insumos-estoque.html" class="nav-item active">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+          Insumos & Lotes
+          <span class="nav-badge warn">3</span>
+        </a>
+        <a href="tela-06-maquinarios.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>
+          Maquinários
+        </a>
+        <a href="tela-07-viabilidade.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" /></svg>
+          Viabilidade Econômica
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Epidemiológico</div>
+        <a href="tela-08-vigilancia-sanitaria.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+          Vigilância Sanitária
+          <span class="nav-badge">1</span>
+        </a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-group-label">Sustentabilidade</div>
+        <a href="tela-09-energia-esg.html" class="nav-item">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>
+          Energia & ESG
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="avatar">RC</div>
+      <div class="user-info">
+        <div class="user-name">Rafael Costa</div>
+        <div class="user-role">Fazenda Santa Maria</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================ -->
+  <!-- CONTEÚDO PRINCIPAL                                           -->
+  <!-- ============================================================ -->
+  <div class="main-content">
+    
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">
+          <a href="tela-01-dashboard.html">Seed</a>
+          <span class="sep">/</span>
+          <span>Operacional</span>
+          <span class="sep">/</span>
+          <span style="color: var(--text-primary); font-weight: 500;">Insumos & Lotes</span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Live Commodities & Diesel Ticker -->
+        <div class="ticker-pill">
+          <div class="ticker-item">
+            <span class="sym">SOJA:</span>
+            <span class="val">R$ 138,50</span>
+            <span class="up">+0.8%</span>
+          </div>
+          <span style="color: var(--border);">|</span>
+          <div class="ticker-item">
+            <span class="sym">MILHO:</span>
+            <span class="val">R$ 64,20</span>
+            <span class="up">+0.3%</span>
+          </div>
+          <span style="color: var(--border);">|</span>
+          <div class="ticker-item">
+            <span class="sym">DIESEL S10:</span>
+            <span class="val">R$ 6,15</span>
+            <span class="down">-0.4%</span>
+          </div>
+        </div>
+
+        <div class="sync-status">
+          <span class="sync-dot"></span>
+          <span>Sync Engine Ativo</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="page">
+      
+      <!-- Cabeçalho de Página e Ações Primárias -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-heading">Gestão de Insumos & Rastreabilidade de Lotes</h1>
+          <p class="page-subheading">Inventário fitossanitário, defensivos químicos, fertilizantes, sementes e conformidade MAPA / inpev</p>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="showToast('Exportando balanço de estoque e inventário em XLSX consolidado.')">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+            Exportar Inventário
+          </button>
+          
+          <button class="btn btn-secondary" onclick="openAllocModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" /></svg>
+            Baixa / Aplicação em Campo
+          </button>
+
+          <button class="btn btn-primary" onclick="openNewLoteModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            Registrar Entrada de Lote
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 Master KPI Cards de Estoque -->
+      <div class="kpi-strip">
+        <div class="kpi-cell">
+          <span class="kpi-cell-label">Valor Total Imobilizado</span>
+          <div class="kpi-cell-val">R$ 1.842.600<span class="cents">,00</span></div>
+          <span class="kpi-cell-sub">
+            <span class="kpi-tag good">+4.2%</span> Giro operacional 2.8x • 38 SKUs
+          </span>
+        </div>
+        
+        <div class="kpi-cell">
+          <span class="kpi-cell-label">Lotes em Quarentena / Alerta</span>
+          <div class="kpi-cell-val" style="color: var(--warning);">3<span class="unit-text" style="color: var(--warning);">lotes críticos</span></div>
+          <span class="kpi-cell-sub">
+            <span class="kpi-tag warn">1 Vencendo em 12d</span> 2 estoque mínimo
+          </span>
+        </div>
+
+        <div class="kpi-cell">
+          <span class="kpi-cell-label">Estoque Estratégico Diesel S10</span>
+          <div class="kpi-cell-val">42.800<span class="unit-text">L</span></div>
+          <span class="kpi-cell-sub">
+            <span class="kpi-tag good">71,3%</span> Autonomia: 18 dias de colheita
+          </span>
+        </div>
+
+        <div class="kpi-cell">
+          <span class="kpi-cell-label">Conformidade Fitossanitária</span>
+          <div class="kpi-cell-val" style="color: var(--accent-text);">100%<span class="unit-text" style="color: var(--accent-text);">ART</span></div>
+          <span class="kpi-cell-sub">
+            38 receituários vinculados • inpev em dia
+          </span>
+        </div>
+      </div>
+
+      <!-- Banner de Alerta Crítico Inteligente (Fungicida Vencendo) -->
+      <div class="alert-banner">
+        <div class="alert-banner-left">
+          <div class="alert-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+          </div>
+          <div class="alert-text-group">
+            <div class="alert-headline">Atenção Fitossanitária: Lote próximo à data de validade</div>
+            <div class="alert-subline">
+              O lote <strong>LT-BAY-2024-04 (Azoxistrobina + Ciproconazol)</strong> possui 180 L restantes e vence em <strong>12 dias (22/01/2025)</strong> no Galpão 01. Sugestão agronômica: aplicar na pulverização preventiva do <strong>Talhão 02 (Pivô Central)</strong>.
+            </div>
+          </div>
+        </div>
+        <div class="alert-actions">
+          <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 11px;" onclick="openDetailModal('LT-BAY-2024-04')">Ver Ficha do Lote</button>
+          <button class="btn btn-primary" style="font-size: 12px; padding: 6px 11px;" onclick="quickAllocate('LT-BAY-2024-04', 'Talhão 02 — Pivô Central (140 ha)')">Alocar no Talhão 02</button>
+        </div>
+      </div>
+
+      <!-- VISÃO FÍSICA DOS DEPÓSITOS & TANQUES (Galpões da Fazenda) -->
+      <div class="warehouses-section-title">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 17px; height: 17px; color: var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5" /></svg>
+        Ocupação dos Armazéns & Estruturas Físicas de Armazenamento
+      </div>
+
+      <div class="warehouses-grid">
+        <!-- Galpão 01: Defensivos -->
+        <div class="warehouse-card">
+          <div class="wh-header">
+            <div class="wh-icon-box amber">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 1-6.23.693L5 15.3m14.8 0A2.25 2.25 0 0 1 21 17.25v1.5a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18.75v-1.5a2.25 2.25 0 0 1 1.2-1.95" /></svg>
+            </div>
+            <span class="wh-status-badge ok">Climatizado 21°C</span>
+          </div>
+          <div class="wh-info">
+            <span class="wh-title">Galpão 01 — Defensivos</span>
+            <span class="wh-type">Químicos, bacia de contenção epóxi</span>
+          </div>
+          <div class="wh-gauge-wrap">
+            <div class="wh-gauge-header">
+              <span>Ocupação</span>
+              <span style="font-weight: 600; color: var(--text-primary);">68% (18.400 L/kg)</span>
+            </div>
+            <div class="wh-progress-bg">
+              <div class="wh-progress-fill amber" style="width: 68%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Galpão 02: Fertilizantes -->
+        <div class="warehouse-card">
+          <div class="wh-header">
+            <div class="wh-icon-box emerald">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+            </div>
+            <span class="wh-status-badge high">Umidade 48%</span>
+          </div>
+          <div class="wh-info">
+            <span class="wh-title">Galpão 02 — Fertilizantes</span>
+            <span class="wh-type">Big bags NPK, Cloreto de Potássio</span>
+          </div>
+          <div class="wh-gauge-wrap">
+            <div class="wh-gauge-header">
+              <span>Ocupação</span>
+              <span style="font-weight: 600; color: var(--text-primary);">82% (140 ton)</span>
+            </div>
+            <div class="wh-progress-bg">
+              <div class="wh-progress-fill" style="width: 82%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Posto de Abastecimento: Diesel S10 -->
+        <div class="warehouse-card">
+          <div class="wh-header">
+            <div class="wh-icon-box blue">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" /></svg>
+            </div>
+            <span class="wh-status-badge ok">Telemetria Ativa</span>
+          </div>
+          <div class="wh-info">
+            <span class="wh-title">Tanques Diesel S10</span>
+            <span class="wh-type">2x Tanques subterrâneos com filtro</span>
+          </div>
+          <div class="wh-gauge-wrap">
+            <div class="wh-gauge-header">
+              <span>Volume Útil</span>
+              <span style="font-weight: 600; color: var(--text-primary);">71,3% (42.800 L)</span>
+            </div>
+            <div class="wh-progress-bg">
+              <div class="wh-progress-fill blue" style="width: 71.3%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Câmara Fria: Sementes -->
+        <div class="warehouse-card">
+          <div class="wh-header">
+            <div class="wh-icon-box cyan">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m9-9H3m14.243-5.243-12.728 12.728m12.728 0L4.515 6.757" /></svg>
+            </div>
+            <span class="wh-status-badge ok">14°C • Hermético</span>
+          </div>
+          <div class="wh-info">
+            <span class="wh-title">Câmara Fria — Sementes</span>
+            <span class="wh-type">Preservação de vigor (>94%)</span>
+          </div>
+          <div class="wh-gauge-wrap">
+            <div class="wh-gauge-header">
+              <span>Capacidade</span>
+              <span style="font-weight: 600; color: var(--text-primary);">91% (920 sc)</span>
+            </div>
+            <div class="wh-progress-bg">
+              <div class="wh-progress-fill cyan" style="width: 91%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- TABELA MESTRA DE INSUMOS & LOTES RASTREADOS                  -->
+      <!-- ============================================================ -->
+      <div class="inventory-card">
+        <div class="inventory-card-header">
+          
+          <!-- Tabs por Categoria Agropecuária -->
+          <div class="cat-tabs" id="catTabs">
+            <button class="cat-tab active" onclick="filterCategory('TODOS')">
+              Todos os Insumos <span class="count">38</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('DEFENSIVO')">
+              Defensivos & Químicos <span class="count">14</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('FERTILIZANTE')">
+              Fertilizantes & Nutrição <span class="count">8</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('SEMENTE')">
+              Sementes Certificadas <span class="count">6</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('COMBUSTIVEL')">
+              Combustível S10 <span class="count">2</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('BIOLOGICO')">
+              Biológicos & Inoculantes <span class="count">8</span>
+            </button>
+          </div>
+
+          <!-- Barra de Busca & Filtros Rápidos -->
+          <div class="table-controls">
+            <div class="search-input-wrap">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+              <input type="text" class="search-input" id="tableSearchInput" placeholder="Buscar por insumo, princípio ativo, lote ou fornecedor..." oninput="handleSearch()" />
+            </div>
+
+            <div class="status-filters">
+              <span style="font-size: 11.5px; color: var(--text-muted); margin-right: 4px;">Status:</span>
+              <button class="status-pill-filter active" onclick="filterStatus('TODOS', this)">Todos</button>
+              <button class="status-pill-filter" onclick="filterStatus('REGULAR', this)">Regular</button>
+              <button class="status-pill-filter" onclick="filterStatus('BAIXO', this)">Estoque Baixo</button>
+              <button class="status-pill-filter" onclick="filterStatus('CRITICO', this)">Crítico / Vencendo</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Grid Table -->
+        <div class="table-wrap">
+          <table class="data-table" id="inventoryTable">
+            <thead>
+              <tr>
+                <th>Insumo / Princípio Ativo</th>
+                <th>Lote / Rastreabilidade</th>
+                <th>Fornecedor & Local</th>
+                <th>Saldo em Estoque</th>
+                <th>Custo Unit. & Total</th>
+                <th>Validade / ART</th>
+                <th>Status</th>
+                <th style="text-align: right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryTbody">
+              
+              <!-- Linha 1: Azoxistrobina (Crítico por Validade) -->
+              <tr data-cat="DEFENSIVO" data-status="CRITICO" data-query="azoxistrobina ciproconazol bayer fungicida lt-bay-2024-04">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon chem">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 1-6.23.693L5 15.3m14.8 0A2.25 2.25 0 0 1 21 17.25v1.5a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18.75v-1.5a2.25 2.25 0 0 1 1.2-1.95" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Azoxistrobina + Ciproconazol</span>
+                      <span class="item-sub">Fungicida Sistêmico • Suspensão Concentrada</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-BAY-2024-04</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Bayer CropScience</span>
+                    <span class="item-sub">Galpão 01 — Bacia 2</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur">180 L</span>
+                      <span class="stock-max">/ 500 L (36%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill crit" style="width: 36%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 23.400,00</span>
+                    <span class="price-unit">R$ 130,00 / L</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">22/01/2025</span>
+                    <span class="expiry-status crit">Vence em 12 dias</span>
+                  </div>
+                </td>
+                <td><span class="status-badge critical">CRÍTICO</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-BAY-2024-04', 'Talhão 02 — Pivô Central (140 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-BAY-2024-04')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 2: Glifosato (Regular) -->
+              <tr data-cat="DEFENSIVO" data-status="REGULAR" data-query="glifosato 480 sl syngenta herbicida lt-syn-2024-88">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon chem">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 1-6.23.693L5 15.3m14.8 0A2.25 2.25 0 0 1 21 17.25v1.5a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18.75v-1.5a2.25 2.25 0 0 1 1.2-1.95" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Glifosato 480 SL</span>
+                      <span class="item-sub">Herbicida Não-Seletivo Sistêmico</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-SYN-2024-88</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Syngenta Proteção</span>
+                    <span class="item-sub">Galpão 01 — Setor A</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur">1.850 L</span>
+                      <span class="stock-max">/ 2.500 L (74%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill" style="width: 74%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 77.700,00</span>
+                    <span class="price-unit">R$ 42,00 / L</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">14/09/2026</span>
+                    <span class="expiry-status good">Validade regular (612d)</span>
+                  </div>
+                </td>
+                <td><span class="status-badge regular">REGULAR</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-SYN-2024-88', 'Talhão 05 — Cerca Velha (180 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-SYN-2024-88')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 3: Clorantraniliprole (Estoque Baixo) -->
+              <tr data-cat="DEFENSIVO" data-status="BAIXO" data-query="clorantraniliprole corteva inseticida lt-cor-2024-12">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon chem">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 1-6.23.693L5 15.3m14.8 0A2.25 2.25 0 0 1 21 17.25v1.5a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18.75v-1.5a2.25 2.25 0 0 1 1.2-1.95" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Clorantraniliprole 200 SC</span>
+                      <span class="item-sub">Inseticida Antranilamida • Lagartas Helicoverpa</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-COR-2024-12</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Corteva Agriscience</span>
+                    <span class="item-sub">Galpão 01 — Armário Seguro</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur" style="color: var(--warning);">45 L</span>
+                      <span class="stock-max">/ 300 L (15%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill warn" style="width: 15%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 13.050,00</span>
+                    <span class="price-unit">R$ 290,00 / L</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">10/11/2025</span>
+                    <span class="expiry-status warn">Abaixo do Estoque Mínimo</span>
+                  </div>
+                </td>
+                <td><span class="status-badge low">ESTOQUE BAIXO</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-COR-2024-12', 'Talhão 01 — Sede (110 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-COR-2024-12')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 4: NPK 04-14-08 (Fertilizante Regular) -->
+              <tr data-cat="FERTILIZANTE" data-status="REGULAR" data-query="npk 04-14-08 yara adubo fertilizante lt-yar-2024-19">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon fert">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">NPK 04-14-08 Granulado</span>
+                      <span class="item-sub">Fertilizante Mineral de Base • Big Bags 1.000 kg</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-YAR-2024-19</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Yara Fertilizantes</span>
+                    <span class="item-sub">Galpão 02 — Box 04</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur">38.000 kg</span>
+                      <span class="stock-max">/ 60.000 kg (63%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill" style="width: 63%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 117.800,00</span>
+                    <span class="price-unit">R$ 3,10 / kg</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">Indeterminado</span>
+                    <span class="expiry-status good">Armazenamento seco OK</span>
+                  </div>
+                </td>
+                <td><span class="status-badge regular">REGULAR</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-YAR-2024-19', 'Talhão 07 — Divisa Leste (210 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-YAR-2024-19')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 5: Cloreto de Potássio KCl -->
+              <tr data-cat="FERTILIZANTE" data-status="REGULAR" data-query="cloreto potassio kcl mosaic cobertura lt-mos-2024-07">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon fert">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Cloreto de Potássio (KCl 60%)</span>
+                      <span class="item-sub">Fertilizante Vermelho Granulado Cobertura</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-MOS-2024-07</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Mosaic Fertilizantes</span>
+                    <span class="item-sub">Galpão 02 — Box 01</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur">24.500 kg</span>
+                      <span class="stock-max">/ 40.000 kg (61%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill" style="width: 61%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 94.325,00</span>
+                    <span class="price-unit">R$ 3,85 / kg</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">Indeterminado</span>
+                    <span class="expiry-status good">Embalagem lacrada</span>
+                  </div>
+                </td>
+                <td><span class="status-badge regular">REGULAR</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-MOS-2024-07', 'Talhão 03 — Platô Alto (95 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-MOS-2024-07')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 6: Semente BRS 511 (Alocada / Baixa) -->
+              <tr data-cat="SEMENTE" data-status="BAIXO" data-query="semente soja brs 511 embrapa precoce lt-emb-2024-51">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon seed">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Semente Soja BRS 511</span>
+                      <span class="item-sub">Transgênica Precoce 110d • Tratada Industrial</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-EMB-2024-51</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Embrapa / Sementes Goiás</span>
+                    <span class="item-sub">Câmara Fria — Palete 08</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur" style="color: var(--warning);">140 sc</span>
+                      <span class="stock-max">/ 900 sc (15%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill warn" style="width: 15%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 121.800,00</span>
+                    <span class="price-unit">R$ 14,50 / kg</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">30/04/2025</span>
+                    <span class="expiry-status good">Germinação 96% • Vigor 92%</span>
+                  </div>
+                </td>
+                <td><span class="status-badge low">ESTOQUE BAIXO</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-EMB-2024-51', 'Talhão 01 — Sede (110 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-EMB-2024-51')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 7: Semente DM 66i68 -->
+              <tr data-cat="SEMENTE" data-status="REGULAR" data-query="semente soja dm 66i68 donmario ipro lt-don-2024-22">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon seed">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Semente Soja DM 66i68 IPRO</span>
+                      <span class="item-sub">Ciclo Médio 120d • Alto Teto Produtivo</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-DON-2024-22</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">DonMario Sementes</span>
+                    <span class="item-sub">Câmara Fria — Palete 03</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur">420 sc</span>
+                      <span class="stock-max">/ 600 sc (70%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill" style="width: 70%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 272.160,00</span>
+                    <span class="price-unit">R$ 16,20 / kg</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">15/05/2025</span>
+                    <span class="expiry-status good">Germinação 95% • Vigor 94%</span>
+                  </div>
+                </td>
+                <td><span class="status-badge regular">REGULAR</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-DON-2024-22', 'Talhão 03 — Platô Alto (95 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-DON-2024-22')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 8: Diesel S10 -->
+              <tr data-cat="COMBUSTIVEL" data-status="REGULAR" data-query="oleo diesel s10 petrobras combustivel tanque lt-pet-2025-01">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon fuel">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Óleo Diesel S10 Agrícola</span>
+                      <span class="item-sub">Baixo Teor Enxofre (10 ppm) • Frota Pesada</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-PET-2025-01</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Petrobras Distribuidora</span>
+                    <span class="item-sub">Posto Interno — Tanque 01</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur">42.800 L</span>
+                      <span class="stock-max">/ 60.000 L (71%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill blue" style="width: 71.3%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 263.220,00</span>
+                    <span class="price-unit">R$ 6,15 / L</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">Contínuo</span>
+                    <span class="expiry-status good">Sensor telemétrico OK</span>
+                  </div>
+                </td>
+                <td><span class="status-badge regular">REGULAR</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-PET-2025-01', 'Frota Geral Colheita')">Abastecer</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-PET-2025-01')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 9: Bacillus thuringiensis (Biológico) -->
+              <tr data-cat="BIOLOGICO" data-status="REGULAR" data-query="bacillus thuringiensis koppert biologico lt-kop-2024-03">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon bio">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Bacillus thuringiensis</span>
+                      <span class="item-sub">Controle Biológico de Lagartas • Sem Intervalo Reentrada</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-KOP-2024-03</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Koppert Biological</span>
+                    <span class="item-sub">Galpão 01 — Geladeira Bio</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur">160 L</span>
+                      <span class="stock-max">/ 200 L (80%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill" style="width: 80%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 29.600,00</span>
+                    <span class="price-unit">R$ 185,00 / L</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">04/06/2025</span>
+                    <span class="expiry-status good">Refrigeração monitorada</span>
+                  </div>
+                </td>
+                <td><span class="status-badge regular">REGULAR</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-KOP-2024-03', 'Talhão 02 — Pivô Central (140 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-KOP-2024-03')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Linha 10: Inoculante Bradyrhizobium (Biológico / Estoque Baixo) -->
+              <tr data-cat="BIOLOGICO" data-status="BAIXO" data-query="inoculante bradyrhizobium total biotecnologia lt-tot-2024-15">
+                <td>
+                  <div class="item-cell">
+                    <div class="item-icon bio">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    </div>
+                    <div class="item-info">
+                      <span class="item-name">Inoculante Bradyrhizobium</span>
+                      <span class="item-sub">Fixação Biológica de Nitrogênio (FBN) • Soja</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="mono-batch">LT-TOT-2024-15</span></td>
+                <td>
+                  <div class="item-info">
+                    <span style="color: var(--text-primary); font-weight: 500;">Total Biotecnologia</span>
+                    <span class="item-sub">Galpão 01 — Geladeira Bio</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="stock-meter-cell">
+                    <div class="stock-values">
+                      <span class="stock-cur" style="color: var(--warning);">95 doses</span>
+                      <span class="stock-max">/ 400 doses (23%)</span>
+                    </div>
+                    <div class="stock-bar-bg">
+                      <div class="stock-bar-fill warn" style="width: 23.7%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="price-cell">
+                    <span class="price-total">R$ 1.140,00</span>
+                    <span class="price-unit">R$ 12,00 / dose</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="expiry-cell">
+                    <span class="expiry-date">18/03/2025</span>
+                    <span class="expiry-status warn">Comprar p/ Safrinha</span>
+                  </div>
+                </td>
+                <td><span class="status-badge low">ESTOQUE BAIXO</span></td>
+                <td style="text-align: right;">
+                  <div class="table-actions" style="justify-content: flex-end;">
+                    <button class="action-btn-sm alloc" onclick="quickAllocate('LT-TOT-2024-15', 'Talhão 04 — Platô Baixo (125 ha)')">Alocar</button>
+                    <button class="action-btn-sm" onclick="openDetailModal('LT-TOT-2024-15')">Detalhes</button>
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL INTERATIVO: + REGISTRAR ENTRADA DE LOTE                -->
+<!-- ============================================================ -->
+<div class="modal-backdrop" id="newLoteModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Registrar Entrada de Lote de Insumo</h3>
+      <button class="modal-close" onclick="closeNewLoteModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form id="formNewLote" onsubmit="handleCreateLote(event)">
+      <div class="modal-body">
+        
+        <!-- Seleção do Insumo Catálogo -->
+        <div class="form-group">
+          <label class="form-label">Insumo / Princípio Ativo</label>
+          <div class="custom-select-wrapper">
+            <div class="custom-select-trigger" onclick="toggleCustomSelect('insumoSelectMenu')">
+              <span id="selectedInsumoText">Azoxistrobina + Ciproconazol (Fungicida)</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </div>
+            <div class="custom-options-menu" id="insumoSelectMenu">
+              <div class="custom-opt selected" onclick="pickOption('selectedInsumoText', 'Azoxistrobina + Ciproconazol (Fungicida)', 'insumoSelectMenu')">Azoxistrobina + Ciproconazol (Fungicida)</div>
+              <div class="custom-opt" onclick="pickOption('selectedInsumoText', 'Glifosato 480 SL (Herbicida)', 'insumoSelectMenu')">Glifosato 480 SL (Herbicida)</div>
+              <div class="custom-opt" onclick="pickOption('selectedInsumoText', 'Clorantraniliprole 200 SC (Inseticida)', 'insumoSelectMenu')">Clorantraniliprole 200 SC (Inseticida)</div>
+              <div class="custom-opt" onclick="pickOption('selectedInsumoText', 'NPK 04-14-08 Granulado (Fertilizante)', 'insumoSelectMenu')">NPK 04-14-08 Granulado (Fertilizante)</div>
+              <div class="custom-opt" onclick="pickOption('selectedInsumoText', 'Cloreto de Potássio KCl (Fertilizante)', 'insumoSelectMenu')">Cloreto de Potássio KCl (Fertilizante)</div>
+              <div class="custom-opt" onclick="pickOption('selectedInsumoText', 'Semente Soja BRS 511 (Semente)', 'insumoSelectMenu')">Semente Soja BRS 511 (Semente)</div>
+              <div class="custom-opt" onclick="pickOption('selectedInsumoText', 'Óleo Diesel S10 (Combustível)', 'insumoSelectMenu')">Óleo Diesel S10 (Combustível)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Código do Lote</label>
+            <input type="text" class="form-input" id="inputBatchCode" placeholder="Ex: LT-BAY-2025-09" required value="LT-BAY-2025-09" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Número da NF-e</label>
+            <input type="text" class="form-input" id="inputNFe" placeholder="Ex: 004.819.201" required value="004.819.201" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fornecedor</label>
+            <input type="text" class="form-input" id="inputSupplier" placeholder="Ex: Bayer CropScience Brasil" required value="Bayer CropScience Brasil" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Armazém de Destino</label>
+            <div class="custom-select-wrapper">
+              <div class="custom-select-trigger" onclick="toggleCustomSelect('warehouseSelectMenu')">
+                <span id="selectedWarehouseText">Galpão 01 — Defensivos</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+              </div>
+              <div class="custom-options-menu" id="warehouseSelectMenu">
+                <div class="custom-opt selected" onclick="pickOption('selectedWarehouseText', 'Galpão 01 — Defensivos', 'warehouseSelectMenu')">Galpão 01 — Defensivos</div>
+                <div class="custom-opt" onclick="pickOption('selectedWarehouseText', 'Galpão 02 — Fertilizantes', 'warehouseSelectMenu')">Galpão 02 — Fertilizantes</div>
+                <div class="custom-opt" onclick="pickOption('selectedWarehouseText', 'Posto Interno — Tanque Diesel', 'warehouseSelectMenu')">Posto Interno — Tanque Diesel</div>
+                <div class="custom-opt" onclick="pickOption('selectedWarehouseText', 'Câmara Fria — Sementes', 'warehouseSelectMenu')">Câmara Fria — Sementes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Quantidade Adquirida</label>
+            <div class="stepper-wrap">
+              <input type="number" step="10" class="form-input" id="inputQty" placeholder="Ex: 500" required value="500" />
+              <div class="stepper-btns">
+                <button type="button" class="stepper-btn" onclick="stepVal('inputQty', 10)" title="Aumentar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" /></svg>
+                </button>
+                <button type="button" class="stepper-btn" onclick="stepVal('inputQty', -10)" title="Diminuir">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preço Unitário (R$)</label>
+            <div class="stepper-wrap">
+              <input type="number" step="1" class="form-input" id="inputPrice" placeholder="Ex: 130.00" required value="130.00" />
+              <div class="stepper-btns">
+                <button type="button" class="stepper-btn" onclick="stepVal('inputPrice', 1, 2)" title="Aumentar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" /></svg>
+                </button>
+                <button type="button" class="stepper-btn" onclick="stepVal('inputPrice', -1, 2)" title="Diminuir">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Data de Validade</label>
+            <input type="date" class="form-input" id="inputExpiry" required value="2026-12-31" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Receituário ART / MAPA</label>
+            <input type="text" class="form-input" id="inputArt" placeholder="Ex: ART-CREA-88412-MT" value="ART-CREA-88412-MT" />
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeNewLoteModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Registrar Entrada no Estoque</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL INTERATIVO: BAIXA / APLICAÇÃO EM CAMPO                 -->
+<!-- ============================================================ -->
+<div class="modal-backdrop" id="allocModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">Lançar Aplicação / Baixa em Campo</h3>
+      <button class="modal-close" onclick="closeAllocModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <form id="formAlloc" onsubmit="handleApplyAlloc(event)">
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label class="form-label">Lote Selecionado</label>
+          <div class="custom-select-wrapper">
+            <div class="custom-select-trigger" onclick="toggleCustomSelect('allocBatchSelectMenu')">
+              <span id="allocBatchText">LT-BAY-2024-04 — Azoxistrobina (180 L disponíveis)</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </div>
+            <div class="custom-options-menu" id="allocBatchSelectMenu">
+              <div class="custom-opt selected" onclick="pickOption('allocBatchText', 'LT-BAY-2024-04 — Azoxistrobina (180 L disponíveis)', 'allocBatchSelectMenu')">LT-BAY-2024-04 — Azoxistrobina (180 L disp.)</div>
+              <div class="custom-opt" onclick="pickOption('allocBatchText', 'LT-SYN-2024-88 — Glifosato 480 SL (1.850 L disponíveis)', 'allocBatchSelectMenu')">LT-SYN-2024-88 — Glifosato (1.850 L disp.)</div>
+              <div class="custom-opt" onclick="pickOption('allocBatchText', 'LT-COR-2024-12 — Clorantraniliprole (45 L disponíveis)', 'allocBatchSelectMenu')">LT-COR-2024-12 — Clorantraniliprole (45 L disp.)</div>
+              <div class="custom-opt" onclick="pickOption('allocBatchText', 'LT-YAR-2024-19 — NPK 04-14-08 (38.000 kg disponíveis)', 'allocBatchSelectMenu')">LT-YAR-2024-19 — NPK 04-14-08 (38 ton disp.)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Talhão de Destino</label>
+            <div class="custom-select-wrapper">
+              <div class="custom-select-trigger" onclick="toggleCustomSelect('allocTalhaoSelectMenu')">
+                <span id="allocTalhaoText">Talhão 02 — Pivô Central (140 ha)</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+              </div>
+              <div class="custom-options-menu" id="allocTalhaoSelectMenu">
+                <div class="custom-opt selected" onclick="pickOption('allocTalhaoText', 'Talhão 02 — Pivô Central (140 ha)', 'allocTalhaoSelectMenu')">Talhão 02 — Pivô Central (140 ha)</div>
+                <div class="custom-opt" onclick="pickOption('allocTalhaoText', 'Talhão 01 — Sede (110 ha)', 'allocTalhaoSelectMenu')">Talhão 01 — Sede (110 ha)</div>
+                <div class="custom-opt" onclick="pickOption('allocTalhaoText', 'Talhão 03 — Platô Alto (95 ha)', 'allocTalhaoSelectMenu')">Talhão 03 — Platô Alto (95 ha)</div>
+                <div class="custom-opt" onclick="pickOption('allocTalhaoText', 'Talhão 05 — Cerca Velha (180 ha)', 'allocTalhaoSelectMenu')">Talhão 05 — Cerca Velha (180 ha)</div>
+                <div class="custom-opt" onclick="pickOption('allocTalhaoText', 'Talhão 07 — Divisa Leste (210 ha)', 'allocTalhaoSelectMenu')">Talhão 07 — Divisa Leste (210 ha)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Safra / Cultura</label>
+            <input type="text" class="form-input" value="Safra Principal 2024/25 — Soja BRS 511" readonly style="color: var(--text-muted);" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Quantidade a Debitar</label>
+            <div class="stepper-wrap">
+              <input type="number" step="1" class="form-input" id="inputAllocQty" placeholder="Ex: 70.0" required value="70.0" />
+              <div class="stepper-btns">
+                <button type="button" class="stepper-btn" onclick="stepVal('inputAllocQty', 1, 1)" title="Aumentar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" /></svg>
+                </button>
+                <button type="button" class="stepper-btn" onclick="stepVal('inputAllocQty', -1, 1)" title="Diminuir">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dosagem Calculada</label>
+            <input type="text" class="form-input" value="0,5 L / hectare" readonly style="color: var(--accent-text); font-family: var(--font-mono);" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Operador / Tratorista</label>
+            <input type="text" class="form-input" value="Carlos Eduardo (Trator JD 8370R)" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Condição Climática</label>
+            <input type="text" class="form-input" value="26°C • Vento 4 km/h • UR 68%" readonly style="color: var(--text-muted); font-size: 12px;" />
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeAllocModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Confirmar Baixa de Campo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL DE DETALHES & RASTREABILIDADE FITOSSANITÁRIA           -->
+<!-- ============================================================ -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal-card" style="max-width: 640px;">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title" id="dTitle">Ficha Técnica do Lote</h3>
+        <span style="font-size: 11.5px; color: var(--text-muted); font-family: var(--font-mono);" id="dSub">LT-BAY-2024-04</span>
+      </div>
+      <button class="modal-close" onclick="closeDetailModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      
+      <div class="detail-hero">
+        <div class="detail-hero-top">
+          <div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);" id="dName">Azoxistrobina + Ciproconazol</div>
+            <div style="font-size: 12px; color: var(--text-secondary);" id="dManuf">Fabricante: Bayer CropScience Brasil Ltda</div>
+          </div>
+          <span class="status-badge critical" id="dBadge">CRÍTICO</span>
+        </div>
+
+        <div class="detail-grid-2">
+          <div class="detail-box">
+            <span class="detail-box-label">Saldo Atual / Total</span>
+            <span class="detail-box-val" id="dBalance">180 L / 500 L</span>
+          </div>
+          <div class="detail-box">
+            <span class="detail-box-label">Data de Validade</span>
+            <span class="detail-box-val" style="color: #f87171;" id="dExpiry">22/01/2025 (12 dias)</span>
+          </div>
+          <div class="detail-box">
+            <span class="detail-box-label">Localização Física</span>
+            <span class="detail-box-val" id="dLoc">Galpão 01 — Bacia 2</span>
+          </div>
+          <div class="detail-box">
+            <span class="detail-box-label">Receituário ART / MAPA</span>
+            <span class="detail-box-val" style="color: var(--accent-text);">ART-CREA-88412-MT</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-mono);">
+          Histórico de Aplicações em Campo (Rastreio)
+        </span>
+        <div class="history-list" id="dHistoryList">
+          <div class="history-item">
+            <div class="history-item-left">
+              <span class="history-title">Talhão 01 — Sede (110 ha)</span>
+              <span class="history-sub">18/12/2024 • Op: Marcos Vinicius (Pulverizador Patriot 350)</span>
+            </div>
+            <span class="history-qty">- 160 L</span>
+          </div>
+          <div class="history-item">
+            <div class="history-item-left">
+              <span class="history-title">Talhão 07 — Divisa Leste (210 ha)</span>
+              <span class="history-sub">04/01/2025 • Op: Carlos Eduardo (Pulverizador Patriot 350)</span>
+            </div>
+            <span class="history-qty">- 160 L</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; padding: 12px; font-size: 11.5px; color: var(--text-secondary); display: flex; align-items: center; gap: 10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 20px; height: 20px; color: var(--accent); flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
+        <span><strong>Logística Reversa inpev:</strong> Embalagens tríplice-lavadas cadastradas para devolução no posto central de Sorriso até 15/03/2025.</span>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeDetailModal()">Fechar</button>
+      <button type="button" class="btn btn-primary" onclick="closeDetailModal(); openAllocModal();">Lançar Nova Aplicação</button>
+    </div>
+  </div>
+</div>
+
+<!-- Container de Toasts -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS DE INTERATIVIDADE & ESTADO                           -->
+<!-- ============================================================ -->
+<script>
+  let activeCategory = 'TODOS';
+  let activeStatus = 'TODOS';
+
+  // Filtro por Categoria de Insumo
+  function filterCategory(cat) {
+    activeCategory = cat;
+    const tabs = document.querySelectorAll('.cat-tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    applyCombinedFilters();
+  }
+
+  // Filtro por Status
+  function filterStatus(st, el) {
+    activeStatus = st;
+    const pills = document.querySelectorAll('.status-pill-filter');
+    pills.forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    applyCombinedFilters();
+  }
+
+  // Busca instantânea
+  function handleSearch() {
+    applyCombinedFilters();
+  }
+
+  // Aplicação combinada de Categoria + Status + Busca
+  function applyCombinedFilters() {
+    const q = document.getElementById('tableSearchInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#inventoryTbody tr');
+
+    rows.forEach(row => {
+      const rowCat = row.getAttribute('data-cat');
+      const rowStatus = row.getAttribute('data-status');
+      const rowQuery = row.getAttribute('data-query');
+
+      const matchesCat = (activeCategory === 'TODOS' || rowCat === activeCategory);
+      const matchesStatus = (activeStatus === 'TODOS' || rowStatus === activeStatus);
+      const matchesSearch = (!q || rowQuery.includes(q));
+
+      if (matchesCat && matchesStatus && matchesSearch) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  // Custom Select Dropdown Toggle
+  function toggleCustomSelect(menuId) {
+    const menu = document.getElementById(menuId);
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.custom-options-menu').forEach(m => m.classList.remove('open'));
+    if (!isOpen) menu.classList.add('open');
+  }
+
+  function pickOption(textSpanId, value, menuId) {
+    document.getElementById(textSpanId).innerText = value;
+    const menu = document.getElementById(menuId);
+    menu.querySelectorAll('.custom-opt').forEach(opt => {
+      if (opt.innerText.trim() === value) opt.classList.add('selected');
+      else opt.classList.remove('selected');
+    });
+    menu.classList.remove('open');
+  }
+
+  // Fechar dropdowns ao clicar fora
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-select-wrapper')) {
+      document.querySelectorAll('.custom-options-menu').forEach(m => m.classList.remove('open'));
+    }
+  });
+
+  // Modal Novo Lote
+  function openNewLoteModal() {
+    document.getElementById('newLoteModal').classList.add('open');
+  }
+  function closeNewLoteModal() {
+    document.getElementById('newLoteModal').classList.remove('open');
+  }
+
+  // Modal Aplicação em Campo
+  function openAllocModal() {
+    document.getElementById('allocModal').classList.add('open');
+  }
+  function closeAllocModal() {
+    document.getElementById('allocModal').classList.remove('open');
+  }
+
+  // Ação rápida de alocar lote específico
+  function quickAllocate(batchId, targetTalhao) {
+    document.getElementById('allocBatchText').innerText = batchId + ' — Selecionado';
+    document.getElementById('allocTalhaoText').innerText = targetTalhao;
+    openAllocModal();
+  }
+
+  // Modal Detalhes do Lote
+  function openDetailModal(batchId) {
+    const modal = document.getElementById('detailModal');
+    if (batchId === 'LT-BAY-2024-04') {
+      document.getElementById('dTitle').innerText = 'Ficha Técnica: LT-BAY-2024-04';
+      document.getElementById('dSub').innerText = 'Fungicida Sistêmico • Bayer CropScience';
+      document.getElementById('dName').innerText = 'Azoxistrobina + Ciproconazol';
+      document.getElementById('dManuf').innerText = 'Fabricante: Bayer CropScience Brasil Ltda';
+      document.getElementById('dBadge').innerText = 'CRÍTICO (12d)';
+      document.getElementById('dBadge').className = 'status-badge critical';
+      document.getElementById('dBalance').innerText = '180 L / 500 L (36%)';
+      document.getElementById('dExpiry').innerText = '22/01/2025 (12 dias)';
+      document.getElementById('dLoc').innerText = 'Galpão 01 — Bacia 2';
+    } else {
+      document.getElementById('dTitle').innerText = 'Ficha Técnica: ' + batchId;
+      document.getElementById('dSub').innerText = 'Insumo Rastreável • Conforme MAPA';
+      document.getElementById('dBadge').innerText = 'REGULAR';
+      document.getElementById('dBadge').className = 'status-badge regular';
+      document.getElementById('dBalance').innerText = '1.850 L / 2.500 L';
+      document.getElementById('dExpiry').innerText = '14/09/2026';
+      document.getElementById('dLoc').innerText = 'Galpão 01';
+    }
+    modal.classList.add('open');
+  }
+  function closeDetailModal() {
+    document.getElementById('detailModal').classList.remove('open');
+  }
+
+  // Submit Handler: Nova Entrada
+  function handleCreateLote(e) {
+    e.preventDefault();
+    const batch = document.getElementById('inputBatchCode').value;
+    const qty = document.getElementById('inputQty').value;
+    const insumo = document.getElementById('selectedInsumoText').innerText;
+    closeNewLoteModal();
+    showToast(`Lote ${batch} (${qty} unidades de ${insumo.split('(')[0]}) registrado com sucesso!`);
+  }
+
+  // Submit Handler: Baixa em Campo
+  function handleApplyAlloc(e) {
+    e.preventDefault();
+    const qty = document.getElementById('inputAllocQty').value;
+    const talhao = document.getElementById('allocTalhaoText').innerText;
+    closeAllocModal();
+    showToast(`Baixa de ${qty} L confirmada e debitada para ${talhao.split('(')[0]}!`);
+  }
+
+  // Toast Notification System
+  function showToast(msg) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px; color: var(--accent); flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+      <span>${msg}</span>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      toast.style.transition = 'opacity 200ms ease, transform 200ms ease';
+      setTimeout(() => toast.remove(), 200);
+    }, 3500);
+  }
+
+  // Custom Stepper Value Helper
+  function stepVal(id, step, decimals = 0) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = parseFloat(el.value) || 0;
+    const next = Math.max(0, cur + step);
+    el.value = decimals > 0 ? next.toFixed(decimals) : next;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  // Fechar modais ao teclar ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeNewLoteModal();
+      closeAllocModal();
+      closeDetailModal();
+    }
+  });
+</script>
+
+</body>
+</html>
