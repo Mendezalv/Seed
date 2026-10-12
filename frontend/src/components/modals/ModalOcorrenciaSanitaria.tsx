@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface ModalOcorrenciaSanitariaProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export const ModalOcorrenciaSanitaria: React.FC<ModalOcorrenciaSanitariaProps> =
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop open" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
@@ -73,56 +74,60 @@ export const ModalOcorrenciaSanitaria: React.FC<ModalOcorrenciaSanitariaProps> =
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Talhão Acometido</label>
-                <select className="form-input" value={talhao} onChange={(e) => setTalhao(e.target.value)}>
-                  <option value="Talhão 01 (Sede - 140 ha)">Talhão 01 (Sede - 140 ha)</option>
-                  <option value="Talhão 04 (Pivô Norte - 220 ha)">Talhão 04 (Pivô Norte - 220 ha)</option>
-                  <option value="Talhão 07 (Baixada - 180 ha)">Talhão 07 (Baixada - 180 ha)</option>
-                  <option value="Talhão 12 (Reserva Leste - 95 ha)">Talhão 12 (Reserva Leste - 95 ha)</option>
-                </select>
+                <CustomSelect
+                  value={talhao}
+                  onChange={(val) => setTalhao(val)}
+                  options={[
+                    'Talhão 01 (Sede - 140 ha)',
+                    'Talhão 04 (Pivô Norte - 220 ha)',
+                    'Talhão 07 (Baixada - 180 ha)',
+                    'Talhão 12 (Reserva Leste - 95 ha)',
+                  ]}
+                />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Cultura Agrícola</label>
-                <select className="form-input" value={tipoCultura} onChange={(e) => setTipoCultura(e.target.value)}>
-                  <option value="Soja">Soja (Glicyne max)</option>
-                  <option value="Milho">Milho Safrinha</option>
-                  <option value="Cana">Cana-de-Açúcar</option>
-                  <option value="Algodão">Algodão</option>
-                </select>
+                <CustomSelect
+                  value={tipoCultura}
+                  onChange={(val) => setTipoCultura(val)}
+                  options={[
+                    { value: 'Soja', label: 'Soja (Glycine max)' },
+                    { value: 'Milho', label: 'Milho Safrinha' },
+                    { value: 'Cana', label: 'Cana-de-Açúcar' },
+                    { value: 'Algodão', label: 'Algodão' },
+                  ]}
+                />
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Categoria de Ameaça</label>
-                <select className="form-input" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-                  <option value="DOENCA">Doença Fúngica / Bacteriana</option>
-                  <option value="PRAGA">Praga / Inseto Mastigador</option>
-                  <option value="PLANTA_DANINHA">Planta Daninha Resistente</option>
-                  <option value="NEMATOIDE">Nematóide de Galha/Cisto</option>
-                </select>
+                <CustomSelect
+                  value={categoria}
+                  onChange={(val) => setCategoria(val)}
+                  options={[
+                    { value: 'DOENCA', label: 'Doença Fúngica / Bacteriana' },
+                    { value: 'PRAGA', label: 'Praga / Inseto Mastigador' },
+                    { value: 'PLANTA_DANINHA', label: 'Planta Daninha Resistente' },
+                    { value: 'NEMATOIDE', label: 'Nematóide de Galha/Cisto' },
+                  ]}
+                />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Nível de Severidade</label>
-                <select
-                  className="form-input"
+                <CustomSelect
                   value={severidade}
-                  onChange={(e) => setSeveridade(e.target.value as 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA')}
-                  style={{
-                    borderColor:
-                      severidade === 'CRITICA'
-                        ? 'var(--danger)'
-                        : severidade === 'ALTA'
-                        ? 'var(--warning)'
-                        : 'var(--border)',
-                  }}
-                >
-                  <option value="BAIXA">Baixa (Monitoramento rotineiro)</option>
-                  <option value="MEDIA">Média (Atingindo nível de controle)</option>
-                  <option value="ALTA">Alta (Dano econômico iminente)</option>
-                  <option value="CRITICA">Crítica (Intervenção imediata com calda)</option>
-                </select>
+                  onChange={(val) => setSeveridade(val as 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA')}
+                  options={[
+                    { value: 'CRITICA', label: 'Crítica (Intervenção imediata)', badge: { text: 'CRÍTICA', className: 'badge-danger' } },
+                    { value: 'ALTA', label: 'Alta (Dano econômico iminente)', badge: { text: 'ALTA', className: 'badge-warn' } },
+                    { value: 'MEDIA', label: 'Média (Atingindo nível de controle)', badge: { text: 'MÉDIA', className: 'badge-info' } },
+                    { value: 'BAIXA', label: 'Baixa (Monitoramento rotineiro)', badge: { text: 'BAIXA', className: 'badge-accent' } },
+                  ]}
+                />
               </div>
             </div>
 

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../../api/client';
+import { CustomSelect } from '../ui/CustomSelect';
+import { CustomDatePicker } from '../ui/CustomDatePicker';
 
 interface ModalEntradaInsumoProps {
   isOpen: boolean;
@@ -51,7 +53,7 @@ export const ModalEntradaInsumo: React.FC<ModalEntradaInsumoProps> = ({ isOpen, 
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop open" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
@@ -78,16 +80,16 @@ export const ModalEntradaInsumo: React.FC<ModalEntradaInsumoProps> = ({ isOpen, 
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Tipo de Insumo</label>
-                <select
-                  className="form-input"
+                <CustomSelect
                   value={tipoInsumo}
-                  onChange={(e) => setTipoInsumo(e.target.value)}
-                >
-                  <option value="DEFENSIVO">Defensivo Agrícola</option>
-                  <option value="FERTILIZANTE">Fertilizante / Adubo</option>
-                  <option value="SEMENTE">Semente Certificada</option>
-                  <option value="COMBUSTIVEL">Combustível (Diesel)</option>
-                </select>
+                  onChange={(val) => setTipoInsumo(val)}
+                  options={[
+                    { value: 'DEFENSIVO', label: 'Defensivo Agrícola' },
+                    { value: 'FERTILIZANTE', label: 'Fertilizante / Adubo' },
+                    { value: 'SEMENTE', label: 'Semente Certificada' },
+                    { value: 'COMBUSTIVEL', label: 'Combustível (Diesel)' },
+                  ]}
+                />
               </div>
 
               <div className="form-group">
@@ -141,16 +143,16 @@ export const ModalEntradaInsumo: React.FC<ModalEntradaInsumoProps> = ({ isOpen, 
 
               <div className="form-group">
                 <label className="form-label">Unidade de Medida</label>
-                <select
-                  className="form-input"
+                <CustomSelect
                   value={unidade}
-                  onChange={(e) => setUnidade(e.target.value)}
-                >
-                  <option value="litros">Litros (L)</option>
-                  <option value="kg">Quilos (kg)</option>
-                  <option value="sc">Sacas (sc)</option>
-                  <option value="ton">Toneladas (t)</option>
-                </select>
+                  onChange={(val) => setUnidade(val)}
+                  options={[
+                    { value: 'litros', label: 'Litros (L)' },
+                    { value: 'kg', label: 'Quilos (kg)' },
+                    { value: 'sc', label: 'Sacas (sc)' },
+                    { value: 'ton', label: 'Toneladas (t)' },
+                  ]}
+                />
               </div>
             </div>
 
@@ -168,11 +170,10 @@ export const ModalEntradaInsumo: React.FC<ModalEntradaInsumoProps> = ({ isOpen, 
 
               <div className="form-group">
                 <label className="form-label">Data de Validade</label>
-                <input
-                  type="date"
-                  className="form-input"
+                <CustomDatePicker
                   value={dataValidade}
-                  onChange={(e) => setDataValidade(e.target.value)}
+                  onChange={(val) => setDataValidade(val)}
+                  required
                 />
               </div>
             </div>

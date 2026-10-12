@@ -6,6 +6,8 @@
 }
 
 :root {
+  color-scheme: dark;
+
   /* Superfícies */
   --bg-primary: #09090b;       /* Fundo principal do app e sidebar */
   --bg-elevated: #18181b;      /* Cards, context-bar e containers elevados */
@@ -59,10 +61,14 @@ body {
 }
 
 /* ── Scrollbar ───────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0c0d10; }
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 5px;
+  border: 2px solid #0c0d10;
+}
+::-webkit-scrollbar-thumb:hover { background: #71717a; }
 
 /* ── Layout Shell ────────────────────────────────── */
 .shell {
@@ -351,7 +357,7 @@ body {
 
 /* ── Page Container ──────────────────────────────── */
 .page {
-  padding: 28px 32px 48px;
+  padding: 28px 32px 140px;
   width: 100%;
   box-sizing: border-box;
   flex: 1;
@@ -363,6 +369,8 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 24px;
+  position: relative;
+  z-index: 50;
 }
 .page-header-left {
   display: flex;
@@ -384,6 +392,8 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
+  z-index: 50;
 }
 
 .btn {
@@ -1031,7 +1041,7 @@ body {
   width: 100%;
   max-width: 540px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
-  overflow: hidden;
+  overflow: visible;
   animation: modal-enter 220ms var(--ease-out);
   display: flex;
   flex-direction: column;
@@ -1044,6 +1054,7 @@ body {
 .modal-header {
   padding: 18px 22px;
   border-bottom: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1078,13 +1089,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: 75vh;
-  overflow-y: auto;
+  max-height: 80vh;
+  overflow-y: visible;
 }
 
 .modal-footer {
   padding: 16px 22px;
   border-top: 1px solid var(--border-subtle);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -1104,22 +1116,56 @@ body {
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
-.form-input, select.form-input, textarea.form-input {
+.form-control, .form-input, select.form-input, textarea.form-input {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 9px 12px;
+  padding: 8px 12px;
   font-family: var(--font-sans);
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text-primary);
   outline: none;
   transition: border-color 140ms ease, box-shadow 140ms ease;
   width: 100%;
 }
-.form-input:focus, select.form-input:focus, textarea.form-input:focus {
+.form-control:focus, .form-input:focus, select.form-input:focus, textarea.form-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
+.form-control[readonly], .form-input[readonly] {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+  cursor: default;
+}
+
+/* Ocultar spinners nativos em inputs numéricos para uso com .stepper-btns */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Estilização consistente de select nativo no tema escuro */
+select.form-input, select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371717a' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 32px;
+  cursor: pointer;
+}
+select.form-input option, select option {
+  background-color: #18181b;
+  color: #f4f4f5;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1157,6 +1203,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  margin-bottom: 28px;
 }
 .kpi-cell {
   padding: 18px 22px;
@@ -1226,6 +1273,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  margin-bottom: 28px;
 }
 .alert-banner-left {
   display: flex;
@@ -1257,11 +1305,13 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-bottom: 14px;
 }
 .warehouses-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 16px;
+  margin-bottom: 32px;
 }
 .warehouse-card {
   background: var(--bg-elevated);
@@ -1297,6 +1347,7 @@ body {
 .wh-icon-box.amber { color: var(--warning); background: var(--warning-muted); border-color: rgba(245, 158, 11, 0.3); }
 .wh-icon-box.blue { color: var(--info); background: var(--info-muted); border-color: rgba(59, 130, 246, 0.3); }
 .wh-icon-box.cyan { color: #06b6d4; background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.3); }
+.wh-icon-box.red { color: var(--danger); background: var(--danger-muted); border-color: rgba(239, 68, 68, 0.3); }
 .wh-icon-box svg { width: 17px; height: 17px; }
 
 .wh-status-badge {
@@ -1311,6 +1362,8 @@ body {
 }
 .wh-status-badge.ok { color: var(--accent-text); background: var(--accent-muted); border-color: rgba(16, 185, 129, 0.25); }
 .wh-status-badge.high { color: var(--warning); background: var(--warning-muted); border-color: rgba(245, 158, 11, 0.25); }
+.wh-status-badge.danger { color: var(--danger-text); background: var(--danger-muted); border-color: rgba(239, 68, 68, 0.25); }
+.wh-status-badge.blue { color: var(--info); background: var(--info-muted); border-color: rgba(59, 130, 246, 0.25); }
 
 .wh-info { display: flex; flex-direction: column; gap: 2px; }
 .wh-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
@@ -1345,6 +1398,7 @@ body {
 .wh-progress-fill.amber { background: var(--warning); }
 .wh-progress-fill.blue { background: var(--info); }
 .wh-progress-fill.cyan { background: #06b6d4; }
+.wh-progress-fill.red { background: var(--danger); }
 
 /* ── Card Principal: Tabela de Insumos & Lotes ─────── */
 .inventory-card {
@@ -1461,17 +1515,21 @@ body {
   border-color: var(--border);
 }
 
-.table-wrap { overflow-x: auto; }
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .data-table {
   width: 100%;
+  min-width: 1140px;
   border-collapse: collapse;
   font-size: 13px;
   text-align: left;
 }
 .data-table th {
   background: #111215;
-  padding: 9px 12px;
-  font-size: 10.5px;
+  padding: 11px 16px;
+  font-size: 11px;
   font-family: var(--font-mono);
   font-weight: 600;
   text-transform: uppercase;
@@ -1481,13 +1539,13 @@ body {
   white-space: nowrap;
 }
 .data-table td {
-  padding: 10px 12px;
+  padding: 13px 16px;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   vertical-align: middle;
   white-space: nowrap;
 }
-.data-table tr:hover td { background: rgba(255, 255, 255, 0.015); }
+.data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
 .data-table tr:last-child td { border-bottom: none; }
 
 .item-cell {
@@ -1532,20 +1590,25 @@ body {
 .stock-meter-cell {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 125px;
+  gap: 6px;
+  min-width: 165px;
 }
 .stock-values {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  font-size: 11.5px;
+  gap: 12px;
+  font-size: 12px;
   font-family: var(--font-mono);
+  line-height: 1.25;
+  margin-bottom: 2px;
 }
-.stock-cur { font-weight: 600; color: var(--text-primary); }
-.stock-max { color: var(--text-muted); }
+.stock-cur { font-weight: 600; color: var(--text-primary); font-size: 12px; }
+.stock-max { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
 .stock-bar-bg {
+  width: 100%;
   height: 5px;
-  background: var(--bg-surface);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 100px;
   overflow: hidden;
 }
@@ -1556,6 +1619,7 @@ body {
 }
 .stock-bar-fill.warn { background: var(--warning); }
 .stock-bar-fill.crit { background: var(--danger); }
+.stock-bar-fill.blue { background: #60a5fa; }
 
 .price-cell {
   display: flex;
@@ -1608,6 +1672,79 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* ── Inventory Card Footer ───────────────────────── */
+.inventory-card-footer {
+  padding: 14px 20px;
+  background: rgba(18, 19, 24, 0.6);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.inventory-card-footer .footer-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inventory-card-footer .footer-stats strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.inventory-card-footer .dot-sep {
+  opacity: 0.4;
+}
+.inventory-card-footer .footer-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11.5px;
+}
+.inventory-card-footer .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.inventory-card-footer .legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.inventory-card-footer .legend-dot.green { background: var(--accent); box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+.inventory-card-footer .legend-dot.amber { background: var(--warning); box-shadow: 0 0 6px rgba(245, 158, 11, 0.4); }
+.inventory-card-footer .legend-dot.red { background: var(--danger); box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+
+/* ── Faixa de Governança & Auditoria Regulatória ─── */
+.inventory-audit-trail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 24px;
+}
+.inventory-audit-trail .audit-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.inventory-audit-trail .audit-label {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.inventory-audit-trail .audit-val {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 /* ── Mini KPI Strip Territorial ──────────────────── */
@@ -1701,24 +1838,52 @@ body {
 }
 .view-btn svg { width: 14px; height: 14px; }
 
-.filter-group {
+.table-section, .table-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-header-bar {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.table-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.table-filters, .filter-group {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
+
 .filter-chip {
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 100px;
   border: 1px solid var(--border);
-  background: var(--bg-elevated);
+  background: var(--bg-surface);
   font-size: 12px;
   color: var(--text-secondary);
   cursor: pointer;
   user-select: none;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
   transition: all 140ms ease;
 }
 .filter-chip:hover { border-color: #3f3f46; color: var(--text-primary); }
@@ -1729,6 +1894,53 @@ body {
   font-weight: 500;
 }
 .chip-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.table-toolbar {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.table-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  width: 320px;
+  transition: border-color 140ms ease;
+}
+.table-search-box:focus-within {
+  border-color: var(--accent);
+}
+.table-search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  width: 100%;
+}
+.table-search-box svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.table-filters-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
 /* ── Split GIS Workspace (Mapa Interativo + Gaveta) ─ */
 .gis-workspace {
@@ -2078,13 +2290,15 @@ body {
   width: 100%;
   background: #27272a;
   border-radius: 3px;
-  overflow: hidden;
+  overflow: visible;
   margin-top: 10px;
+  margin-bottom: 8px;
   display: flex;
+  position: relative;
 }
-.meter-segment-green { width: 30%; background: var(--accent); }
+.meter-segment-green { width: 30%; background: var(--accent); border-radius: 3px 0 0 3px; }
 .meter-segment-yellow { width: 30%; background: var(--warning); }
-.meter-segment-red { width: 40%; background: var(--danger); }
+.meter-segment-red { width: 40%; background: var(--danger); border-radius: 0 3px 3px 0; }
 .meter-needle {
   position: absolute;
   top: -3px;
@@ -2093,6 +2307,9 @@ body {
   background: #fff;
   border-radius: 2px;
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* Seção Central: Mapa Georreferenciado + Painel de Foco */
@@ -2143,9 +2360,16 @@ body {
   border-radius: var(--radius-sm);
   font-family: var(--font-sans);
   font-size: 12px;
-  padding: 5px 10px;
+  padding: 5px 28px 5px 10px;
   outline: none;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371717a' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  transition: border-color 140ms ease;
 }
 .map-select:focus { border-color: var(--accent); }
 
@@ -2654,6 +2878,7 @@ input[type="range"]::-webkit-slider-thumb {
 /* ── Ciclo de Safras & Planejamento ─────────────── */
 .season-selector {
   position: relative;
+  z-index: 60;
 }
 .season-btn {
   display: flex;
@@ -2676,16 +2901,18 @@ input[type="range"]::-webkit-slider-thumb {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  width: 250px;
+  min-width: 260px;
+  width: max-content;
+  max-width: 330px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
   padding: 6px;
   display: none;
   flex-direction: column;
   gap: 2px;
-  z-index: 50;
+  z-index: 1000;
 }
 .season-menu.open { display: flex; }
 .season-opt {
@@ -2716,7 +2943,7 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  margin-bottom: 22px;
+  margin-bottom: 28px;
 }
 .timeline-card-header {
   display: flex;
@@ -2995,8 +3222,9 @@ input[type="range"]::-webkit-slider-thumb {
   border: 1px solid var(--border);
   border-radius: 4px;
   overflow: hidden;
-  width: 20px;
+  width: 22px;
   height: 28px;
+  z-index: 5;
 }
 .stepper-btn {
   flex: 1;
@@ -3008,15 +3236,413 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--text-muted);
   cursor: pointer;
   padding: 0;
+  line-height: 0;
   transition: background 120ms ease, color 120ms ease;
 }
 .stepper-btn:first-child { border-bottom: 1px solid var(--border-subtle); }
 .stepper-btn:hover { background: var(--bg-hover); color: var(--accent-text); }
-.stepper-btn svg { width: 9px; height: 9px; }
+.stepper-btn:active { background: var(--accent-muted); }
+.stepper-btn svg { width: 10px; height: 10px; display: block; stroke-width: 2.5; }
+
+/* ── Custom Select (Padrão Dark Opus / Zinc & Emerald) ── */
+.custom-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+.custom-select-trigger {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  box-sizing: border-box;
+  min-height: 38px;
+}
+.custom-select-trigger:hover {
+  border-color: #3f3f46;
+  background: #18191e;
+}
+.custom-select-trigger.open {
+  border-color: var(--accent);
+  background: #18191e;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.custom-select-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.custom-select-trigger .trigger-chevron {
+  color: var(--text-muted);
+  width: 14px;
+  height: 14px;
+  transition: transform 200ms var(--ease-out);
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.custom-select-trigger.open .trigger-chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+.custom-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #16171a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px;
+  z-index: 120;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  max-height: 240px;
+  overflow-y: auto;
+  animation: dropdown-fade-in 140ms var(--ease-out);
+}
+.custom-select-dropdown.open {
+  display: flex;
+}
+@keyframes dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.custom-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 120ms ease;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.custom-select-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+.custom-select-item.selected {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.custom-select-item .item-check {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  opacity: 0;
+  flex-shrink: 0;
+}
+.custom-select-item.selected .item-check {
+  opacity: 1;
+}
+
+/* ── Upload Dropzone ── */
+.upload-dropzone {
+  border: 2px dashed #3f3f46;
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  background: rgba(24, 24, 27, 0.4);
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.upload-dropzone:hover {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+}
+.upload-dropzone svg {
+  width: 28px;
+  height: 28px;
+  color: var(--text-muted);
+}
+
+/* ── Modal Foto Ampliada ── */
+.photo-modal-box {
+  max-width: 820px;
+}
+.photo-full-display {
+  width: 100%;
+  height: 480px;
+  background: #000;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.photo-full-display img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 @media (max-width: 1024px) {
   .climate-row { grid-template-columns: 1fr; }
   .gantt-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Custom Datepicker (Padrão Dark Opus / Zinc & Emerald) ────────── */
+.custom-datepicker-container {
+  position: relative;
+  width: 100%;
+}
+.custom-datepicker-trigger {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  min-height: 38px;
+  box-sizing: border-box;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.custom-datepicker-trigger:hover {
+  border-color: #3f3f46;
+  background: #18191e;
+}
+.custom-datepicker-trigger.open {
+  border-color: var(--accent);
+  background: #18191e;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+.custom-datepicker-trigger.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.custom-datepicker-trigger .datepicker-text {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.custom-datepicker-trigger .datepicker-text.placeholder {
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+}
+.custom-datepicker-trigger .datepicker-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color 160ms ease;
+}
+.custom-datepicker-trigger.open .datepicker-icon {
+  color: var(--accent);
+}
+
+.custom-datepicker-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 292px;
+  background: #14151a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  z-index: 1000;
+  padding: 12px;
+  animation: datepickerFadeIn 140ms var(--ease-out);
+}
+
+.custom-datepicker-dropdown.open-upwards {
+  top: auto;
+  bottom: calc(100% + 6px);
+  animation: datepickerFadeInUp 140ms var(--ease-out);
+}
+
+.custom-datepicker-dropdown.align-right {
+  left: auto;
+  right: 0;
+}
+
+@keyframes datepickerFadeIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes datepickerFadeInUp {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.datepicker-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.datepicker-title {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.datepicker-title strong {
+  color: #fff;
+  font-weight: 600;
+}
+.datepicker-year-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-text);
+  background: var(--accent-muted);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.datepicker-nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  transition: all 120ms ease;
+}
+.datepicker-nav-btn.year {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 5px;
+}
+.datepicker-nav-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.datepicker-nav-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.datepicker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.datepicker-day {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.datepicker-day.outside {
+  color: rgba(113, 113, 122, 0.4);
+  cursor: default;
+  pointer-events: none;
+}
+.datepicker-day.current:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.datepicker-day.today {
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: var(--accent-text);
+}
+.datepicker-day.selected {
+  background: var(--accent) !important;
+  color: #000 !important;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.datepicker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+.datepicker-quick-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.datepicker-quick-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: #3f3f46;
+}
+.datepicker-quick-btn.clear {
+  color: var(--text-muted);
+  border-color: transparent;
+}
+.datepicker-quick-btn.clear:hover {
+  color: var(--danger-text);
 }
 
 

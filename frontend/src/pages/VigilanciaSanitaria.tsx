@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ModalOcorrenciaSanitaria } from '../components/modals/ModalOcorrenciaSanitaria';
+import { CustomSelect } from '../components/ui/CustomSelect';
 
 export interface OccurrenceItem {
   id: string;
@@ -272,37 +272,79 @@ export const VigilanciaSanitaria: React.FC = () => {
     showToast('Laudo fitossanitário consolidado emitido em PDF com assinatura digital de responsabilidade técnica.');
   };
 
-  const handleSuccessNewOccurrence = (nova: { agente: string; severidade: string; talhao: string }) => {
+  // Estados do Modal 1: Registro de Ocorrência Fitossanitária em Campo
+  const [occurTalhao, setOccurTalhao] = useState('Talhão 02 • Pivô Central');
+  const [occurAgente, setOccurAgente] = useState('Ferrugem Asiática (Phakopsora pachyrhizi)');
+  const [occurSeveridade, setOccurSeveridade] = useState<'CRITICA' | 'ALTA' | 'MEDIA' | 'BAIXA'>('ALTA');
+  const [occurLat, setOccurLat] = useState('-12.5020');
+  const [occurLon, setOccurLon] = useState('-55.7015');
+  const [occurObs, setOccurObs] = useState('Presença de uredósporos maduros na face abaxial em estágio R3.');
+  const [occurPhotoLoaded, setOccurPhotoLoaded] = useState(false);
+
+  const handleSimulatePhotoUpload = () => {
+    setOccurPhotoLoaded(true);
+    showToast('Foto da amostra carregada com metadados EXIF e GPS validados!');
+  };
+
+  const handleCreateNewOccurrenceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     const newId = `EPI-${Math.floor(100 + Math.random() * 900)}`;
+    const shortTalhao = occurTalhao.split(' ')[0] || 'T-02';
+    const agentSimple = occurAgente.split(' (')[0];
+    const category: OccurrenceItem['category'] = occurAgente.includes('Ferrugem')
+      ? 'FERRUGEM'
+      : occurAgente.includes('Lagarta')
+      ? 'LAGARTA'
+      : occurAgente.includes('Percevejo')
+      ? 'PERCEVEJO'
+      : occurAgente.includes('Antracnose')
+      ? 'ANTRACNOSE'
+      : 'CIGARRINHA';
+
     const newRecord: OccurrenceItem = {
       id: newId,
       code: `#${newId}`,
-      title: `Foco #${newId} (${nova.talhao})`,
-      badge: `${nova.severidade} • ${nova.agente.toUpperCase()}`,
-      badgeClass: nova.severidade === 'CRITICA' || nova.severidade === 'ALTA' ? 'badge-danger' : 'badge-warn',
+      title: `Foco #${newId} (${shortTalhao})`,
+      badge: `${occurSeveridade} • ${agentSimple.toUpperCase()}`,
+      badgeClass:
+        occurSeveridade === 'CRITICA'
+          ? 'badge-danger'
+          : occurSeveridade === 'ALTA'
+          ? 'badge-warn'
+          : occurSeveridade === 'MEDIA'
+          ? 'badge-info'
+          : 'badge-accent',
       date: 'Hoje, agora',
       timestamp: new Date().toLocaleString('pt-BR'),
-      agent: nova.agente,
-      agentScientific: `${nova.agente} (Identificado em campo)`,
-      category: 'FERRUGEM',
-      talhao: nova.talhao,
-      talhaoShort: nova.talhao.split(' ')[0] || 'T-XX',
-      crop: 'Soja / Milho',
-      gps: '-12.5020°, -55.7015°',
-      severity: `${nova.severidade} (Gravidade)`,
-      severityLevel: (nova.severidade as OccurrenceItem['severityLevel']) || 'ALTA',
-      prescription: `Aplicação preventiva recomendada para controle imediato de ${nova.agente}.`,
-      productName: 'Fungicida Sistêmico / Inseticida',
-      stockAvailable: 'Estoque Galpão Central conferido',
+      agent: agentSimple,
+      agentScientific: occurAgente,
+      category,
+      talhao: occurTalhao,
+      talhaoShort: shortTalhao,
+      crop: 'Soja Intacta (180 ha)',
+      gps: `${occurLat}°, ${occurLon}°`,
+      severity:
+        occurSeveridade === 'CRITICA'
+          ? '>20% Sev. Foliar'
+          : occurSeveridade === 'ALTA'
+          ? '12% Inc. • 8% Sev.'
+          : occurSeveridade === 'MEDIA'
+          ? '5-10% Incidência'
+          : '<5% Monitorado',
+      severityLevel: occurSeveridade,
+      prescription: `Aplicação curativa recomendada para contenção de ${agentSimple}.`,
+      productName: 'Azoxistrobina + Ciproconazol',
+      stockAvailable: 'Estoque disponível no Galpão 01',
       status: 'EM ABERTO',
       img: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80',
-      boxLabel: nova.agente,
-      confidence: 95.0,
+      boxLabel: agentSimple,
+      confidence: 97.8,
     };
 
     setOccurrences((prev) => [newRecord, ...prev]);
     setSelectedOccurrenceId(newId);
-    showToast(`Novo registro fitossanitário #${newId} adicionado com sucesso e integrado ao mapa!`);
+    showToast(`Ocorrência fitossanitária #${newId} cadastrada com sucesso e plotada no mapa!`);
+    setModalNewOccurOpen(false);
   };
 
   return (
@@ -406,74 +448,114 @@ export const VigilanciaSanitaria: React.FC = () => {
         </div>
       </section>
 
-      {/* KPIs Executivos Sanitários */}
-      <section className="kpi-grid stagger-item">
+      {/* KPIs Executivos Sanitários Padronizados */}
+      <section className="warehouses-grid stagger-item" style={{ animationDelay: '100ms' }}>
         {/* KPI 1: Score Geral */}
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-label">Pressão Sanitária Geral</span>
-            <span className="kpi-badge badge-danger">RISCO ALTO</span>
+        <div className="warehouse-card">
+          <div className="wh-header">
+            <div className="wh-icon-box red">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+            </div>
+            <span className="wh-status-badge danger">Risco Alto</span>
           </div>
-          <div className="kpi-value-row">
-            <span className="kpi-value">{calculatedPests.overall}</span>
-            <span className="kpi-unit">/ 1.00</span>
+          <div className="wh-info">
+            <span className="wh-title">Pressão Sanitária Geral</span>
+            <span className="wh-type">Clima (60%): 0.58 • Histórico (40%): 0.44</span>
           </div>
-          <div className="score-meter" style={{ position: 'relative' }}>
-            <div className="meter-segment-green"></div>
-            <div className="meter-segment-yellow"></div>
-            <div className="meter-segment-red"></div>
-            <div
-              className="meter-needle"
-              style={{ left: `${Math.min(95, Math.max(5, parseFloat(calculatedPests.overall) * 100))}%` }}
-            ></div>
-          </div>
-          <div className="kpi-subtext">
-            <span>Clima (60%): <strong>0.58</strong></span> • <span>Histórico (40%): <strong>0.44</strong></span>
+          <div className="wh-gauge-wrap">
+            <div className="wh-gauge-header">
+              <span>Índice Preditivo</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {calculatedPests.overall} / 1.00 ({Math.round(parseFloat(calculatedPests.overall) * 100)}%)
+              </span>
+            </div>
+            <div className="wh-progress-bg">
+              <div
+                className="wh-progress-fill red"
+                style={{ width: `${Math.min(100, Math.max(5, Math.round(parseFloat(calculatedPests.overall) * 100)))}%` }}
+              />
+            </div>
           </div>
         </div>
 
         {/* KPI 2: Ocorrências na Região */}
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-label">Ocorrências na Região (50km)</span>
-            <span className="kpi-badge badge-warn">7 FOCOS</span>
+        <div className="warehouse-card">
+          <div className="wh-header">
+            <div className="wh-icon-box amber">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+              </svg>
+            </div>
+            <span className="wh-status-badge high">7 Focos Ativos</span>
           </div>
-          <div className="kpi-value-row">
-            <span className="kpi-value">7</span>
-            <span className="kpi-unit">focos ativos</span>
+          <div className="wh-info">
+            <span className="wh-title">Ocorrências na Região (50km)</span>
+            <span className="wh-type">{occurrences.length} na fazenda • 2 críticas • 3 altas</span>
           </div>
-          <div className="kpi-subtext">
-            <span>{occurrences.length} na fazenda</span> • <span style={{ color: 'var(--danger-text)' }}>2 críticas</span> • <span>3 altas</span>
+          <div className="wh-gauge-wrap">
+            <div className="wh-gauge-header">
+              <span>Severidade Regional</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>7 focos ativos</span>
+            </div>
+            <div className="wh-progress-bg">
+              <div className="wh-progress-fill amber" style={{ width: '70%' }} />
+            </div>
           </div>
         </div>
 
         {/* KPI 3: Microclima e Molhamento Foliar */}
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-label">Molhamento Foliar Contínuo</span>
-            <span className="kpi-badge badge-danger">GATILHO ATIVO</span>
+        <div className="warehouse-card">
+          <div className="wh-header">
+            <div className="wh-icon-box blue">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25c0 0-6.75 7.765-6.75 12a6.75 6.75 0 0 0 13.5 0c0-4.235-6.75-12-6.75-12Z" />
+              </svg>
+            </div>
+            <span className="wh-status-badge danger">Gatilho Ativo</span>
           </div>
-          <div className="kpi-value-row">
-            <span className="kpi-value">{simWetness.toFixed(1)}</span>
-            <span className="kpi-unit">horas</span>
+          <div className="wh-info">
+            <span className="wh-title">Molhamento Foliar Contínuo</span>
+            <span className="wh-type">Temp Média: {simTemp.toFixed(1)} °C • UR: {simHumidity}%</span>
           </div>
-          <div className="kpi-subtext">
-            <span>Temp Média: <strong>{simTemp.toFixed(1)} °C</strong></span> • <span>UR: <strong>{simHumidity}%</strong></span>
+          <div className="wh-gauge-wrap">
+            <div className="wh-gauge-header">
+              <span>Janela de Infecção</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{simWetness.toFixed(1)} horas</span>
+            </div>
+            <div className="wh-progress-bg">
+              <div
+                className="wh-progress-fill blue"
+                style={{ width: `${Math.min(100, Math.round((simWetness / 24) * 100))}%` }}
+              />
+            </div>
           </div>
         </div>
 
         {/* KPI 4: Área em Manejo Fitossanitário */}
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-label">Área em Manejo Fitossanitário</span>
-            <span className="kpi-badge badge-accent">72% PROTEGIDO</span>
+        <div className="warehouse-card">
+          <div className="wh-header">
+            <div className="wh-icon-box emerald">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+              </svg>
+            </div>
+            <span className="wh-status-badge ok">72% Protegido</span>
           </div>
-          <div className="kpi-value-row">
-            <span className="kpi-value">180</span>
-            <span className="kpi-unit">ha em quarentena</span>
+          <div className="wh-info">
+            <span className="wh-title">Área em Manejo Fitossanitário</span>
+            <span className="wh-type">Talhão 02 (120ha) • Talhão 03 (60ha)</span>
           </div>
-          <div className="kpi-subtext">
-            <span>Talhão 02 (120ha)</span> • <span>Talhão 03 (60ha)</span>
+          <div className="wh-gauge-wrap">
+            <div className="wh-gauge-header">
+              <span>Área Quarentenada</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>180 ha (72%)</span>
+            </div>
+            <div className="wh-progress-bg">
+              <div className="wh-progress-fill" style={{ width: '72%' }} />
+            </div>
           </div>
         </div>
       </section>
@@ -491,26 +573,30 @@ export const VigilanciaSanitaria: React.FC = () => {
               <span className="kpi-badge badge-info" style={{ fontSize: '10px' }}>EPSG:4326 • SIRGAS 2000</span>
             </div>
             <div className="map-filters-row">
-              <select
-                className="map-select"
-                value={mapAgentFilter}
-                onChange={(e) => setMapAgentFilter(e.target.value)}
-              >
-                <option value="ALL">Todos os Patógenos</option>
-                <option value="FERRUGEM">Ferrugem Asiática (Fungos)</option>
-                <option value="LAGARTA">Lagarta-do-cartucho (Insetos)</option>
-                <option value="PERCEVEJO">Percevejo-marrom (Insetos)</option>
-              </select>
+              <div style={{ width: 220 }}>
+                <CustomSelect
+                  value={mapAgentFilter}
+                  onChange={(val) => setMapAgentFilter(val)}
+                  options={[
+                    { value: 'ALL', label: 'Todos os Patógenos' },
+                    { value: 'FERRUGEM', label: 'Ferrugem Asiática (Fungos)' },
+                    { value: 'LAGARTA', label: 'Lagarta-do-cartucho (Insetos)' },
+                    { value: 'PERCEVEJO', label: 'Percevejo-marrom (Insetos)' },
+                  ]}
+                />
+              </div>
 
-              <select
-                className="map-select"
-                value={mapLayerFilter}
-                onChange={(e) => setMapLayerFilter(e.target.value as 'HEATMAP' | 'PINS' | 'PARCELAS')}
-              >
-                <option value="HEATMAP">Heatmap + Focos Ativos</option>
-                <option value="PINS">Apenas Focos e Pins</option>
-                <option value="PARCELAS">Limites de Talhões</option>
-              </select>
+              <div style={{ width: 210 }}>
+                <CustomSelect
+                  value={mapLayerFilter}
+                  onChange={(val) => setMapLayerFilter(val as 'HEATMAP' | 'PINS' | 'PARCELAS')}
+                  options={[
+                    { value: 'HEATMAP', label: 'Heatmap + Focos Ativos' },
+                    { value: 'PINS', label: 'Apenas Focos e Pins' },
+                    { value: 'PARCELAS', label: 'Limites de Talhões' },
+                  ]}
+                />
+              </div>
             </div>
           </div>
 
@@ -1007,7 +1093,14 @@ export const VigilanciaSanitaria: React.FC = () => {
       <section className="table-card stagger-item">
         <div className="table-toolbar">
           <div className="table-search-box">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
+              stroke="currentColor"
+              style={{ width: 15, height: 15, flexShrink: 0 }}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
             <input
@@ -1019,29 +1112,33 @@ export const VigilanciaSanitaria: React.FC = () => {
           </div>
 
           <div className="table-filters-group">
-            <select
-              className="map-select"
-              value={tableSeverityFilter}
-              onChange={(e) => setTableSeverityFilter(e.target.value)}
-            >
-              <option value="ALL">Todas as Severidades</option>
-              <option value="CRITICA">Crítica</option>
-              <option value="ALTA">Alta</option>
-              <option value="MEDIA">Média</option>
-              <option value="BAIXA">Baixa</option>
-            </select>
+            <div style={{ width: 190 }}>
+              <CustomSelect
+                value={tableSeverityFilter}
+                onChange={(val) => setTableSeverityFilter(val)}
+                options={[
+                  { value: 'ALL', label: 'Todas as Severidades' },
+                  { value: 'CRITICA', label: 'Crítica', badge: { text: 'CRÍTICA', className: 'badge-danger' } },
+                  { value: 'ALTA', label: 'Alta', badge: { text: 'ALTA', className: 'badge-warn' } },
+                  { value: 'MEDIA', label: 'Média', badge: { text: 'MÉDIA', className: 'badge-info' } },
+                  { value: 'BAIXA', label: 'Baixa', badge: { text: 'BAIXA', className: 'badge-accent' } },
+                ]}
+              />
+            </div>
 
-            <select
-              className="map-select"
-              value={tableStatusFilter}
-              onChange={(e) => setTableStatusFilter(e.target.value)}
-            >
-              <option value="ALL">Todos os Status</option>
-              <option value="EM ABERTO">Em Aberto</option>
-              <option value="EM TRATAMENTO">Em Tratamento</option>
-              <option value="MONITORADO">Monitorado</option>
-              <option value="CONTROLADO">Controlado</option>
-            </select>
+            <div style={{ width: 170 }}>
+              <CustomSelect
+                value={tableStatusFilter}
+                onChange={(val) => setTableStatusFilter(val)}
+                options={[
+                  { value: 'ALL', label: 'Todos os Status' },
+                  { value: 'EM ABERTO', label: 'Em Aberto' },
+                  { value: 'EM TRATAMENTO', label: 'Em Tratamento' },
+                  { value: 'MONITORADO', label: 'Monitorado' },
+                  { value: 'CONTROLADO', label: 'Controlado' },
+                ]}
+              />
+            </div>
 
             <button className="btn btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={handleExportReport}>
               Exportar CSV
@@ -1132,16 +1229,144 @@ export const VigilanciaSanitaria: React.FC = () => {
         </div>
       </section>
 
-      {/* MODAL 1: REGISTRO DE NOVA OCORRÊNCIA SANITÁRIA (COMPONENTIZADO) */}
-      <ModalOcorrenciaSanitaria
-        isOpen={modalNewOccurOpen}
-        onClose={() => setModalNewOccurOpen(false)}
-        onSuccess={handleSuccessNewOccurrence}
-      />
+      {/* MODAL 1: REGISTRO DE NOVA OCORRÊNCIA FITOSSANITÁRIA (TELA 08 FIDELIDADE TOTAL) */}
+      {modalNewOccurOpen && (
+        <div className="modal-backdrop open" onClick={() => setModalNewOccurOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '620px' }}>
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">Registrar Ocorrência Fitossanitária em Campo</h3>
+                <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                  Amostragem Georreferenciada • Telemetria MAPA / SIRGAS 2000
+                </span>
+              </div>
+              <button className="modal-close" onClick={() => setModalNewOccurOpen(false)}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewOccurrenceSubmit}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Talhão Alvo</label>
+                  <CustomSelect
+                    value={occurTalhao}
+                    onChange={(val) => setOccurTalhao(val)}
+                    options={[
+                      'Talhão 01 • Sede (110 ha)',
+                      'Talhão 02 • Pivô Central (180 ha)',
+                      'Talhão 03 • Área Vizinha (120 ha)',
+                      'Talhão 04 • Baixada Norte (125 ha)',
+                      'Talhão 05 • Milho Alto (210 ha)',
+                      'Talhão 07 • Divisa Leste (210 ha)',
+                    ]}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Agente Patogênico / Praga</label>
+                    <CustomSelect
+                      value={occurAgente}
+                      onChange={(val) => setOccurAgente(val)}
+                      options={[
+                        'Ferrugem Asiática (Phakopsora pachyrhizi)',
+                        'Lagarta-do-cartucho (Spodoptera frugiperda)',
+                        'Percevejo-marrom (Euschistus heros)',
+                        'Antracnose (Colletotrichum truncatum)',
+                        'Cigarrinha-do-milho (Dalbulus maidis)',
+                      ]}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Severidade Estimada</label>
+                    <CustomSelect
+                      value={occurSeveridade}
+                      onChange={(val) => setOccurSeveridade(val as 'CRITICA' | 'ALTA' | 'MEDIA' | 'BAIXA')}
+                      options={[
+                        { value: 'CRITICA', label: 'Crítica (>20% severidade foliar)', badge: { text: 'CRÍTICA', className: 'badge-danger' } },
+                        { value: 'ALTA', label: 'Alta (10-20%)', badge: { text: 'ALTA', className: 'badge-warn' } },
+                        { value: 'MEDIA', label: 'Média (5-10%)', badge: { text: 'MÉDIA', className: 'badge-info' } },
+                        { value: 'BAIXA', label: 'Baixa (<5%)', badge: { text: 'BAIXA', className: 'badge-accent' } },
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Latitude GPS</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={occurLat}
+                      onChange={(e) => setOccurLat(e.target.value)}
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Longitude GPS</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={occurLon}
+                      onChange={(e) => setOccurLon(e.target.value)}
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Evidência Fotográfica / Laudo de Campo</label>
+                  <div className="upload-dropzone" onClick={handleSimulatePhotoUpload}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    </svg>
+                    <div style={{ fontSize: '12.5px', fontWeight: 500, color: occurPhotoLoaded ? 'var(--accent-text)' : 'var(--text-primary)' }}>
+                      {occurPhotoLoaded
+                        ? '✓ Foto "amostra_folha_pustula_04.jpg" carregada (GPS & EXIF incorporados)'
+                        : 'Clique para anexar foto da folha/praga com sensor de campo'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      Suporte a JPG, PNG e RAW geotaggeados • Reconhecimento automático via IA
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Observações Fitotécnicas</label>
+                  <textarea
+                    className="form-input"
+                    rows={2}
+                    value={occurObs}
+                    onChange={(e) => setOccurObs(e.target.value)}
+                    placeholder="Ex: Presença de uredósporos maduros na face abaxial em estágio R3..."
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setModalNewOccurOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Salvar & Sincronizar Registro
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* MODAL 2: ORDEM DE PULVERIZAÇÃO EMERGENCIAL (OS) */}
       {modalSprayOpen && (
-        <div className="modal-backdrop" onClick={() => setModalSprayOpen(false)}>
+        <div className="modal-backdrop open" onClick={() => setModalSprayOpen(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
             <div className="modal-header">
               <div className="modal-title">
@@ -1156,36 +1381,36 @@ export const VigilanciaSanitaria: React.FC = () => {
               <div className="modal-body">
                 <div className="form-group">
                   <label className="form-label">Talhão Alvo</label>
-                  <input type="text" className="form-control" value={sprayForm.talhao} readOnly style={{ fontWeight: 600 }} />
+                  <input type="text" className="form-input" value={sprayForm.talhao} readOnly style={{ fontWeight: 600 }} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                   <div className="form-group">
                     <label className="form-label">Patógeno Alvo</label>
-                    <input type="text" className="form-control" value={sprayForm.agente} readOnly />
+                    <input type="text" className="form-input" value={sprayForm.agente} readOnly />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Insumo Prescrito (Galpão 01)</label>
-                    <input type="text" className="form-control" value={sprayForm.produto} readOnly style={{ color: 'var(--accent-text)', fontWeight: 600 }} />
+                    <input type="text" className="form-input" value={sprayForm.produto} readOnly style={{ color: 'var(--accent-text)', fontWeight: 600 }} />
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                   <div className="form-group">
                     <label className="form-label">Maquinário Designado</label>
-                    <select
-                      className="form-control"
+                    <CustomSelect
                       value={sprayForm.maquina}
-                      onChange={(e) => setSprayForm({ ...sprayForm, maquina: e.target.value })}
-                    >
-                      <option value="PV-01">PV-01 • Jacto Uniport 3030 (Barra 36m • Disponível)</option>
-                      <option value="PV-02">PV-02 • Pulverizador Autopropelido 24m (Standby)</option>
-                      <option value="DR-01">DR-01 • Drone DJI Agras T40 (Autônomo)</option>
-                    </select>
+                      onChange={(val) => setSprayForm({ ...sprayForm, maquina: val })}
+                      options={[
+                        'PV-01 • Jacto Uniport 3030 (Barra 36m • Disponível)',
+                        'PV-02 • Pulverizador Autopropelido 24m (Standby)',
+                        'DR-01 • Drone DJI Agras T40 (Autônomo)',
+                      ]}
+                    />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Dose Recomendada</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="form-input"
                       value={sprayForm.dose}
                       onChange={(e) => setSprayForm({ ...sprayForm, dose: e.target.value })}
                     />
@@ -1209,7 +1434,7 @@ export const VigilanciaSanitaria: React.FC = () => {
 
       {/* MODAL 3: VISUALIZAÇÃO AMPLIADA DA FOTO DE LAUDO COM IA */}
       {modalPhotoOpen && (
-        <div className="modal-backdrop" onClick={() => setModalPhotoOpen(false)}>
+        <div className="modal-backdrop open" onClick={() => setModalPhotoOpen(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '780px' }}>
             <div className="modal-header">
               <div>

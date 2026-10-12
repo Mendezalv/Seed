@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../../api/client';
+import { CustomSelect } from '../ui/CustomSelect';
 
 interface ModalSimuladorViabilidadeProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ export const ModalSimuladorViabilidade: React.FC<ModalSimuladorViabilidadeProps>
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop open" onClick={onClose}>
       <div className="modal-card" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
@@ -93,10 +94,14 @@ export const ModalSimuladorViabilidade: React.FC<ModalSimuladorViabilidadeProps>
           <div className="modal-body">
             <div className="form-group">
               <label className="form-label">Safra / Cultura Base</label>
-              <select className="form-input" value={safra} onChange={(e) => setSafra(e.target.value)}>
-                <option value="Safra 2026/27 - Soja Verão (1.240 ha)">Safra 2026/27 - Soja Verão (1.240 ha)</option>
-                <option value="Safrinha 2027 - Milho (680 ha)">Safrinha 2027 - Milho (680 ha)</option>
-              </select>
+              <CustomSelect
+                value={safra}
+                onChange={(val) => setSafra(val)}
+                options={[
+                  'Safra 2026/27 - Soja Verão (1.240 ha)',
+                  'Safrinha 2027 - Milho (680 ha)',
+                ]}
+              />
             </div>
 
             <div className="form-row">

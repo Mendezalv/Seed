@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { CustomSelect } from '../components/ui/CustomSelect';
+import { CustomDatePicker } from '../components/ui/CustomDatePicker';
 
 export interface SafraTalhao {
   id: number;
@@ -171,6 +173,21 @@ export const SafrasPlanejamento: React.FC = () => {
   const [selectedSeason, setSelectedSeason] = useState<string>('Safra Principal 2024/25');
   const [seasonMenuOpen, setSeasonMenuOpen] = useState<boolean>(false);
   const [culturaFilter, setCulturaFilter] = useState<'all' | 'soja' | 'milho' | 'pousio'>('all');
+  const seasonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (seasonRef.current && !seasonRef.current.contains(e.target as Node)) {
+        setSeasonMenuOpen(false);
+      }
+    };
+    if (seasonMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [seasonMenuOpen]);
   
   // Modais e gaveta
   const [modalNewOpen, setModalNewOpen] = useState<boolean>(false);
@@ -293,7 +310,7 @@ export const SafrasPlanejamento: React.FC = () => {
 
         <div className="header-actions">
           {/* Seletor de Safra Dropdown */}
-          <div className="season-selector">
+          <div className="season-selector" ref={seasonRef}>
             <button className="season-btn" onClick={() => setSeasonMenuOpen(!seasonMenuOpen)}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -667,32 +684,27 @@ export const SafrasPlanejamento: React.FC = () => {
               <div className="modal-body">
                 <div className="form-group">
                   <label className="form-label">Talhão de Alocação</label>
-                  <select
-                    className="form-input"
+                  <CustomSelect
                     value={formData.talhao}
-                    onChange={(e) => setFormData({ ...formData, talhao: e.target.value })}
-                  >
-                    <option value="Talhão 01 — Sede (110 ha)">Talhão 01 — Sede (110 ha)</option>
-                    <option value="Talhão 02 — Pivô Central (140 ha)">Talhão 02 — Pivô Central (140 ha)</option>
-                    <option value="Talhão 03 — Platô Alto (95 ha)">Talhão 03 — Platô Alto (95 ha)</option>
-                    <option value="Talhão 05 — Cerca Velha (180 ha)">Talhão 05 — Cerca Velha (180 ha)</option>
-                    <option value="Talhão 07 — Divisa Leste (210 ha)">Talhão 07 — Divisa Leste (210 ha)</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, talhao: val })}
+                    options={[
+                      'Talhão 01 — Sede (110 ha)',
+                      'Talhão 02 — Pivô Central (140 ha)',
+                      'Talhão 03 — Platô Alto (95 ha)',
+                      'Talhão 05 — Cerca Velha (180 ha)',
+                      'Talhão 07 — Divisa Leste (210 ha)',
+                    ]}
+                  />
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Cultura Principal</label>
-                    <select
-                      className="form-input"
+                    <CustomSelect
                       value={formData.cultura}
-                      onChange={(e) => setFormData({ ...formData, cultura: e.target.value })}
-                    >
-                      <option value="Soja">Soja</option>
-                      <option value="Milho Safrinha">Milho Safrinha</option>
-                      <option value="Algodão">Algodão</option>
-                      <option value="Sorgo / Forrageira">Sorgo / Forrageira</option>
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, cultura: val })}
+                      options={['Soja', 'Milho Safrinha', 'Algodão', 'Sorgo / Forrageira']}
+                    />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Cultivar / Variedade</label>
@@ -709,21 +721,17 @@ export const SafrasPlanejamento: React.FC = () => {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Data Prevista de Plantio</label>
-                    <input
-                      type="date"
-                      className="form-input"
+                    <CustomDatePicker
                       value={formData.dataPlantio}
-                      onChange={(e) => setFormData({ ...formData, dataPlantio: e.target.value })}
+                      onChange={(val) => setFormData({ ...formData, dataPlantio: val })}
                       required
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Previsão de Colheita</label>
-                    <input
-                      type="date"
-                      className="form-input"
+                    <CustomDatePicker
                       value={formData.dataColheita}
-                      onChange={(e) => setFormData({ ...formData, dataColheita: e.target.value })}
+                      onChange={(val) => setFormData({ ...formData, dataColheita: val })}
                       required
                     />
                   </div>
@@ -745,16 +753,22 @@ export const SafrasPlanejamento: React.FC = () => {
                         <button
                           type="button"
                           className="stepper-btn"
-                          onClick={() => setFormData({ ...formData, metaProd: formData.metaProd + 0.5 })}
+                          title="Aumentar"
+                          onClick={() => setFormData({ ...formData, metaProd: Number((formData.metaProd + 0.5).toFixed(1)) })}
                         >
-                          ▲
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                          </svg>
                         </button>
                         <button
                           type="button"
                           className="stepper-btn"
-                          onClick={() => setFormData({ ...formData, metaProd: Math.max(0, formData.metaProd - 0.5) })}
+                          title="Diminuir"
+                          onClick={() => setFormData({ ...formData, metaProd: Math.max(0, Number((formData.metaProd - 0.5).toFixed(1))) })}
                         >
-                          ▼
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
                         </button>
                       </div>
                     </div>
@@ -774,16 +788,22 @@ export const SafrasPlanejamento: React.FC = () => {
                         <button
                           type="button"
                           className="stepper-btn"
+                          title="Aumentar"
                           onClick={() => setFormData({ ...formData, custoHa: formData.custoHa + 50 })}
                         >
-                          ▲
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                          </svg>
                         </button>
                         <button
                           type="button"
                           className="stepper-btn"
+                          title="Diminuir"
                           onClick={() => setFormData({ ...formData, custoHa: Math.max(0, formData.custoHa - 50) })}
                         >
-                          ▼
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
                         </button>
                       </div>
                     </div>

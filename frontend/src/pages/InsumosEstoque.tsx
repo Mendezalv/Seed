@@ -491,14 +491,14 @@ export const InsumosEstoque: React.FC = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Insumo / Princípio Ativo</th>
-                <th>Lote / Rastreabilidade</th>
-                <th>Fornecedor & Local</th>
-                <th>Saldo em Estoque</th>
-                <th>Custo Unit. & Total</th>
-                <th>Validade / ART</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Ações</th>
+                <th style={{ minWidth: '250px' }}>Insumo / Princípio Ativo</th>
+                <th style={{ minWidth: '135px' }}>Lote / Rastreabilidade</th>
+                <th style={{ minWidth: '170px' }}>Fornecedor & Local</th>
+                <th style={{ minWidth: '185px' }}>Saldo em Estoque</th>
+                <th style={{ minWidth: '150px' }}>Custo Unit. & Total</th>
+                <th style={{ minWidth: '140px' }}>Validade / ART</th>
+                <th style={{ minWidth: '110px' }}>Status</th>
+                <th style={{ minWidth: '90px', textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -565,7 +565,7 @@ export const InsumosEstoque: React.FC = () => {
                           </div>
                           <div className="stock-bar-bg">
                             <div
-                              className={`stock-bar-fill ${isCrit ? 'crit' : isLow ? 'warn' : ''}`}
+                              className={`stock-bar-fill ${isCrit ? 'crit' : isLow ? 'warn' : lote.categoria === 'COMBUSTIVEL' ? 'blue' : ''}`}
                               style={{ width: `${Math.min(100, pct)}%` }}
                             />
                           </div>
@@ -612,6 +612,42 @@ export const InsumosEstoque: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Rodapé da Tabela de Insumos */}
+        <div className="inventory-card-footer">
+          <div className="footer-stats">
+            <span>
+              Mostrando <strong>{filteredLotes.length}</strong> de <strong>{lotes.length}</strong> lotes cadastrados
+            </span>
+            <span className="dot-sep">•</span>
+            <span>Rastreabilidade MAPA & Conexão em tempo real</span>
+          </div>
+          <div className="footer-legend">
+            <span className="legend-item"><span className="legend-dot green"></span> Regular</span>
+            <span className="legend-item"><span className="legend-dot amber"></span> Atenção</span>
+            <span className="legend-item"><span className="legend-dot red"></span> Crítico</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Faixa de Governança, ART & Conformidade Regulatória */}
+      <div className="inventory-audit-trail stagger-item" style={{ animationDelay: '200ms' }}>
+        <div className="audit-item">
+          <div className="audit-label">Último Fechamento Fiscal</div>
+          <div className="audit-val">30/09/2026 • Auditoria Contábil Integrada</div>
+        </div>
+        <div className="audit-item">
+          <div className="audit-label">Logística Reversa inpEV</div>
+          <div className="audit-val">Certificado Nº 88219/2026 • Em dia</div>
+        </div>
+        <div className="audit-item">
+          <div className="audit-label">Responsável Técnico (ART)</div>
+          <div className="audit-val">Eng. Agr. Marcelo Guimarães • CREA-MT 24.891-D</div>
+        </div>
+        <div className="audit-item">
+          <div className="audit-label">Telemetria de Tanques</div>
+          <div className="audit-val">Sensor Ultrassônico Nível 4 • Atualizado há 4 min</div>
         </div>
       </div>
     </>

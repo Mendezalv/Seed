@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ModalEntradaInsumo } from '../components/modals/ModalEntradaInsumo';
-import { ModalOcorrenciaSanitaria } from '../components/modals/ModalOcorrenciaSanitaria';
+import { CustomSelect } from '../components/ui/CustomSelect';
 
 export interface AplicacaoHist {
   data: string;
@@ -355,10 +354,22 @@ export const TalhoesGis: React.FC = () => {
   const [activeTool, setActiveTool] = useState<'select' | 'ndvi' | 'measure' | 'center'>('select');
   const [ndviOverlay, setNdviOverlay] = useState<boolean>(false);
   
-  // Modais e feedback
-  const [modalEntradaOpen, setModalEntradaOpen] = useState(false);
-  const [modalOcorrenciaOpen, setModalOcorrenciaOpen] = useState(false);
+  // Modais específicos do talhão e feedback
+  const [modalPrescricaoOpen, setModalPrescricaoOpen] = useState(false);
+  const [modalApontamentoOpen, setModalApontamentoOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Form states de Prescrição Agronômica
+  const [prescricaoInsumo, setPrescricaoInsumo] = useState('Fungicida Fox Xpro');
+  const [prescricaoDose, setPrescricaoDose] = useState<number>(0.5);
+  const [prescricaoOperador, setPrescricaoOperador] = useState('Carlos M.');
+  const [prescricaoEquipamento, setPrescricaoEquipamento] = useState('Pulverizador Patriot 350');
+
+  // Form states de Apontamento de Campo
+  const [apontamentoTipo, setApontamentoTipo] = useState('Foco Fitossanitário Detectado');
+  const [apontamentoSeveridade, setApontamentoSeveridade] = useState<'ALERTA_FERRUGEM' | 'NORMAL'>('ALERTA_FERRUGEM');
+  const [apontamentoGps, setApontamentoGps] = useState('-12.5020°, -55.7015°');
+  const [apontamentoObs, setApontamentoObs] = useState('Pústulas observadas no terço médio e inferior da folhagem.');
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -468,36 +479,11 @@ export const TalhoesGis: React.FC = () => {
     }
   };
 
-  // Sucesso de nova ocorrência adicionada ao talhão
-  const handleSuccessOcorrencia = (nova: { agente: string; severidade: string; talhao: string }) => {
-    setTalhoes((prev) =>
-      prev.map((t) => {
-        if (t.id === selectedTalhao.id) {
-          return {
-            ...t,
-            status: 'ALERTA_FERRUGEM',
-            alertTitle: `Alerta: ${nova.agente} (${nova.severidade})`,
-            alertDesc: `Ocorrência registrada no talhão. Severidade classificada como ${nova.severidade}.`,
-            aplicacoes: [
-              {
-                data: `Hoje, ${new Date().toLocaleTimeString().slice(0, 5)} • App Web`,
-                responsavel: 'Registro Sanitário',
-                titulo: `Alerta: ${nova.agente}`,
-                meta: `Severidade: ${nova.severidade}`,
-                tipo: 'danger',
-              },
-              ...t.aplicacoes,
-            ],
-          };
-        }
-        return t;
-      })
-    );
-    showToast(`Ocorrência sanitária vinculada com sucesso a ${selectedTalhao.nome}!`);
-  };
+  // Lançar Prescrição no Talhão
+  const handleSalvarPrescricao = (e: React.FormEvent) => {
+    e.preventDefault();
+    const volumeTotal = Number((selectedTalhao.areaNum * prescricaoDose).toFixed(1));
 
-  // Sucesso de insumo alocado
-  const handleSuccessInsumo = (novo: { nome: string; quantidade: number; custo: number }) => {
     setTalhoes((prev) =>
       prev.map((t) => {
         if (t.id === selectedTalhao.id) {
@@ -505,10 +491,10 @@ export const TalhoesGis: React.FC = () => {
             ...t,
             aplicacoes: [
               {
-                data: `Hoje, ${new Date().toLocaleTimeString().slice(0, 5)} • Prescrição`,
-                responsavel: 'Eng. Agrônomo',
-                titulo: `Alocação: ${novo.nome}`,
-                meta: `Qtd: ${novo.quantidade} • Custo: R$ ${novo.custo.toLocaleString('pt-BR')}`,
+                data: `Hoje, ${new Date().toLocaleTimeString().slice(0, 5)} • Operador ${prescricaoOperador}`,
+                responsavel: prescricaoOperador,
+                titulo: `Prescrição: ${prescricaoInsumo}`,
+                meta: `Dose: ${prescricaoDose} L/ha • Calda Total: ${volumeTotal} L • ${prescricaoEquipamento}`,
                 tipo: 'accent',
               },
               ...t.aplicacoes,
@@ -518,7 +504,40 @@ export const TalhoesGis: React.FC = () => {
         return t;
       })
     );
-    showToast(`Insumo ${novo.nome} alocado com sucesso ao talhão ${selectedTalhao.code}!`);
+    showToast(`Prescrição de ${prescricaoInsumo} alocada com sucesso ao ${selectedTalhao.nome}!`);
+    setModalPrescricaoOpen(false);
+  };
+
+  // Salvar Apontamento de Campo
+  const handleSalvarApontamento = (e: React.FormEvent) => {
+    e.preventDefault();
+    const isAlerta = apontamentoSeveridade === 'ALERTA_FERRUGEM';
+
+    setTalhoes((prev) =>
+      prev.map((t) => {
+        if (t.id === selectedTalhao.id) {
+          return {
+            ...t,
+            status: isAlerta ? 'ALERTA_FERRUGEM' : t.status,
+            alertTitle: isAlerta ? apontamentoTipo : t.alertTitle,
+            alertDesc: isAlerta ? apontamentoObs : t.alertDesc,
+            aplicacoes: [
+              {
+                data: `Hoje, ${new Date().toLocaleTimeString().slice(0, 5)} • Telemetria de Campo`,
+                responsavel: 'Inspetor Técnico',
+                titulo: apontamentoTipo,
+                meta: `GPS: ${apontamentoGps} • ${apontamentoObs}`,
+                tipo: isAlerta ? 'danger' : 'default',
+              },
+              ...t.aplicacoes,
+            ],
+          };
+        }
+        return t;
+      })
+    );
+    showToast(`Apontamento georreferenciado registrado com sucesso no ${selectedTalhao.nome}!`);
+    setModalApontamentoOpen(false);
   };
 
   return (
@@ -967,14 +986,14 @@ export const TalhoesGis: React.FC = () => {
               <button
                 className="btn btn-outline"
                 style={{ flex: 1 }}
-                onClick={() => setModalEntradaOpen(true)}
+                onClick={() => setModalPrescricaoOpen(true)}
               >
                 Alocar Insumo
               </button>
               <button
                 className="btn btn-primary"
                 style={{ flex: 1 }}
-                onClick={() => setModalOcorrenciaOpen(true)}
+                onClick={() => setModalApontamentoOpen(true)}
               >
                 Nova Ocorrência
               </button>
@@ -1056,18 +1075,224 @@ export const TalhoesGis: React.FC = () => {
         </div>
       )}
 
-      {/* Modais Integrados */}
-      <ModalEntradaInsumo
-        isOpen={modalEntradaOpen}
-        onClose={() => setModalEntradaOpen(false)}
-        onSuccess={handleSuccessInsumo}
-      />
+      {/* MODAL 1: PRESCRIÇÃO E ALOCAÇÃO AGRONÔMICA ESPECÍFICA DO TALHÃO */}
+      {modalPrescricaoOpen && (
+        <div className="modal-backdrop open" onClick={() => setModalPrescricaoOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px' }}>
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">Prescrever Aplicação no Talhão</h3>
+                <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                  Alvo: {selectedTalhao.nome} • {selectedTalhao.culturaDisplay} ({selectedTalhao.area})
+                </span>
+              </div>
+              <button className="modal-close" onClick={() => setModalPrescricaoOpen(false)}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-      <ModalOcorrenciaSanitaria
-        isOpen={modalOcorrenciaOpen}
-        onClose={() => setModalOcorrenciaOpen(false)}
-        onSuccess={handleSuccessOcorrencia}
-      />
+            <form onSubmit={handleSalvarPrescricao}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Insumo Agrícola / Calda</label>
+                  <CustomSelect
+                    value={prescricaoInsumo}
+                    onChange={(val) => setPrescricaoInsumo(val)}
+                    options={[
+                      'Fungicida Fox Xpro (Bayer)',
+                      'Fungicida Opera Ultra (BASF)',
+                      'Fertilizante NPK 04-14-08 (Yara)',
+                      'Inseticida Ampligo (Syngenta)',
+                      'Biológico Inoculante Bradyrhizobium',
+                      'Herbicida Glifosato 480 SL',
+                    ]}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Dose por Hectare (L/ha ou kg/ha)</label>
+                    <div className="stepper-wrap">
+                      <input
+                        type="number"
+                        step="0.1"
+                        className="form-input"
+                        value={prescricaoDose}
+                        onChange={(e) => setPrescricaoDose(parseFloat(e.target.value) || 0)}
+                        required
+                      />
+                      <div className="stepper-btns">
+                        <button
+                          type="button"
+                          className="stepper-btn"
+                          title="Aumentar"
+                          onClick={() => setPrescricaoDose(Number((prescricaoDose + 0.1).toFixed(2)))}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="stepper-btn"
+                          title="Diminuir"
+                          onClick={() => setPrescricaoDose(Math.max(0, Number((prescricaoDose - 0.1).toFixed(2))))}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Calda Total Calculada</label>
+                    <div
+                      style={{
+                        background: 'var(--bg-surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '9px 12px',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '13.5px',
+                        color: 'var(--accent-text)',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {(selectedTalhao.areaNum * prescricaoDose).toFixed(1)} L / kg
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Operador Responsável</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={prescricaoOperador}
+                      onChange={(e) => setPrescricaoOperador(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Maquinário / Pontas</label>
+                    <CustomSelect
+                      value={prescricaoEquipamento}
+                      onChange={(val) => setPrescricaoEquipamento(val)}
+                      options={[
+                        'Pulverizador Patriot 350',
+                        'Trator John Deere 6130M',
+                        'Drone DJI Agras T40',
+                        'Distribuidor Linha Uniport',
+                      ]}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setModalPrescricaoOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Registrar no Talhão
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: APONTAMENTO GEORREFERENCIADO DE TELEMETRIA DO TALHÃO */}
+      {modalApontamentoOpen && (
+        <div className="modal-backdrop open" onClick={() => setModalApontamentoOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px' }}>
+            <div className="modal-header">
+              <div>
+                <h3 className="modal-title">Apontamento de Campo — {selectedTalhao.nome}</h3>
+                <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                  PostGIS GeoJSON ID: {selectedTalhao.geoId} • Centro: 12°32'44"S 55°42'18"W
+                </span>
+              </div>
+              <button className="modal-close" onClick={() => setModalApontamentoOpen(false)}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSalvarApontamento}>
+              <div className="modal-body">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Tipo de Ocorrência Territorial</label>
+                    <CustomSelect
+                      value={apontamentoTipo}
+                      onChange={(val) => setApontamentoTipo(val)}
+                      options={[
+                        'Foco Fitossanitário Detectado',
+                        'Infestação de Lagarta / Praga',
+                        'Falha de Emergência de Stand',
+                        'Anomalia Hídrica / Encharcamento',
+                        'Deficiência Nutricional / Clorose',
+                      ]}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Nível de Gravidade</label>
+                    <CustomSelect
+                      value={apontamentoSeveridade}
+                      onChange={(val) => setApontamentoSeveridade(val as 'ALERTA_FERRUGEM' | 'NORMAL')}
+                      options={[
+                        { value: 'ALERTA_FERRUGEM', label: 'Risco Alto (Atenção Imediata)', badge: { text: 'RISCO', className: 'badge-danger' } },
+                        { value: 'NORMAL', label: 'Monitoramento Rotineiro', badge: { text: 'NORMAL', className: 'badge-accent' } },
+                      ]}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Coordenadas de Amostragem (Lat / Lon)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={apontamentoGps}
+                    onChange={(e) => setApontamentoGps(e.target.value)}
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Laudo / Observações do Inspetor</label>
+                  <textarea
+                    rows={3}
+                    className="form-input"
+                    value={apontamentoObs}
+                    onChange={(e) => setApontamentoObs(e.target.value)}
+                    placeholder="Descreva sintomas observados na parcela ou recomendação agronômica..."
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setModalApontamentoOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Registrar Apontamento Territorial
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 };
