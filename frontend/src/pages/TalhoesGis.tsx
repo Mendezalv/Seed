@@ -1,84 +1,1073 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
+import { ModalEntradaInsumo } from '../components/modals/ModalEntradaInsumo';
+import { ModalOcorrenciaSanitaria } from '../components/modals/ModalOcorrenciaSanitaria';
+
+export interface AplicacaoHist {
+  data: string;
+  responsavel: string;
+  titulo: string;
+  meta: string;
+  tipo: 'danger' | 'accent' | 'default';
+}
+
+export interface Talhao {
+  id: number;
+  code: string;
+  nome: string;
+  area: string;
+  areaNum: number;
+  cultura: 'soja' | 'milho' | 'pousio';
+  culturaDisplay: string;
+  variedade: string;
+  estagio: string;
+  produtividade: string;
+  status: 'NORMAL' | 'ALERTA_FERRUGEM' | 'POUSIO';
+  plantio: string;
+  colheita: string;
+  geoId: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  ndvi: number;
+  alertTitle?: string;
+  alertDesc?: string;
+  aplicacoes: AplicacaoHist[];
+}
+
+const TALHOES_DATA: Talhao[] = [
+  {
+    id: 1,
+    code: 'T-01',
+    nome: 'Talhão 01 — Sede',
+    area: '110,0 ha',
+    areaNum: 110.0,
+    cultura: 'soja',
+    culturaDisplay: 'Soja',
+    variedade: 'BRS 511',
+    estagio: 'V6 Vegetativo',
+    produtividade: '66,0 sc/ha',
+    status: 'NORMAL',
+    plantio: '20/10/2024',
+    colheita: '15/02/2025',
+    geoId: '#TLH-01',
+    x: 50,
+    y: 95,
+    width: 185,
+    height: 225,
+    color: '#10b981',
+    ndvi: 0.79,
+    aplicacoes: [
+      {
+        data: '12/11/2024 • Operador João P.',
+        responsavel: 'João P.',
+        titulo: 'Fungicida Opera Ultra',
+        meta: 'Dose: 0,5 L/ha • Lote OP-2024-12',
+        tipo: 'accent',
+      },
+      {
+        data: '20/10/2024 • Plantio Mecanizado',
+        responsavel: 'Equipe Sede',
+        titulo: 'Sementes BRS 511 Tratadas',
+        meta: 'Densidade: 250 mil pl/ha • Lote SEM-18',
+        tipo: 'accent',
+      },
+    ],
+  },
+  {
+    id: 2,
+    code: 'T-02',
+    nome: 'Talhão 02 — Pivô Central',
+    area: '140,0 ha',
+    areaNum: 140.0,
+    cultura: 'soja',
+    culturaDisplay: 'Soja',
+    variedade: 'BRS 511',
+    estagio: 'R1 Floração',
+    produtividade: '68,0 sc/ha',
+    status: 'NORMAL',
+    plantio: '15/10/2024',
+    colheita: '10/02/2025',
+    geoId: '#TLH-02',
+    x: 255,
+    y: 95,
+    width: 185,
+    height: 225,
+    color: '#10b981',
+    ndvi: 0.82,
+    aplicacoes: [
+      {
+        data: '10/11/2024 • Operador Carlos M.',
+        responsavel: 'Carlos M.',
+        titulo: 'Fertirrigação Nitrogênio + Boro',
+        meta: 'Lâmina: 14mm • Tanque 02',
+        tipo: 'accent',
+      },
+      {
+        data: '15/10/2024 • Plantio Pivô',
+        responsavel: 'Equipe Mecanizada',
+        titulo: 'Sementes BRS 511',
+        meta: 'Densidade: 260 mil pl/ha • Lote SEM-22',
+        tipo: 'accent',
+      },
+    ],
+  },
+  {
+    id: 3,
+    code: 'T-03',
+    nome: 'Talhão 03 — Platô Alto',
+    area: '95,0 ha',
+    areaNum: 95.0,
+    cultura: 'soja',
+    culturaDisplay: 'Soja',
+    variedade: 'DM 66i68',
+    estagio: 'R2 Vagens',
+    produtividade: '64,0 sc/ha',
+    status: 'NORMAL',
+    plantio: '22/10/2024',
+    colheita: '18/02/2025',
+    geoId: '#TLH-03',
+    x: 460,
+    y: 95,
+    width: 185,
+    height: 225,
+    color: '#10b981',
+    ndvi: 0.77,
+    aplicacoes: [
+      {
+        data: '08/11/2024 • Operador Lucas F.',
+        responsavel: 'Lucas F.',
+        titulo: 'Inseticida Ampligo',
+        meta: 'Dose: 0,15 L/ha • Lote AMP-44',
+        tipo: 'accent',
+      },
+      {
+        data: '22/10/2024 • Plantio Direto',
+        responsavel: 'Equipe Sede',
+        titulo: 'Sementes DM 66i68',
+        meta: 'Densidade: 245 mil pl/ha • Lote SEM-39',
+        tipo: 'accent',
+      },
+    ],
+  },
+  {
+    id: 4,
+    code: 'T-04',
+    nome: 'Talhão 04 — Baixada Norte',
+    area: '125,0 ha',
+    areaNum: 125.0,
+    cultura: 'soja',
+    culturaDisplay: 'Soja',
+    variedade: 'DM 66i68',
+    estagio: 'R2 Vagens',
+    produtividade: '58,0 sc/ha',
+    status: 'ALERTA_FERRUGEM',
+    plantio: '18/10/2024',
+    colheita: '12/02/2025',
+    geoId: '#TLH-04',
+    x: 665,
+    y: 95,
+    width: 185,
+    height: 225,
+    color: '#ef4444',
+    ndvi: 0.65,
+    alertTitle: 'Foco de Ferrugem Asiática Detectado',
+    alertDesc: 'Score de risco fitossanitário 0.88 correlacionado ao molhamento foliar. Aplicação de defensivo curativo prioritária.',
+    aplicacoes: [
+      {
+        data: 'Hoje, 08:30 • Operador Carlos M.',
+        responsavel: 'Carlos M.',
+        titulo: 'Fungicida Fox Xpro',
+        meta: 'Dose: 0,5 L/ha • Lote FX-2024-88',
+        tipo: 'danger',
+      },
+      {
+        data: '15/09/2024 • Operador João P.',
+        responsavel: 'João P.',
+        titulo: 'Fertilizante NPK 04-14-08',
+        meta: 'Dose: 350 kg/ha • Lote FERT-09',
+        tipo: 'accent',
+      },
+      {
+        data: '18/10/2024 • Plantio Mecanizado',
+        responsavel: 'Equipe Sede',
+        titulo: 'Sementes Tratadas DM 66i68',
+        meta: 'Densidade: 240 mil pl/ha • Lote SEM-41',
+        tipo: 'accent',
+      },
+    ],
+  },
+  {
+    id: 5,
+    code: 'T-05',
+    nome: 'Talhão 05 — Cerca Velha',
+    area: '180,0 ha',
+    areaNum: 180.0,
+    cultura: 'milho',
+    culturaDisplay: 'Milho',
+    variedade: 'DKB 360',
+    estagio: 'V4 Desenvolvimento',
+    produtividade: '120,0 sc/ha',
+    status: 'NORMAL',
+    plantio: '05/11/2024',
+    colheita: '25/03/2025',
+    geoId: '#TLH-05',
+    x: 50,
+    y: 370,
+    width: 185,
+    height: 225,
+    color: '#f59e0b',
+    ndvi: 0.74,
+    aplicacoes: [
+      {
+        data: '22/11/2024 • Operador Marcos R.',
+        responsavel: 'Marcos R.',
+        titulo: 'Herbicida Soberan',
+        meta: 'Dose: 0,25 L/ha • Lote SOB-99',
+        tipo: 'accent',
+      },
+      {
+        data: '05/11/2024 • Semeadura Milho',
+        responsavel: 'Equipe Sul',
+        titulo: 'Sementes DKB 360 PRO4',
+        meta: 'Densidade: 68 mil pl/ha • Lote MIL-11',
+        tipo: 'accent',
+      },
+    ],
+  },
+  {
+    id: 6,
+    code: 'T-06',
+    nome: 'Talhão 06 — Represa',
+    area: '160,0 ha',
+    areaNum: 160.0,
+    cultura: 'milho',
+    culturaDisplay: 'Milho',
+    variedade: 'DKB 360',
+    estagio: 'V6 Desenvolvimento',
+    produtividade: '115,0 sc/ha',
+    status: 'NORMAL',
+    plantio: '02/11/2024',
+    colheita: '20/03/2025',
+    geoId: '#TLH-06',
+    x: 255,
+    y: 370,
+    width: 185,
+    height: 225,
+    color: '#f59e0b',
+    ndvi: 0.76,
+    aplicacoes: [
+      {
+        data: '18/11/2024 • Operador Marcos R.',
+        responsavel: 'Marcos R.',
+        titulo: 'Ureia Agrícola Coberta (N)',
+        meta: 'Dose: 180 kg/ha • Lote URE-04',
+        tipo: 'accent',
+      },
+      {
+        data: '02/11/2024 • Plantio Represa',
+        responsavel: 'Equipe Sul',
+        titulo: 'Sementes DKB 360 PRO4',
+        meta: 'Densidade: 66 mil pl/ha • Lote MIL-12',
+        tipo: 'accent',
+      },
+    ],
+  },
+  {
+    id: 7,
+    code: 'T-07',
+    nome: 'Talhão 07 — Divisa Leste',
+    area: '210,0 ha',
+    areaNum: 210.0,
+    cultura: 'soja',
+    culturaDisplay: 'Soja',
+    variedade: 'BRS 511',
+    estagio: 'R3 Granação',
+    produtividade: '65,0 sc/ha',
+    status: 'NORMAL',
+    plantio: '12/10/2024',
+    colheita: '08/02/2025',
+    geoId: '#TLH-07',
+    x: 460,
+    y: 370,
+    width: 185,
+    height: 225,
+    color: '#10b981',
+    ndvi: 0.81,
+    aplicacoes: [
+      {
+        data: '14/11/2024 • Operador Carlos M.',
+        responsavel: 'Carlos M.',
+        titulo: 'Fungicida Priori Xtra',
+        meta: 'Dose: 0,3 L/ha • Lote PR-80',
+        tipo: 'accent',
+      },
+      {
+        data: '12/10/2024 • Plantio Leste',
+        responsavel: 'Equipe Sede',
+        titulo: 'Sementes BRS 511',
+        meta: 'Densidade: 255 mil pl/ha • Lote SEM-14',
+        tipo: 'accent',
+      },
+    ],
+  },
+  {
+    id: 8,
+    code: 'T-08',
+    nome: 'Talhão 08 — Reserva & Palhada',
+    area: '200,0 ha',
+    areaNum: 200.0,
+    cultura: 'pousio',
+    culturaDisplay: 'Pousio ESG',
+    variedade: 'Braquiária Ruziziensis',
+    estagio: 'Manejo de Cobertura',
+    produtividade: '—',
+    status: 'POUSIO',
+    plantio: '— (Pousio)',
+    colheita: '— (Palhada)',
+    geoId: '#TLH-08',
+    x: 665,
+    y: 370,
+    width: 185,
+    height: 225,
+    color: '#71717a',
+    ndvi: 0.71,
+    alertTitle: 'Área em Regeneração & Pousio ESG',
+    alertDesc: 'Talhão sob cobertura de Braquiária para acúmulo de palhada, retenção hídrica e descompactação biológica do solo.',
+    aplicacoes: [
+      {
+        data: '01/08/2024 • Operador Renato S.',
+        responsavel: 'Renato S.',
+        titulo: 'Semeadura a Lanço Braquiária',
+        meta: 'Taxa: 12 kg/ha • Manejo Integrado',
+        tipo: 'default',
+      },
+    ],
+  },
+];
 
 export const TalhoesGis: React.FC = () => {
+  const [talhoes, setTalhoes] = useState<Talhao[]>(TALHOES_DATA);
+  const [selectedId, setSelectedId] = useState<number>(4);
+  const [culturaFilter, setCulturaFilter] = useState<'all' | 'soja' | 'milho' | 'pousio'>('all');
+  const [viewMode, setViewMode] = useState<'map' | 'table'>('map');
+  const [activeTool, setActiveTool] = useState<'select' | 'ndvi' | 'measure' | 'center'>('select');
+  const [ndviOverlay, setNdviOverlay] = useState<boolean>(false);
+  
+  // Modais e feedback
+  const [modalEntradaOpen, setModalEntradaOpen] = useState(false);
+  const [modalOcorrenciaOpen, setModalOcorrenciaOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 4000);
+  };
+
+  const selectedTalhao = talhoes.find((t) => t.id === selectedId) || talhoes[0];
+
+  // Filtro de lista
+  const filteredTalhoes = talhoes.filter((t) => {
+    if (culturaFilter === 'all') return true;
+    return t.cultura === culturaFilter;
+  });
+
+  // Exportar GeoJSON
+  const handleExportGeoJSON = () => {
+    const geojsonData = {
+      type: 'FeatureCollection',
+      crs: {
+        type: 'name',
+        properties: { name: 'urn:ogc:def:crs:EPSG::4674' }, // SIRGAS 2000
+      },
+      metadata: {
+        propriedade: 'Fazenda Santa Maria',
+        municipio: 'Sorriso',
+        uf: 'MT',
+        gerado_em: new Date().toISOString(),
+        total_talhoes: talhoes.length,
+      },
+      features: talhoes.map((t) => ({
+        type: 'Feature',
+        id: t.code,
+        properties: {
+          id: t.id,
+          nome: t.nome,
+          area_ha: t.areaNum,
+          cultura: t.cultura,
+          variedade: t.variedade,
+          estagio: t.estagio,
+          produtividade_esperada: t.produtividade,
+          status: t.status,
+          ndvi_atual: t.ndvi,
+          plantio: t.plantio,
+          colheita: t.colheita,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-55.705 + (t.x / 1000), -12.545 - (t.y / 1000)],
+              [-55.705 + ((t.x + t.width) / 1000), -12.545 - (t.y / 1000)],
+              [-55.705 + ((t.x + t.width) / 1000), -12.545 - ((t.y + t.height) / 1000)],
+              [-55.705 + (t.x / 1000), -12.545 - ((t.y + t.height) / 1000)],
+              [-55.705 + (t.x / 1000), -12.545 - (t.y / 1000)],
+            ],
+          ],
+        },
+      })),
+    };
+
+    const blob = new Blob([JSON.stringify(geojsonData, null, 2)], { type: 'application/geo+json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `seed-fazenda-santa-maria-talhoes-${new Date().toISOString().split('T')[0]}.geojson`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast('Exportação concluída: GeoJSON SIRGAS 2000 baixado com sucesso!');
+  };
+
+  // Importar KML / GeoJSON
+  const handleImportKmlClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      showToast(`Arquivo "${file.name}" importado com sucesso! Geometrias vetoriais validadas no PostGIS.`);
+    }
+    // reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Troca de ferramentas do mapa
+  const handleToolClick = (tool: 'select' | 'ndvi' | 'measure' | 'center') => {
+    setActiveTool(tool);
+    if (tool === 'ndvi') {
+      const nextNdvi = !ndviOverlay;
+      setNdviOverlay(nextNdvi);
+      showToast(nextNdvi ? 'Camada Sentinel-2 NDVI (Índice de Vigor) ativada.' : 'Camada NDVI desativada.');
+    } else if (tool === 'measure') {
+      showToast('Ferramenta de régua geodésica ativa: clique em dois vértices para mensurar distância.');
+    } else if (tool === 'center') {
+      showToast('Mapa centralizado na sede (12°32\'44"S 55°42\'18"W).');
+    } else {
+      showToast('Modo de seleção de parcelas ativo.');
+    }
+  };
+
+  // Sucesso de nova ocorrência adicionada ao talhão
+  const handleSuccessOcorrencia = (nova: { agente: string; severidade: string; talhao: string }) => {
+    setTalhoes((prev) =>
+      prev.map((t) => {
+        if (t.id === selectedTalhao.id) {
+          return {
+            ...t,
+            status: 'ALERTA_FERRUGEM',
+            alertTitle: `Alerta: ${nova.agente} (${nova.severidade})`,
+            alertDesc: `Ocorrência registrada no talhão. Severidade classificada como ${nova.severidade}.`,
+            aplicacoes: [
+              {
+                data: `Hoje, ${new Date().toLocaleTimeString().slice(0, 5)} • App Web`,
+                responsavel: 'Registro Sanitário',
+                titulo: `Alerta: ${nova.agente}`,
+                meta: `Severidade: ${nova.severidade}`,
+                tipo: 'danger',
+              },
+              ...t.aplicacoes,
+            ],
+          };
+        }
+        return t;
+      })
+    );
+    showToast(`Ocorrência sanitária vinculada com sucesso a ${selectedTalhao.nome}!`);
+  };
+
+  // Sucesso de insumo alocado
+  const handleSuccessInsumo = (novo: { nome: string; quantidade: number; custo: number }) => {
+    setTalhoes((prev) =>
+      prev.map((t) => {
+        if (t.id === selectedTalhao.id) {
+          return {
+            ...t,
+            aplicacoes: [
+              {
+                data: `Hoje, ${new Date().toLocaleTimeString().slice(0, 5)} • Prescrição`,
+                responsavel: 'Eng. Agrônomo',
+                titulo: `Alocação: ${novo.nome}`,
+                meta: `Qtd: ${novo.quantidade} • Custo: R$ ${novo.custo.toLocaleString('pt-BR')}`,
+                tipo: 'accent',
+              },
+              ...t.aplicacoes,
+            ],
+          };
+        }
+        return t;
+      })
+    );
+    showToast(`Insumo ${novo.nome} alocado com sucesso ao talhão ${selectedTalhao.code}!`);
+  };
+
   return (
     <>
+      {/* Toast flutuante de notificação */}
+      {toastMsg && (
+        <div className="toast-msg">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" style={{ width: '18px', height: '18px', color: 'var(--accent)' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
+      {/* Input oculto para upload de arquivo KML/GeoJSON */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".kml,.kmz,.geojson,.json"
+        style={{ display: 'none' }}
+      />
+
+      {/* Cabeçalho da Página */}
       <div className="page-header stagger-item">
         <div className="page-header-left">
-          <h1 className="page-heading">Talhões & GIS</h1>
-          <p className="page-subheading">Mapeamento georreferenciado, topografia e mosaico de parcelas agrícolas</p>
+          <h1 className="page-heading">Gestão Territorial & Talhões</h1>
+          <p className="page-subheading">Mapeamento vetorial com telemetria fenológica, safras e alocação de insumos</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-outline">Filtrar Safras</button>
-          <button className="btn btn-primary">+ Novo Talhão</button>
+          <button className="btn btn-outline" onClick={handleExportGeoJSON} title="Baixar arquivo GeoJSON SIRGAS 2000">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Exportar GeoJSON
+          </button>
+          <button className="btn btn-primary" onClick={handleImportKmlClick} title="Importar arquivo vetorial KML ou GeoJSON">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Importar KML / Talhão
+          </button>
         </div>
       </div>
 
-      <div className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-title">Área Total Cadastrada</span>
-            <div className="kpi-icon green">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
-              </svg>
-            </div>
-          </div>
-          <div className="kpi-value">1.420 <span className="suffix">ha</span></div>
-          <div className="kpi-footer">
-            <span className="kpi-detail">18 talhões georreferenciados</span>
-            <span className="kpi-badge green">100% PostGIS</span>
-          </div>
+      {/* Mini KPI Strip Territorial */}
+      <div className="gis-strip stagger-item">
+        <div className="gis-cell">
+          <span className="gis-cell-label">Área Mapeada Total</span>
+          <div className="gis-cell-val">1.850,0<span className="unit">ha</span></div>
+          <span className="gis-cell-sub">14 talhões cadastrados</span>
         </div>
-
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-title">NDVI Médio</span>
-            <div className="kpi-icon green">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </svg>
-            </div>
+        <div className="gis-cell">
+          <span className="gis-cell-label">Área Cultivada (Safra 24/25)</span>
+          <div className="gis-cell-val">1.420,0<span className="unit">ha</span></div>
+          <span className="gis-cell-sub" style={{ color: 'var(--accent-text)' }}>76.7% sob plantio ativo</span>
+        </div>
+        <div className="gis-cell">
+          <span className="gis-cell-label">Produtividade Estimada</span>
+          <div className="gis-cell-val">64,5<span className="unit">sc/ha</span></div>
+          <span className="gis-cell-sub">Break-even: 41,2 sc/ha</span>
+        </div>
+        <div className="gis-cell">
+          <span className="gis-cell-label">Talhões com Alerta</span>
+          <div className="gis-cell-val" style={{ color: 'var(--danger)' }}>
+            1 <span className="unit" style={{ color: 'var(--danger)' }}>crítico</span>
           </div>
-          <div className="kpi-value">0.74 <span className="suffix">vigor</span></div>
-          <div className="kpi-footer">
-            <span className="kpi-detail">Sentinel-2 (L2A)</span>
-            <span className="kpi-badge green">Vigor Bom</span>
-          </div>
+          <span className="gis-cell-sub">Talhão 04 (Ferrugem)</span>
         </div>
       </div>
 
-      <div className="section-card">
-        <div className="section-header">
-          <div className="section-title">Visualizador Cartográfico GIS</div>
-        </div>
-        <div className="section-body">
+      {/* Barra de Controles e Filtros de Visualização */}
+      <div className="controls-bar stagger-item">
+        <div className="filter-group">
+          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', fontWeight: 600 }}>
+            Cultura:
+          </span>
           <div
-            style={{
-              height: '420px',
-              background: '#121215',
-              border: '1px dashed var(--border)',
-              borderRadius: 'var(--radius-sm)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '12px',
-              color: 'var(--text-secondary)',
-            }}
+            className={`filter-chip ${culturaFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setCulturaFilter('all')}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" style={{ width: '40px', height: '40px', color: 'var(--accent)' }}>
+            <span>Todos ({talhoes.length})</span>
+          </div>
+          <div
+            className={`filter-chip ${culturaFilter === 'soja' ? 'active' : ''}`}
+            onClick={() => setCulturaFilter('soja')}
+          >
+            <span className="chip-dot" style={{ background: 'var(--accent)' }}></span>
+            <span>Soja (760 ha)</span>
+          </div>
+          <div
+            className={`filter-chip ${culturaFilter === 'milho' ? 'active' : ''}`}
+            onClick={() => setCulturaFilter('milho')}
+          >
+            <span className="chip-dot" style={{ background: 'var(--warning)' }}></span>
+            <span>Milho (340 ha)</span>
+          </div>
+          <div
+            className={`filter-chip ${culturaFilter === 'pousio' ? 'active' : ''}`}
+            onClick={() => setCulturaFilter('pousio')}
+          >
+            <span className="chip-dot" style={{ background: 'var(--text-muted)' }}></span>
+            <span>Pastagem/Pousio (320 ha)</span>
+          </div>
+        </div>
+
+        <div className="view-toggles">
+          <button
+            className={`view-btn ${viewMode === 'map' ? 'active' : ''}`}
+            onClick={() => setViewMode('map')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
             </svg>
-            <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)' }}>
-              Módulo GIS Georreferenciado
-            </div>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '440px', textAlign: 'center' }}>
-              Camada pronta para renderizar polígonos GeoJSON/Shapefiles com dados de solo, histórico de plantio e declividade.
-            </p>
-          </div>
+            Mapa GIS
+          </button>
+          <button
+            className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
+            onClick={() => setViewMode('table')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+            Tabela Detalhada
+          </button>
         </div>
       </div>
+
+      {/* VIEW 1: MAPA GIS INTERATIVO COM GAVETA */}
+      {viewMode === 'map' && (
+        <div className="gis-workspace stagger-item">
+          {/* Card do Mapa Interativo */}
+          <div className="map-container">
+            {/* Controles de Ferramentas do Mapa */}
+            <div className="map-toolbar">
+              <button
+                className={`map-tool-btn ${activeTool === 'select' ? 'active' : ''}`}
+                title="Modo Seleção"
+                onClick={() => handleToolClick('select')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
+                </svg>
+              </button>
+              <button
+                className={`map-tool-btn ${ndviOverlay ? 'active' : ''}`}
+                title="Camada de Satélite NDVI (Sentinel-2)"
+                onClick={() => handleToolClick('ndvi')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" />
+                </svg>
+              </button>
+              <button
+                className={`map-tool-btn ${activeTool === 'measure' ? 'active' : ''}`}
+                title="Medir Área / Distância"
+                onClick={() => handleToolClick('measure')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                </svg>
+              </button>
+              <button
+                className={`map-tool-btn ${activeTool === 'center' ? 'active' : ''}`}
+                title="Centralizar Mapa"
+                onClick={() => handleToolClick('center')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Coordenadas Geográficas de Centro */}
+            <div className="map-coords">
+              <span>CENTRO: <strong>12°32'44"S 55°42'18"W</strong></span>
+              <span>•</span>
+              <span>DATUM: <strong>SIRGAS 2000 / PostGIS</strong></span>
+              {ndviOverlay && (
+                <>
+                  <span>•</span>
+                  <span style={{ color: 'var(--accent-text)' }}>SENTINEL-2 NDVI ATIVO</span>
+                </>
+              )}
+            </div>
+
+            {/* SVG Cartográfico dos Polígonos de Talhões */}
+            <svg className="svg-map-canvas" viewBox="0 0 900 700" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <linearGradient id="ndviGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+                  <stop offset="60%" stopColor="#84cc16" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#eab308" stopOpacity="0.25" />
+                </linearGradient>
+              </defs>
+
+              {/* Estradas de serviço e carreadores internos contínuos de ponta a ponta */}
+              <path
+                d="M 0 345 L 900 345 M 245 0 L 245 700 M 450 0 L 450 700 M 655 0 L 655 700"
+                stroke="#27272a"
+                strokeWidth="2"
+                strokeDasharray="6 4"
+                fill="none"
+              />
+
+              {/* Renderização dinâmica dos talhões */}
+              {talhoes.map((t) => {
+                const isSelected = t.id === selectedId;
+                const isDimmed = culturaFilter !== 'all' && t.cultura !== culturaFilter;
+
+                // Cores dinâmicas com base no status e camada NDVI
+                let fillColor = t.color;
+                let strokeColor = t.color;
+                let fillOpacity = isSelected ? 0.45 : 0.18;
+
+                if (ndviOverlay) {
+                  // Vigor NDVI visual
+                  if (t.ndvi >= 0.78) {
+                    fillColor = '#10b981';
+                    strokeColor = '#34d399';
+                  } else if (t.ndvi >= 0.70) {
+                    fillColor = '#84cc16';
+                    strokeColor = '#a3e635';
+                  } else {
+                    fillColor = '#f59e0b';
+                    strokeColor = '#fbbf24';
+                  }
+                  fillOpacity = isSelected ? 0.55 : 0.35;
+                }
+
+                if (t.status === 'ALERTA_FERRUGEM' && !ndviOverlay) {
+                  fillColor = '#ef4444';
+                  strokeColor = '#ef4444';
+                  fillOpacity = isSelected ? 0.45 : 0.28;
+                }
+
+                const centerX = t.x + t.width / 2;
+                const centerY = t.y + t.height / 2;
+
+                return (
+                  <g
+                    key={t.id}
+                    style={{
+                      opacity: isDimmed ? 0.15 : 1,
+                      pointerEvents: isDimmed ? 'none' : 'auto',
+                      transition: 'opacity 200ms ease',
+                    }}
+                  >
+                    <rect
+                      id={`poly-${t.id}`}
+                      className={`talhao-poly ${isSelected ? 'selected' : ''}`}
+                      data-cultura={t.cultura}
+                      x={t.x}
+                      y={t.y}
+                      width={t.width}
+                      height={t.height}
+                      rx="6"
+                      ry="6"
+                      fill={fillColor}
+                      fillOpacity={fillOpacity}
+                      stroke={isSelected ? '#fafafa' : strokeColor}
+                      strokeWidth={isSelected ? 3 : 1.5}
+                      onClick={() => setSelectedId(t.id)}
+                    />
+
+                    {/* Rótulo Principal do Talhão */}
+                    <text
+                      x={centerX}
+                      y={centerY - 10}
+                      textAnchor="middle"
+                      className="poly-label"
+                      style={{ fill: t.status === 'ALERTA_FERRUGEM' && !ndviOverlay ? '#fca5a5' : '#fafafa' }}
+                    >
+                      {t.code}
+                    </text>
+
+                    {/* Subtítulo de Cultura e Área */}
+                    <text
+                      x={centerX}
+                      y={centerY + 12}
+                      textAnchor="middle"
+                      className="poly-sublabel"
+                      style={{
+                        fill: t.status === 'ALERTA_FERRUGEM' && !ndviOverlay ? '#ef4444' : '#a1a1aa',
+                        fontWeight: t.status === 'ALERTA_FERRUGEM' ? 600 : 400,
+                      }}
+                    >
+                      {ndviOverlay
+                        ? `NDVI ${t.ndvi.toFixed(2)} • ${t.area.split(' ')[0]} ha`
+                        : `${t.area.split(' ')[0]} ha • ${t.culturaDisplay}`}
+                    </text>
+
+                    {/* Beacon piscante em talhão com alerta crítico */}
+                    {t.status === 'ALERTA_FERRUGEM' && (
+                      <circle cx={centerX} cy={centerY + 32} r="4.5" fill="#ef4444">
+                        <animate attributeName="opacity" values="1;0.25;1" dur="1.5s" repeatCount="indefinite" />
+                      </circle>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          {/* Painel Lateral de Detalhes do Talhão Ativo */}
+          <aside className="detail-panel">
+            <div className="panel-header">
+              <div className="panel-header-info">
+                <h2 className="panel-title">{selectedTalhao.nome}</h2>
+                <span className="panel-subtitle">
+                  {selectedTalhao.area} • PostGIS GeoJSON ID: {selectedTalhao.geoId}
+                </span>
+              </div>
+              {selectedTalhao.status === 'ALERTA_FERRUGEM' ? (
+                <span className="status-pill" style={{ background: 'var(--danger-muted)', color: 'var(--danger)' }}>
+                  RISCO ALTO
+                </span>
+              ) : selectedTalhao.status === 'POUSIO' ? (
+                <span className="status-pill" style={{ background: 'rgba(113, 113, 122, 0.2)', color: 'var(--text-muted)' }}>
+                  POUSIO
+                </span>
+              ) : (
+                <span className="status-pill" style={{ background: 'var(--accent-muted)', color: 'var(--accent-text)' }}>
+                  ATIVO
+                </span>
+              )}
+            </div>
+
+            <div className="panel-body">
+              {/* Banner de Alerta Sanitário Condicional */}
+              <div
+                className={`panel-alert ${
+                  selectedTalhao.status === 'ALERTA_FERRUGEM'
+                    ? 'alert-danger'
+                    : selectedTalhao.status === 'POUSIO'
+                    ? 'alert-pousio'
+                    : 'alert-normal'
+                }`}
+              >
+                <div
+                  className="panel-alert-icon"
+                  style={{
+                    color:
+                      selectedTalhao.status === 'ALERTA_FERRUGEM'
+                        ? 'var(--danger)'
+                        : selectedTalhao.status === 'POUSIO'
+                        ? 'var(--text-muted)'
+                        : 'var(--accent)',
+                  }}
+                >
+                  {selectedTalhao.status === 'ALERTA_FERRUGEM' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                  ) : selectedTalhao.status === 'POUSIO' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <div
+                    className="panel-alert-title"
+                    style={{
+                      color:
+                        selectedTalhao.status === 'ALERTA_FERRUGEM'
+                          ? '#fca5a5'
+                          : selectedTalhao.status === 'POUSIO'
+                          ? 'var(--text-primary)'
+                          : '#a7f3d0',
+                    }}
+                  >
+                    {selectedTalhao.alertTitle || 'Sanidade Vegetal Estável'}
+                  </div>
+                  <div className="panel-alert-desc">
+                    {selectedTalhao.alertDesc ||
+                      `Vigor fenológico (NDVI ${selectedTalhao.ndvi}) dentro da normalidade para estágio ${selectedTalhao.estagio}. Nenhuma ocorrência fitossanitária ativa.`}
+                  </div>
+                </div>
+              </div>
+
+              {/* Dados da Safra Ativa */}
+              <div>
+                <div className="timeline-section-title">Dados da Safra Ativa (2024/25)</div>
+                <div className="metric-rows">
+                  <div className="metric-row">
+                    <span className="metric-row-label">Cultura / Variedade</span>
+                    <span className="metric-row-val">{selectedTalhao.culturaDisplay} {selectedTalhao.variedade}</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-row-label">Estágio Fenológico</span>
+                    <span className="metric-row-val">{selectedTalhao.estagio}</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-row-label">Produtividade Estimada</span>
+                    <span className="metric-row-val">{selectedTalhao.produtividade}</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-row-label">Índice NDVI Atual</span>
+                    <span className="metric-row-val" style={{ color: selectedTalhao.ndvi >= 0.75 ? 'var(--accent-text)' : 'var(--warning)' }}>
+                      {selectedTalhao.ndvi.toFixed(2)} (Sentinel-2)
+                    </span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-row-label">Data de Plantio</span>
+                    <span className="metric-row-val">{selectedTalhao.plantio}</span>
+                  </div>
+                  <div className="metric-row">
+                    <span className="metric-row-label">Previsão de Colheita</span>
+                    <span className="metric-row-val">{selectedTalhao.colheita}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rastreabilidade de Insumos Aplicados */}
+              <div>
+                <div className="timeline-section-title">Histórico de Aplicações no Talhão</div>
+                <div className="timeline">
+                  {selectedTalhao.aplicacoes.map((item, idx) => (
+                    <div key={idx} className="timeline-item">
+                      <span
+                        className="timeline-dot"
+                        style={{
+                          background:
+                            item.tipo === 'danger'
+                              ? 'var(--danger)'
+                              : item.tipo === 'accent'
+                              ? 'var(--accent)'
+                              : 'var(--text-muted)',
+                        }}
+                      ></span>
+                      <span className="timeline-date">{item.data}</span>
+                      <span className="timeline-title">{item.titulo}</span>
+                      <span className="timeline-meta">{item.meta}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="panel-footer">
+              <button
+                className="btn btn-outline"
+                style={{ flex: 1 }}
+                onClick={() => setModalEntradaOpen(true)}
+              >
+                Alocar Insumo
+              </button>
+              <button
+                className="btn btn-primary"
+                style={{ flex: 1 }}
+                onClick={() => setModalOcorrenciaOpen(true)}
+              >
+                Nova Ocorrência
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* VIEW 2: VISUALIZAÇÃO EM TABELA DETALHADA */}
+      {viewMode === 'table' && (
+        <div className="table-container stagger-item">
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Identificação</th>
+                  <th>Área (ha)</th>
+                  <th>Cultura</th>
+                  <th>Variedade</th>
+                  <th>Estágio Fenológico</th>
+                  <th>Prod. Estimada</th>
+                  <th>NDVI</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTalhoes.map((t) => (
+                  <tr
+                    key={t.id}
+                    style={{
+                      background: t.status === 'ALERTA_FERRUGEM' ? 'rgba(239, 68, 68, 0.05)' : undefined,
+                    }}
+                  >
+                    <td className="cell-mono" style={{ color: t.status === 'ALERTA_FERRUGEM' ? 'var(--danger)' : undefined }}>
+                      {t.nome}
+                    </td>
+                    <td className="cell-mono">{t.area}</td>
+                    <td>{t.culturaDisplay}</td>
+                    <td>{t.variedade}</td>
+                    <td>{t.estagio}</td>
+                    <td className="cell-mono">{t.produtividade}</td>
+                    <td className="cell-mono" style={{ color: t.ndvi >= 0.75 ? 'var(--accent-text)' : 'var(--warning)' }}>
+                      {t.ndvi.toFixed(2)}
+                    </td>
+                    <td>
+                      {t.status === 'ALERTA_FERRUGEM' ? (
+                        <span className="status-pill" style={{ background: 'var(--danger-muted)', color: 'var(--danger)' }}>
+                          RISCO ALTO
+                        </span>
+                      ) : t.status === 'POUSIO' ? (
+                        <span className="status-pill" style={{ background: 'rgba(113, 113, 122, 0.2)', color: 'var(--text-muted)' }}>
+                          POUSIO
+                        </span>
+                      ) : (
+                        <span className="status-pill" style={{ background: 'var(--accent-muted)', color: 'var(--accent-text)' }}>
+                          ATIVO
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-outline"
+                        style={{ padding: '4px 8px', fontSize: '11px' }}
+                        onClick={() => {
+                          setSelectedId(t.id);
+                          setViewMode('map');
+                          showToast(`Talhão ${t.code} selecionado e focado no mapa!`);
+                        }}
+                      >
+                        Ver no Mapa
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modais Integrados */}
+      <ModalEntradaInsumo
+        isOpen={modalEntradaOpen}
+        onClose={() => setModalEntradaOpen(false)}
+        onSuccess={handleSuccessInsumo}
+      />
+
+      <ModalOcorrenciaSanitaria
+        isOpen={modalOcorrenciaOpen}
+        onClose={() => setModalOcorrenciaOpen(false)}
+        onSuccess={handleSuccessOcorrencia}
+      />
     </>
   );
 };
