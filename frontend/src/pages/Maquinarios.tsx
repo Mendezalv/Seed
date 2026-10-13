@@ -1,52 +1,1479 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
+import { CustomSelect } from '../components/ui/CustomSelect';
+
+interface Machine {
+  id: string;
+  code: string;
+  name: string;
+  category: 'TRATOR' | 'COLHEITADEIRA' | 'PULVERIZADOR' | 'PLANTADEIRA';
+  typeTag: string;
+  status: 'OPERANDO' | 'PATIO' | 'MANUTENCAO' | 'REVISAO';
+  statusLabel: string;
+  iconType: 'tractor' | 'harvester' | 'sprayer' | 'planter';
+  horimeter: number;
+  horimeterTarget: number;
+  horimeterCyclePct: number;
+  horimeterSub1: string;
+  horimeterSub2: string;
+  horimeterSub2Color?: string;
+  telemetry1Label: string;
+  telemetry1Val: string;
+  telemetry2Label: string;
+  telemetry2Val: string;
+  telemetry2IsFuel?: boolean;
+  fuelPct?: number;
+  telemetry3Label: string;
+  telemetry3Val: string;
+  operator: string;
+  operatorInitials: string;
+  talhao: string;
+  activeOS?: string;
+}
+
+interface MaintenanceOrder {
+  id: string;
+  code: string;
+  machineCode: string;
+  machineName: string;
+  machineSub: string;
+  type: string;
+  typeDesc: string;
+  horimeter: string;
+  parts: string;
+  partsOrigin: string;
+  mechanic: string;
+  cost: number;
+  status: 'EM_EXECUCAO' | 'AGUARDANDO_PECA' | 'AGENDADA' | 'CONCLUIDA';
+  statusLabel: string;
+  statusClass: string;
+  date: string;
+}
+
+interface ToastMessage {
+  id: string;
+  text: string;
+}
+
+const INITIAL_MACHINES: Machine[] = [
+  {
+    id: '1',
+    code: 'TR-01',
+    name: 'John Deere 8370R',
+    category: 'TRATOR',
+    typeTag: 'Trator Pesado • 370 cv',
+    status: 'REVISAO',
+    statusLabel: 'Revisão em 8h',
+    iconType: 'tractor',
+    horimeter: 1492,
+    horimeterTarget: 1500,
+    horimeterCyclePct: 98.4,
+    horimeterSub1: '99% concluído do ciclo',
+    horimeterSub2: 'Faltam 8h p/ troca óleo',
+    horimeterSub2Color: 'var(--warning)',
+    telemetry1Label: 'Consumo Instantâneo',
+    telemetry1Val: '18,2 L/h',
+    telemetry2Label: 'Nível Diesel S10',
+    telemetry2Val: '74%',
+    telemetry2IsFuel: true,
+    fuelPct: 74,
+    telemetry3Label: 'Velocidade Atual',
+    telemetry3Val: '7,4 km/h',
+    operator: 'Carlos Eduardo',
+    operatorInitials: 'CE',
+    talhao: 'Talhão 02',
+  },
+  {
+    id: '2',
+    code: 'TR-02',
+    name: 'Case IH Magnum 380',
+    category: 'TRATOR',
+    typeTag: 'Trator Pesado • 380 cv',
+    status: 'OPERANDO',
+    statusLabel: 'Em Operação',
+    iconType: 'tractor',
+    horimeter: 840,
+    horimeterTarget: 1000,
+    horimeterCyclePct: 84,
+    horimeterSub1: '84% do ciclo',
+    horimeterSub2: 'Faltam 160h p/ revisão',
+    telemetry1Label: 'Consumo Instantâneo',
+    telemetry1Val: '17,5 L/h',
+    telemetry2Label: 'Nível Diesel S10',
+    telemetry2Val: '82%',
+    telemetry2IsFuel: true,
+    fuelPct: 82,
+    telemetry3Label: 'Velocidade Atual',
+    telemetry3Val: '6,8 km/h',
+    operator: 'Marcos Silveira',
+    operatorInitials: 'MS',
+    talhao: 'Talhão 05',
+  },
+  {
+    id: '3',
+    code: 'CH-01',
+    name: 'John Deere S790',
+    category: 'COLHEITADEIRA',
+    typeTag: 'Colheitadeira Grãos • 540 cv',
+    status: 'PATIO',
+    statusLabel: 'Pátio Central',
+    iconType: 'harvester',
+    horimeter: 640,
+    horimeterTarget: 1000,
+    horimeterCyclePct: 64,
+    horimeterSub1: 'Plataforma Drapper 45ft acoplada',
+    horimeterSub2: 'Pronta p/ Colheita',
+    horimeterSub2Color: 'var(--accent-text)',
+    telemetry1Label: 'Consumo Instantâneo',
+    telemetry1Val: '0,0 L/h (Off)',
+    telemetry2Label: 'Nível Diesel S10',
+    telemetry2Val: '88%',
+    telemetry2IsFuel: true,
+    fuelPct: 88,
+    telemetry3Label: 'Status Telemetria',
+    telemetry3Val: 'Sinal GPS 100%',
+    operator: 'Anderson Lima',
+    operatorInitials: 'AL',
+    talhao: 'Pátio Central',
+  },
+  {
+    id: '4',
+    code: 'PV-01',
+    name: 'Jacto Uniport 3030',
+    category: 'PULVERIZADOR',
+    typeTag: 'Pulverizador • 3.000 L',
+    status: 'OPERANDO',
+    statusLabel: 'Pulverizando',
+    iconType: 'sprayer',
+    horimeter: 980,
+    horimeterTarget: 1000,
+    horimeterCyclePct: 98,
+    horimeterSub1: 'Barra 36m • Bicos cerâmicos',
+    horimeterSub2: 'Faltam 20h p/ revisão',
+    telemetry1Label: 'Vazão Calda',
+    telemetry1Val: '110 L/ha',
+    telemetry2Label: 'Nível Tanque Calda',
+    telemetry2Val: '1.480 L (49%)',
+    telemetry3Label: 'Velocidade Aplicação',
+    telemetry3Val: '18,5 km/h',
+    operator: 'Rodrigo Pires',
+    operatorInitials: 'RP',
+    talhao: 'Talhão 04',
+  },
+  {
+    id: '5',
+    code: 'TR-04',
+    name: 'John Deere 7230J',
+    category: 'TRATOR',
+    typeTag: 'Trator Médio • 230 cv',
+    status: 'MANUTENCAO',
+    statusLabel: 'Em Oficina (OS Aberta)',
+    iconType: 'tractor',
+    horimeter: 2310,
+    horimeterTarget: 2500,
+    horimeterCyclePct: 100,
+    horimeterSub1: 'OS-2025-084 em execução',
+    horimeterSub2: 'Troca Válvula Hidráulica',
+    horimeterSub2Color: 'var(--danger)',
+    telemetry1Label: 'Mecânico Responsável',
+    telemetry1Val: 'Tiago Rezende',
+    telemetry2Label: 'Custo Estimado OS',
+    telemetry2Val: 'R$ 4.850,00',
+    telemetry3Label: 'Previsão Liberação',
+    telemetry3Val: 'Amanhã, 16h',
+    operator: 'Oficina Central',
+    operatorInitials: 'OF',
+    talhao: 'Box 02',
+    activeOS: 'OS-2025-084',
+  },
+  {
+    id: '6',
+    code: 'PL-01',
+    name: 'DB ExactEmerge 36L',
+    category: 'PLANTADEIRA',
+    typeTag: 'Plantadeira • 36 Linhas (45cm)',
+    status: 'OPERANDO',
+    statusLabel: 'Plantando',
+    iconType: 'planter',
+    horimeter: 1280,
+    horimeterTarget: 1420,
+    horimeterCyclePct: 90.1,
+    horimeterSub1: 'Atrelada ao Trator TR-01',
+    horimeterSub2: 'Taxa Variável Ativa',
+    horimeterSub2Color: 'var(--accent-text)',
+    telemetry1Label: 'População Alvo',
+    telemetry1Val: '280 mil pl/ha',
+    telemetry2Label: 'Singulação Sementes',
+    telemetry2Val: '99,2%',
+    telemetry3Label: 'Pressão Linha',
+    telemetry3Val: '120 kg (DownForce)',
+    operator: 'Carlos Eduardo',
+    operatorInitials: 'CE',
+    talhao: 'Talhão 02',
+  },
+  {
+    id: '7',
+    code: 'TR-03',
+    name: 'John Deere 6190M',
+    category: 'TRATOR',
+    typeTag: 'Trator Médio • 190 cv',
+    status: 'OPERANDO',
+    statusLabel: 'Em Operação',
+    iconType: 'tractor',
+    horimeter: 1120,
+    horimeterTarget: 1250,
+    horimeterCyclePct: 89.6,
+    horimeterSub1: '90% do ciclo',
+    horimeterSub2: 'Faltam 130h p/ revisão',
+    telemetry1Label: 'Consumo Instantâneo',
+    telemetry1Val: '13,8 L/h',
+    telemetry2Label: 'Nível Diesel S10',
+    telemetry2Val: '76%',
+    telemetry2IsFuel: true,
+    fuelPct: 76,
+    telemetry3Label: 'Velocidade Atual',
+    telemetry3Val: '7,2 km/h',
+    operator: 'Lucas Ferreira',
+    operatorInitials: 'LF',
+    talhao: 'Talhão 08',
+  },
+  {
+    id: '8',
+    code: 'TR-05',
+    name: 'Case IH Steiger 500',
+    category: 'TRATOR',
+    typeTag: 'Articulado • 500 cv',
+    status: 'PATIO',
+    statusLabel: 'Pátio Central',
+    iconType: 'tractor',
+    horimeter: 3410,
+    horimeterTarget: 3500,
+    horimeterCyclePct: 97.4,
+    horimeterSub1: '97% do ciclo',
+    horimeterSub2: 'Faltam 90h p/ revisão',
+    telemetry1Label: 'Consumo Instantâneo',
+    telemetry1Val: '0,0 L/h (Off)',
+    telemetry2Label: 'Nível Diesel S10',
+    telemetry2Val: '92%',
+    telemetry2IsFuel: true,
+    fuelPct: 92,
+    telemetry3Label: 'Status Telemetria',
+    telemetry3Val: 'Sinal GPS 100%',
+    operator: 'Pátio Central',
+    operatorInitials: 'PC',
+    talhao: 'Standby',
+  },
+  {
+    id: '9',
+    code: 'CH-02',
+    name: 'Case IH Axial-Flow 8250',
+    category: 'COLHEITADEIRA',
+    typeTag: 'Colheitadeira Grãos • 480 cv',
+    status: 'PATIO',
+    statusLabel: 'Pronta p/ Safra',
+    iconType: 'harvester',
+    horimeter: 890,
+    horimeterTarget: 1000,
+    horimeterCyclePct: 89,
+    horimeterSub1: 'Plataforma Drapper 40ft engatada',
+    horimeterSub2: 'Pronta p/ Colheita',
+    horimeterSub2Color: 'var(--accent-text)',
+    telemetry1Label: 'Consumo Instantâneo',
+    telemetry1Val: '0,0 L/h (Off)',
+    telemetry2Label: 'Nível Diesel S10',
+    telemetry2Val: '95%',
+    telemetry2IsFuel: true,
+    fuelPct: 95,
+    telemetry3Label: 'Status Telemetria',
+    telemetry3Val: 'Sinal RTK Ativo',
+    operator: 'Anderson Lima',
+    operatorInitials: 'AL',
+    talhao: 'Hangar Colheita',
+  },
+  {
+    id: '10',
+    code: 'CH-03',
+    name: 'New Holland CR 8.90',
+    category: 'COLHEITADEIRA',
+    typeTag: 'Duplo Rotor • 503 cv',
+    status: 'MANUTENCAO',
+    statusLabel: 'Oficina (OS Aberta)',
+    iconType: 'harvester',
+    horimeter: 1200,
+    horimeterTarget: 1250,
+    horimeterCyclePct: 100,
+    horimeterSub1: 'OS-2025-083 em execução',
+    horimeterSub2: 'Balanceamento Rotores',
+    horimeterSub2Color: 'var(--danger)',
+    telemetry1Label: 'Mecânico Resp.',
+    telemetry1Val: 'CNH Autorizada',
+    telemetry2Label: 'Custo Estimado OS',
+    telemetry2Val: 'R$ 12.400,00',
+    telemetry3Label: 'Previsão Liberação',
+    telemetry3Val: '3 dias',
+    operator: 'Oficina Central',
+    operatorInitials: 'OF',
+    talhao: 'Box 01',
+    activeOS: 'OS-2025-083',
+  },
+  {
+    id: '11',
+    code: 'PV-02',
+    name: 'John Deere M4040',
+    category: 'PULVERIZADOR',
+    typeTag: 'Pulverizador • 36m ExactApply',
+    status: 'OPERANDO',
+    statusLabel: 'Pulverizando',
+    iconType: 'sprayer',
+    horimeter: 620,
+    horimeterTarget: 1000,
+    horimeterCyclePct: 62,
+    horimeterSub1: 'Barra 36m • Bicos ExactApply',
+    horimeterSub2: 'Faltam 380h p/ revisão',
+    telemetry1Label: 'Vazão Calda',
+    telemetry1Val: '85 L/ha',
+    telemetry2Label: 'Nível Tanque Calda',
+    telemetry2Val: '2.100 L (53%)',
+    telemetry3Label: 'Velocidade Aplicação',
+    telemetry3Val: '19,2 km/h',
+    operator: 'Lucas Martins',
+    operatorInitials: 'LM',
+    talhao: 'Talhão 06',
+  },
+  {
+    id: '12',
+    code: 'PL-02',
+    name: 'Case IH Fast Riser 6100',
+    category: 'PLANTADEIRA',
+    typeTag: 'Plantadeira Dobrável • 24L',
+    status: 'PATIO',
+    statusLabel: 'Pátio / Calibrada',
+    iconType: 'planter',
+    horimeter: 860,
+    horimeterTarget: 1200,
+    horimeterCyclePct: 71.6,
+    horimeterSub1: 'Atrelada ao Trator TR-02',
+    horimeterSub2: 'Pronta p/ Plantio',
+    horimeterSub2Color: 'var(--accent-text)',
+    telemetry1Label: 'População Alvo',
+    telemetry1Val: '240 mil pl/ha',
+    telemetry2Label: 'Singulação',
+    telemetry2Val: '98,9%',
+    telemetry3Label: 'Sensor Linha',
+    telemetry3Val: '100% Ativo',
+    operator: 'Hangar Implementos',
+    operatorInitials: 'HI',
+    talhao: 'Pátio',
+  },
+];
+
+const INITIAL_ORDERS: MaintenanceOrder[] = [
+  {
+    id: 'os-1',
+    code: 'OS-2025-084',
+    machineCode: 'TR-04',
+    machineName: 'John Deere 7230J',
+    machineSub: 'Trator Médio 230 cv',
+    type: 'Corretiva Urgente',
+    typeDesc: 'Vazamento Válvula Hidráulica Traseira',
+    horimeter: '2.310 h',
+    parts: 'Kit Vedação John Deere + 24L Óleo ISO 68',
+    partsOrigin: 'Estoque Galpão 01',
+    mechanic: 'Tiago Rezende (Oficina Central)',
+    cost: 4850.0,
+    status: 'EM_EXECUCAO',
+    statusLabel: 'Em Execução',
+    statusClass: 'maintenance',
+    date: '12/10/2026',
+  },
+  {
+    id: 'os-2',
+    code: 'OS-2025-083',
+    machineCode: 'CH-03',
+    machineName: 'New Holland CR 8.90',
+    machineSub: 'Colheitadeira Duplo Rotor',
+    type: 'Preventiva Periódica',
+    typeDesc: 'Regulagem e Balanceamento de Rotores',
+    horimeter: '1.200 h',
+    parts: 'Rolamentos Blindados + Correia Primária',
+    partsOrigin: 'Peças CNH Originais',
+    mechanic: 'Oficina CNH Especializada',
+    cost: 12400.0,
+    status: 'AGUARDANDO_PECA',
+    statusLabel: 'Aguardando Peça',
+    statusClass: 'revision',
+    date: '11/10/2026',
+  },
+  {
+    id: 'os-3',
+    code: 'OS-2025-082',
+    machineCode: 'PV-03',
+    machineName: 'Case Patriot 350',
+    machineSub: 'Pulverizador Autopropelido',
+    type: 'Plano Preventivo 500h',
+    typeDesc: 'Troca Filtros Combustível e Bicos Cerâmicos',
+    horimeter: '495 h',
+    parts: 'Filtro Racor + Bicos TeeJet TTJ60',
+    partsOrigin: 'Estoque da Fazenda',
+    mechanic: 'Mec. Lucas Barreto',
+    cost: 2150.0,
+    status: 'AGENDADA',
+    statusLabel: 'Agendada p/ Hoje',
+    statusClass: 'revision',
+    date: '12/10/2026',
+  },
+  {
+    id: 'os-4',
+    code: 'OS-2025-080',
+    machineCode: 'TR-01',
+    machineName: 'John Deere 8370R',
+    machineSub: 'Trator Pesado 370 cv',
+    type: 'Revisão de 1.000 h',
+    typeDesc: 'Troca Fluido Transmissão AutoPowr',
+    horimeter: '1.002 h',
+    parts: 'Hy-Gard John Deere (60 L) + Filtros',
+    partsOrigin: 'Concessionária Iguaçu Máquinas',
+    mechanic: 'Equipe Externa Concessionária',
+    cost: 14800.0,
+    status: 'CONCLUIDA',
+    statusLabel: 'Concluída (08/01)',
+    statusClass: 'operating',
+    date: '08/01/2026',
+  },
+];
 
 export const Maquinarios: React.FC = () => {
+  const [machines] = useState<Machine[]>(INITIAL_MACHINES);
+  const [orders, setOrders] = useState<MaintenanceOrder[]>(INITIAL_ORDERS);
+  const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
+  const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'GRID' | 'TABLE'>('GRID');
+
+  // Modais
+  const [modalNewOSOpen, setModalNewOSOpen] = useState(false);
+  const [modalTelemetryOpen, setModalTelemetryOpen] = useState(false);
+  const [modalOSDetailOpen, setModalOSDetailOpen] = useState(false);
+  const [selectedTelemetryMachine, setSelectedTelemetryMachine] = useState<Machine | null>(null);
+  const [selectedOSDetail, setSelectedOSDetail] = useState<MaintenanceOrder | null>(null);
+
+  // Form de Nova OS
+  const [formMachine, setFormMachine] = useState('TR-01 • John Deere 8370R (Trator Pesado)');
+  const [formType, setFormType] = useState('Preventiva Periódica (500h / 1.000h)');
+  const [formHorimeter, setFormHorimeter] = useState<number>(1492);
+  const [formDesc, setFormDesc] = useState(
+    'Revisão preventiva de 1.500 horas de motor e troca do óleo Plus-50 II'
+  );
+  const [formMechanic, setFormMechanic] = useState('Tiago Rezende (Oficina Sede)');
+  const [formCost, setFormCost] = useState<number>(3200);
+
+  // Toasts
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const showToast = (text: string) => {
+    const id = String(Date.now());
+    setToasts((prev) => [...prev, { id, text }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3800);
+  };
+
+  // Filtragem de máquinas
+  const filteredMachines = useMemo(() => {
+    return machines.filter((m) => {
+      const matchCat = selectedCategory === 'TODOS' || m.category === selectedCategory;
+      const matchStatus = selectedStatus === 'TODOS' || m.status === selectedStatus;
+      const q = searchQuery.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        m.code.toLowerCase().includes(q) ||
+        m.name.toLowerCase().includes(q) ||
+        m.operator.toLowerCase().includes(q) ||
+        m.talhao.toLowerCase().includes(q);
+
+      return matchCat && matchStatus && matchSearch;
+    });
+  }, [machines, selectedCategory, selectedStatus, searchQuery]);
+
+  // Contadores por categoria
+  const categoryCounts = useMemo(() => {
+    return {
+      TODOS: machines.length,
+      TRATOR: machines.filter((m) => m.category === 'TRATOR').length,
+      COLHEITADEIRA: machines.filter((m) => m.category === 'COLHEITADEIRA').length,
+      PULVERIZADOR: machines.filter((m) => m.category === 'PULVERIZADOR').length,
+      PLANTADEIRA: machines.filter((m) => m.category === 'PLANTADEIRA').length,
+    };
+  }, [machines]);
+
+  // Abertura de Modal de Telemetria
+  const handleOpenTelemetry = (machine: Machine) => {
+    setSelectedTelemetryMachine(machine);
+    setModalTelemetryOpen(true);
+  };
+
+  // Abertura de Modal de Nova OS pré-configurada
+  const handleOpenNewOSWithMachine = (machineText: string, typePreset?: string) => {
+    setFormMachine(machineText);
+    if (typePreset === 'PREVENTIVA_1500') {
+      setFormType('Preventiva Periódica (500h / 1.000h)');
+      setFormHorimeter(1492);
+      setFormDesc('Revisão obrigatória de 1.500 horas de motor: Troca filtros e óleo Plus-50 II');
+      setFormCost(3400);
+    }
+    setModalNewOSOpen(true);
+  };
+
+  // Submissão do Form de Nova OS
+  const handleCreateOSSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newCode = `OS-2026-${Math.floor(100 + Math.random() * 900)}`;
+    const machinePart = formMachine.split('•');
+    const machineCode = machinePart[0]?.trim() || 'TR-01';
+    const machineName = machinePart[1]?.trim() || 'Equipamento';
+
+    const newOrder: MaintenanceOrder = {
+      id: String(Date.now()),
+      code: newCode,
+      machineCode,
+      machineName,
+      machineSub: formType,
+      type: formType.split('(')[0]?.trim() || 'Preventiva',
+      typeDesc: formDesc,
+      horimeter: `${formHorimeter} h`,
+      parts: 'Filtros Originais + Lubrificante Especializado',
+      partsOrigin: 'Estoque Central',
+      mechanic: formMechanic,
+      cost: formCost,
+      status: 'EM_EXECUCAO',
+      statusLabel: 'Em Execução',
+      statusClass: 'maintenance',
+      date: new Date().toLocaleDateString('pt-BR'),
+    };
+
+    setOrders((prev) => [newOrder, ...prev]);
+    setModalNewOSOpen(false);
+    showToast(
+      `Ordem de Serviço ${newCode} registrada com sucesso para ${machineCode}! Custo orçado: R$ ${formCost.toLocaleString('pt-BR')},00`
+    );
+  };
+
+  const handleOpenOSDetail = (os: MaintenanceOrder) => {
+    setSelectedOSDetail(os);
+    setModalOSDetailOpen(true);
+  };
+
   return (
     <>
+      {/* Toast Notification Container */}
+      <div className="toast-container">
+        {toasts.map((t) => (
+          <div key={t.id} className="toast">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
+              stroke="currentColor"
+              style={{ width: '16px', height: '16px', color: 'var(--accent)' }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+            <span>{t.text}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Cabeçalho da Página & Ações */}
       <div className="page-header stagger-item">
         <div className="page-header-left">
-          <h1 className="page-heading">Maquinários & Frotas</h1>
-          <p className="page-subheading">Telemetria, horímetros, planos de manutenção preventiva e ordens de serviço</p>
+          <h1 className="page-heading">Gestão de Maquinários & Frotas</h1>
+          <p className="page-subheading">
+            Telemetria operacional em tempo real, monitoramento de horímetro e ordens de manutenção (OS)
+          </p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-outline">Histórico de OS</button>
-          <button className="btn btn-primary">+ Nova Ordem de Serviço</button>
+          <button
+            className="btn btn-outline"
+            onClick={() => showToast('Exportando relatório consolidado de manutenções (PDF / CSV)...')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Exportar Relatório OS
+          </button>
+          <button className="btn btn-primary" onClick={() => setModalNewOSOpen(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Abrir Ordem de Serviço
+          </button>
         </div>
       </div>
 
-      <div className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-title">Disponibilidade de Frota</span>
-            <div className="kpi-icon blue">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" />
-              </svg>
+      {/* 4 Master KPIs da Frota */}
+      <div className="kpi-strip stagger-item" style={{ animationDelay: '40ms' }}>
+        <div className="kpi-cell">
+          <span className="kpi-cell-label">Disponibilidade da Frota</span>
+          <div className="kpi-cell-val">
+            85,7%<span className="unit-text" style={{ color: 'var(--accent-text)' }}>operacional</span>
+          </div>
+          <span className="kpi-cell-sub">
+            <span className="kpi-tag good">+2.4%</span> 12 ativas • 2 em oficina
+          </span>
+        </div>
+
+        <div className="kpi-cell">
+          <span className="kpi-cell-label">Consumo Médio Telemetria</span>
+          <div className="kpi-cell-val">
+            14,2<span className="unit-text">L/h</span>
+          </div>
+          <span className="kpi-cell-sub">
+            <span className="kpi-tag good">-4.1% ECO</span> 1.420 L diesel hoje
+          </span>
+        </div>
+
+        <div className="kpi-cell">
+          <span className="kpi-cell-label">Ordens de Serviço (OS) Abertas</span>
+          <div className="kpi-cell-val" style={{ color: 'var(--warning)' }}>
+            {orders.filter((o) => o.status !== 'CONCLUIDA').length}
+            <span className="unit-text" style={{ color: 'var(--warning)' }}>ativas</span>
+          </div>
+          <span className="kpi-cell-sub">
+            <span className="kpi-tag warn">1 Corretiva urgente</span> 2 Preventivas
+          </span>
+        </div>
+
+        <div className="kpi-cell">
+          <span className="kpi-cell-label">Custo Acumulado Manutenção</span>
+          <div className="kpi-cell-val">
+            R$ 48.650<span className="cents">,00</span>
+          </div>
+          <span className="kpi-cell-sub">
+            <span className="kpi-tag info">82% do orçado</span> Teto R$ 59.000
+          </span>
+        </div>
+      </div>
+
+      {/* Banner de Alerta Preditivo Inteligente (Horímetro Próximo à Revisão) */}
+      <div className="alert-banner stagger-item" style={{ animationDelay: '80ms' }}>
+        <div className="alert-banner-left">
+          <div className="alert-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning)' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+            </svg>
+          </div>
+          <div className="alert-text-group">
+            <div className="alert-headline">Alerta de Revisão Preditiva: TR-01 (John Deere 8370R)</div>
+            <div className="alert-subline">
+              Horímetro atingiu <strong>1.492 h</strong> (faltam apenas <strong>8 horas</strong> para a revisão obrigatória de 1.500 h). Recomendado agendar parada preventiva ao término do plantio no <strong>Talhão 02</strong>.
             </div>
           </div>
-          <div className="kpi-value">75% <span className="suffix">(9/12)</span></div>
-          <div className="kpi-footer">
-            <span className="kpi-detail">3 em revisão preventiva</span>
-            <span className="kpi-badge amber">2 ordens abertas</span>
+        </div>
+        <div className="alert-actions">
+          <button
+            className="btn btn-outline"
+            style={{ fontSize: '11.5px', padding: '6px 12px' }}
+            onClick={() => handleOpenTelemetry(machines[0])}
+          >
+            Ver Telemetria CAN
+          </button>
+          <button
+            className="btn btn-primary"
+            style={{ fontSize: '11.5px', padding: '6px 12px' }}
+            onClick={() => handleOpenNewOSWithMachine('TR-01 • John Deere 8370R', 'PREVENTIVA_1500')}
+          >
+            Agendar Revisão 1.500h
+          </button>
+        </div>
+      </div>
+
+      {/* Card Principal: Abas de Categoria, Filtros & Toggle de Visualização */}
+      <div className="fleet-controls-card stagger-item" style={{ animationDelay: '120ms' }}>
+        {/* Abas de Tipos de Máquinas */}
+        <div className="category-tabs-bar">
+          <button
+            className={`cat-tab ${selectedCategory === 'TODOS' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('TODOS')}
+          >
+            Todas as Frotas <span className="count">{categoryCounts.TODOS}</span>
+          </button>
+          <button
+            className={`cat-tab ${selectedCategory === 'TRATOR' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('TRATOR')}
+          >
+            Tratores Pesados <span className="count">{categoryCounts.TRATOR}</span>
+          </button>
+          <button
+            className={`cat-tab ${selectedCategory === 'COLHEITADEIRA' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('COLHEITADEIRA')}
+          >
+            Colheitadeiras <span className="count">{categoryCounts.COLHEITADEIRA}</span>
+          </button>
+          <button
+            className={`cat-tab ${selectedCategory === 'PULVERIZADOR' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('PULVERIZADOR')}
+          >
+            Pulverizadores <span className="count">{categoryCounts.PULVERIZADOR}</span>
+          </button>
+          <button
+            className={`cat-tab ${selectedCategory === 'PLANTADEIRA' ? 'active' : ''}`}
+            onClick={() => setSelectedCategory('PLANTADEIRA')}
+          >
+            Plantadeiras & Implementos <span className="count">{categoryCounts.PLANTADEIRA}</span>
+          </button>
+        </div>
+
+        {/* Sub-barra: Busca, Filtros de Status e Toggle Grid/Tabela */}
+        <div className="filter-bar">
+          <div className="search-input-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Buscar por prefixo (TR-01), modelo, operador ou talhão..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="status-filters">
+            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginRight: '4px' }}>Status:</span>
+            <button
+              className={`status-pill ${selectedStatus === 'TODOS' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('TODOS')}
+            >
+              Todos
+            </button>
+            <button
+              className={`status-pill ${selectedStatus === 'OPERANDO' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('OPERANDO')}
+            >
+              Em Operação
+            </button>
+            <button
+              className={`status-pill ${selectedStatus === 'PATIO' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('PATIO')}
+            >
+              Pátio / Standby
+            </button>
+            <button
+              className={`status-pill ${selectedStatus === 'MANUTENCAO' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('MANUTENCAO')}
+            >
+              Oficina
+            </button>
+            <button
+              className={`status-pill ${selectedStatus === 'REVISAO' ? 'active' : ''}`}
+              onClick={() => setSelectedStatus('REVISAO')}
+            >
+              Revisão Próxima
+            </button>
+          </div>
+
+          {/* Toggle de Visualização: Cards vs Tabela OS */}
+          <div className="view-toggle">
+            <button
+              className={`view-toggle-btn ${viewMode === 'GRID' ? 'active' : ''}`}
+              onClick={() => setViewMode('GRID')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+              </svg>
+              Grid de Máquinas ({filteredMachines.length})
+            </button>
+            <button
+              className={`view-toggle-btn ${viewMode === 'TABLE' ? 'active' : ''}`}
+              onClick={() => setViewMode('TABLE')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm0 5.25h.007v.008H3.75V12Zm0 5.25h.007v.008H3.75v-.008Z" />
+              </svg>
+              Tabela de OS ({orders.length})
+            </button>
           </div>
         </div>
 
-        <div className="kpi-card">
-          <div className="kpi-header">
-            <span className="kpi-title">Custo Médio / Hora</span>
-            <div className="kpi-icon amber">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </svg>
+        {/* ── VISÃO 1: GRID DE MÁQUINAS (Cards com Telemetria) ── */}
+        {viewMode === 'GRID' && (
+          <div className="fleet-grid">
+            {filteredMachines.map((m) => {
+              const isRevision = m.status === 'REVISAO';
+              const isMaintenance = m.status === 'MANUTENCAO';
+              const isOperating = m.status === 'OPERANDO';
+
+              return (
+                <div key={m.id} className="machine-card">
+                  <div className="machine-top">
+                    <div className="machine-info-left">
+                      <div className={`machine-icon-box ${m.iconType}`}>
+                        {m.iconType === 'tractor' && (
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m16.5 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.875a1.125 1.125 0 0 0 1.125-1.125V13.5m-19.5.75h19.5m-19.5 0L6 7.5h7.5l2.25 6.75M6 7.5V4.5H3.75" />
+                          </svg>
+                        )}
+                        {m.iconType === 'harvester' && (
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0h-10.5m10.5 0a1.5 1.5 0 0 1-3 0m-4.5 0a1.5 1.5 0 0 1-3 0" />
+                          </svg>
+                        )}
+                        {m.iconType === 'sprayer' && (
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                          </svg>
+                        )}
+                        {m.iconType === 'planter' && (
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="machine-titles">
+                        <div className="machine-code-row">
+                          <span className="machine-code">{m.code}</span>
+                          <span className="machine-type-tag">{m.typeTag}</span>
+                        </div>
+                        <span className="machine-name">{m.name}</span>
+                      </div>
+                    </div>
+
+                    <span
+                      className={`status-badge ${
+                        isOperating
+                          ? 'operating'
+                          : isMaintenance
+                          ? 'maintenance'
+                          : isRevision
+                          ? 'revision'
+                          : 'standby'
+                      }`}
+                    >
+                      {isOperating && <span className="dot"></span>}
+                      {m.statusLabel}
+                    </span>
+                  </div>
+
+                  {/* Horímetro & Progresso até Revisão */}
+                  <div className="horimeter-box">
+                    <div className="horimeter-row-top">
+                      <span className="horimeter-label">Horímetro Atual</span>
+                      <span className="horimeter-val">
+                        {m.horimeter.toLocaleString('pt-BR')} h{' '}
+                        <span className="target">/ rev. {m.horimeterTarget.toLocaleString('pt-BR')} h</span>
+                      </span>
+                    </div>
+                    <div className="horimeter-progress-bg">
+                      <div
+                        className={`horimeter-progress-fill ${
+                          isMaintenance ? 'danger' : isRevision ? 'warn' : ''
+                        }`}
+                        style={{ width: `${Math.min(100, m.horimeterCyclePct)}%` }}
+                      ></div>
+                    </div>
+                    <div className="horimeter-subtext">
+                      <span>{m.horimeterSub1}</span>
+                      <span style={{ color: m.horimeterSub2Color || 'var(--text-muted)' }}>
+                        {m.horimeterSub2}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Telemetria CAN Bus ao Vivo */}
+                  <div className="telemetry-grid">
+                    <div className="telemetry-cell">
+                      <span className="telemetry-cell-label">{m.telemetry1Label}</span>
+                      <span className="telemetry-cell-val">{m.telemetry1Val}</span>
+                    </div>
+                    <div className="telemetry-cell">
+                      <span className="telemetry-cell-label">{m.telemetry2Label}</span>
+                      {m.telemetry2IsFuel ? (
+                        <span className="telemetry-cell-val diesel-bar">
+                          <span>{m.telemetry2Val}</span>
+                          <span className="mini-fuel-bar">
+                            <span className="mini-fuel-fill" style={{ width: `${m.fuelPct || 80}%` }}></span>
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="telemetry-cell-val" style={{ color: 'var(--accent-text)' }}>
+                          {m.telemetry2Val}
+                        </span>
+                      )}
+                    </div>
+                    <div className="telemetry-cell">
+                      <span className="telemetry-cell-label">{m.telemetry3Label}</span>
+                      <span className="telemetry-cell-val">{m.telemetry3Val}</span>
+                    </div>
+                  </div>
+
+                  {/* Rodapé do Card */}
+                  <div className="machine-card-footer">
+                    <div className="operator-info">
+                      <div className="operator-avatar">{m.operatorInitials}</div>
+                      <span>
+                        {m.operator} • <strong>{m.talhao}</strong>
+                      </span>
+                    </div>
+                    <div className="card-actions-row">
+                      <button className="action-btn-mini" onClick={() => handleOpenTelemetry(m)}>
+                        Telemetria
+                      </button>
+                      <button
+                        className="action-btn-mini os-btn"
+                        onClick={() => handleOpenNewOSWithMachine(`${m.code} • ${m.name}`)}
+                      >
+                        Abrir OS
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── VISÃO 2: TABELA DE ORDENS DE MANUTENÇÃO (OS) ────── */}
+        {viewMode === 'TABLE' && (
+          <div className="table-view-section">
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Código OS</th>
+                    <th>Máquina & Prefixo</th>
+                    <th>Tipo de Intervenção</th>
+                    <th>Horímetro</th>
+                    <th>Peças / Insumos Utilizados</th>
+                    <th>Mecânico / Box</th>
+                    <th>Custo Total</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'right' }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((os) => (
+                    <tr key={os.id}>
+                      <td>
+                        <span className="os-code-pill">{os.code}</span>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {os.machineCode} • {os.machineName}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{os.machineSub}</div>
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            color:
+                              os.status === 'EM_EXECUCAO'
+                                ? 'var(--danger)'
+                                : os.status === 'CONCLUIDA'
+                                ? 'var(--accent-text)'
+                                : 'var(--warning)',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {os.type}
+                        </span>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{os.typeDesc}</div>
+                      </td>
+                      <td>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{os.horimeter}</span>
+                      </td>
+                      <td>
+                        <div>{os.parts}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{os.partsOrigin}</div>
+                      </td>
+                      <td>{os.mechanic}</td>
+                      <td>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          R$ {os.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${os.statusClass}`}>{os.statusLabel}</span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          className="btn btn-outline"
+                          style={{ padding: '4px 10px', fontSize: '11px' }}
+                          onClick={() => handleOpenOSDetail(os)}
+                        >
+                          Ficha OS
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-          <div className="kpi-value">R$ 142 <span className="suffix">/h</span></div>
-          <div className="kpi-footer">
-            <span className="kpi-detail">Diesel + Manutenção</span>
-            <span className="kpi-badge green">Dentro da meta</span>
+        )}
+
+        {/* Rodapé do Card de Controles */}
+        <div className="inventory-card-footer">
+          <div className="footer-stats">
+            <span>
+              Mostrando <strong>{filteredMachines.length}</strong> de <strong>{machines.length}</strong> máquinas cadastradas
+            </span>
+            <span className="dot-sep">•</span>
+            <span>Telemetria CAN Bus J1939 conectada via Starlink</span>
+          </div>
+          <div className="footer-legend">
+            <span className="legend-item"><span className="legend-dot green"></span> Operando</span>
+            <span className="legend-item"><span className="legend-dot amber"></span> Revisão</span>
+            <span className="legend-item"><span className="legend-dot red"></span> Oficina</span>
           </div>
         </div>
       </div>
+
+      {/* Faixa de Resumo Operacional da Frota & Starlink */}
+      <div className="fleet-summary-strip stagger-item" style={{ animationDelay: '160ms' }}>
+        <div className="summary-item">
+          <div className="summary-label">Gateway Telemetria</div>
+          <div className="summary-val">Starlink Mini IP 192.168.1.80 • Latência 28ms</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-label">Eficiência Energética Frota</div>
+          <div className="summary-val">Consumo 14,2 L/h • Redução 4,1% (Modo Eco CAN)</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-label">Oficina Central</div>
+          <div className="summary-val">Box 01 e Box 02 ocupados • 2 mecânicos ativos</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-label">Seguro de Máquinas & Frota</div>
+          <div className="summary-val">Apólice Rural Allianz 2026/27 • Cobertura 100%</div>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* MODAL 1: ABRIR NOVA ORDEM DE SERVIÇO (OS)                    */}
+      {/* ============================================================ */}
+      {modalNewOSOpen && (
+        <div className="modal-backdrop open" onClick={() => setModalNewOSOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  style={{ width: '20px', height: '20px', color: 'var(--accent)' }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" />
+                </svg>
+                Abrir Nova Ordem de Serviço (OS)
+              </span>
+              <button className="modal-close" onClick={() => setModalNewOSOpen(false)}>✕</button>
+            </div>
+
+            <form onSubmit={handleCreateOSSubmit}>
+              <div className="modal-body">
+                {/* Equipamento Selecionado (Custom Select) */}
+                <div className="form-group">
+                  <label className="form-label">Equipamento / Máquina</label>
+                  <CustomSelect
+                    value={formMachine}
+                    onChange={(val) => setFormMachine(val)}
+                    options={[
+                      'TR-01 • John Deere 8370R (Trator Pesado)',
+                      'TR-02 • Case IH Magnum 380 (Trator Pesado)',
+                      'TR-03 • John Deere 6190M (Trator Médio)',
+                      'TR-04 • John Deere 7230J (Trator Médio)',
+                      'TR-05 • Case IH Steiger 500 (Articulado)',
+                      'CH-01 • John Deere S790 (Colheitadeira)',
+                      'CH-02 • Case IH Axial-Flow 8250 (Colheitadeira)',
+                      'CH-03 • New Holland CR 8.90 (Colheitadeira)',
+                      'PV-01 • Jacto Uniport 3030 (Pulverizador)',
+                      'PV-02 • John Deere M4040 (Pulverizador)',
+                      'PL-01 • DB ExactEmerge 36L (Plantadeira)',
+                      'PL-02 • Case IH Fast Riser 6100 (Plantadeira)',
+                    ]}
+                  />
+                </div>
+
+                <div className="form-row">
+                  {/* Tipo de Intervenção */}
+                  <div className="form-group">
+                    <label className="form-label">Tipo de Manutenção</label>
+                    <CustomSelect
+                      value={formType}
+                      onChange={(val) => setFormType(val)}
+                      options={[
+                        'Preventiva Periódica (500h / 1.000h)',
+                        'Corretiva Emergencial',
+                        'Preditiva (Análise Óleo / Vibração)',
+                        'Calibração & Regulagem Eletrônica',
+                      ]}
+                    />
+                  </div>
+
+                  {/* Horímetro Atual (Custom Stepper) */}
+                  <div className="form-group">
+                    <label className="form-label">Horímetro Atual (h)</label>
+                    <div className="stepper-wrap">
+                      <input
+                        type="number"
+                        step="1"
+                        className="form-input"
+                        value={formHorimeter}
+                        onChange={(e) => setFormHorimeter(Number(e.target.value) || 0)}
+                        required
+                      />
+                      <div className="stepper-btns">
+                        <button
+                          type="button"
+                          className="stepper-btn"
+                          onClick={() => setFormHorimeter((prev) => prev + 1)}
+                          title="Aumentar"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="stepper-btn"
+                          onClick={() => setFormHorimeter((prev) => Math.max(0, prev - 1))}
+                          title="Diminuir"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Descrição da Demanda */}
+                <div className="form-group">
+                  <label className="form-label">Descrição do Serviço / Sintomas</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Ex: Substituição de filtros de combustível primário e secundário..."
+                    required
+                    value={formDesc}
+                    onChange={(e) => setFormDesc(e.target.value)}
+                  />
+                </div>
+
+                <div className="form-row">
+                  {/* Mecânico / Responsável */}
+                  <div className="form-group">
+                    <label className="form-label">Mecânico / Box Destino</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={formMechanic}
+                      onChange={(e) => setFormMechanic(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {/* Custo Estimado (Custom Stepper) */}
+                  <div className="form-group">
+                    <label className="form-label">Custo Estimado (R$)</label>
+                    <div className="stepper-wrap">
+                      <input
+                        type="number"
+                        step="50"
+                        className="form-input"
+                        value={formCost}
+                        onChange={(e) => setFormCost(Number(e.target.value) || 0)}
+                        required
+                      />
+                      <div className="stepper-btns">
+                        <button
+                          type="button"
+                          className="stepper-btn"
+                          onClick={() => setFormCost((prev) => prev + 50)}
+                          title="Aumentar"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="stepper-btn"
+                          onClick={() => setFormCost((prev) => Math.max(0, prev - 50))}
+                          title="Diminuir"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-outline" onClick={() => setModalNewOSOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Registrar Ordem de Serviço
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 2: FICHA DE TELEMETRIA CAN BUS AO VIVO                 */}
+      {/* ============================================================ */}
+      {modalTelemetryOpen && selectedTelemetryMachine && (
+        <div className="modal-backdrop open" onClick={() => setModalTelemetryOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '640px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <span className="modal-title">
+                  Telemetria ao Vivo • {selectedTelemetryMachine.code} ({selectedTelemetryMachine.name})
+                </span>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  CAN Bus J1939 • Gateway 4G Starlink Integrado • Atualizado há 12s
+                </div>
+              </div>
+              <button className="modal-close" onClick={() => setModalTelemetryOpen(false)}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              {/* Painel de Indicadores do Motor */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                <div
+                  style={{
+                    background: 'var(--bg-surface)',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Rotação do Motor
+                  </span>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                      marginTop: '4px',
+                    }}
+                  >
+                    1.850 RPM
+                  </div>
+                  <span style={{ fontSize: '10.5px', color: 'var(--accent-text)' }}>Faixa econômica</span>
+                </div>
+                <div
+                  style={{
+                    background: 'var(--bg-surface)',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Temperatura Arref.
+                  </span>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                      marginTop: '4px',
+                    }}
+                  >
+                    88 °C
+                  </div>
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Normal (85-92°C)</span>
+                </div>
+                <div
+                  style={{
+                    background: 'var(--bg-surface)',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Pressão Óleo Motor
+                  </span>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                      marginTop: '4px',
+                    }}
+                  >
+                    4,2 bar
+                  </div>
+                  <span style={{ fontSize: '10.5px', color: 'var(--accent-text)' }}>Pressão ideal</span>
+                </div>
+              </div>
+
+              {/* Localização & Operação em Campo */}
+              <div
+                style={{
+                  background: 'var(--bg-surface)',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Alocação Territorial Atual:</span>
+                  <span style={{ fontWeight: 600, color: 'var(--accent-text)' }}>
+                    {selectedTelemetryMachine.talhao} — Pivô Central (140 ha)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Coordenadas GPS RTK:</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                    12°32'44"S 55°42'18"W (Precisão 2.5cm)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Implemento Acoplado:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>Plantadeira DB ExactEmerge 36L</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Rendimento Operacional:</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                    14,8 ha/hora trabalhada
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setModalTelemetryOpen(false)}>
+                Fechar
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setModalTelemetryOpen(false);
+                  handleOpenNewOSWithMachine(
+                    `${selectedTelemetryMachine.code} • ${selectedTelemetryMachine.name}`,
+                    'PREVENTIVA_1500'
+                  );
+                }}
+              >
+                Agendar Parada Técnica
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL 3: FICHA DETALHADA DA ORDEM DE SERVIÇO (OS)            */}
+      {/* ============================================================ */}
+      {modalOSDetailOpen && selectedOSDetail && (
+        <div className="modal-backdrop open" onClick={() => setModalOSDetailOpen(false)}>
+          <div className="modal-card" style={{ maxWidth: '580px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <span className="modal-title">Ficha Técnica da Ordem • {selectedOSDetail.code}</span>
+                <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  {selectedOSDetail.machineCode} — {selectedOSDetail.machineName} ({selectedOSDetail.machineSub})
+                </div>
+              </div>
+              <button className="modal-close" onClick={() => setModalOSDetailOpen(false)}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              <div
+                style={{
+                  background: 'var(--bg-surface)',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Tipo de Intervenção:</span>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{selectedOSDetail.type}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Horímetro no Registro:</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                    {selectedOSDetail.horimeter}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Peças / Insumos:</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{selectedOSDetail.parts}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Origem dos Componentes:</span>
+                  <span style={{ color: 'var(--text-muted)' }}>{selectedOSDetail.partsOrigin}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Mecânico Credenciado:</span>
+                  <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{selectedOSDetail.mechanic}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Custo Contábil Apropriado:</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent-text)' }}>
+                    R$ {selectedOSDetail.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Status da Execução:</span>
+                  <span className={`status-badge ${selectedOSDetail.statusClass}`}>{selectedOSDetail.statusLabel}</span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  padding: '12px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '12px',
+                  color: 'var(--accent-text)',
+                }}
+              >
+                ✓ Registro em conformidade com o manual de manutenção preventiva do fabricante e plano safra 2026/27.
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setModalOSDetailOpen(false)}>
+                Fechar
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setModalOSDetailOpen(false);
+                  showToast(`Comprovante de manutenção ${selectedOSDetail.code} impresso com sucesso!`);
+                }}
+              >
+                Exportar Laudo Técnico
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
