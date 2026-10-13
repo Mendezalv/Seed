@@ -303,70 +303,67 @@ export const Viabilidade: React.FC = () => {
 
   return (
     <>
-      <div className="page" style={{ paddingBottom: '140px' }}>
-        {/* Top Ticker de Mercado em Tempo Real */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          <div className="market-ticker">
-            <div className="ticker-item">
-              <span className="label">SOJA CBOT:</span>
-              <span className="val">US$ 10,24/bu</span>
-              <span className="delta-up">+0.8%</span>
-            </div>
-            <span className="ticker-sep">|</span>
-            <div className="ticker-item">
-              <span className="label">MILHO B3:</span>
-              <span className="val">R$ 64,20/sc</span>
-              <span className="delta-up">+1.1%</span>
-            </div>
-            <span className="ticker-sep">|</span>
-            <div className="ticker-item">
-              <span className="label">DÓLAR PTAX:</span>
-              <span className="val">R$ 5,742</span>
-              <span className="delta-down">-0.3%</span>
-            </div>
-            <span className="ticker-sep">|</span>
-            <div className="ticker-item">
-              <span className="label">PRÊMIO PNG:</span>
-              <span className="val" style={{ color: 'var(--accent-text)' }}>+115 ¢/bu</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              className="btn btn-outline"
-              onClick={() => showToast('Gerando Demonstração de Resultado do Exercício (DRE 2024/25) em PDF/XLS...')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-              </svg>
-              Exportar DRE
-            </button>
-            <button className="btn btn-primary" onClick={() => setIsHedgeModalOpen(true)}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Simular Contrato Hedge
-            </button>
-          </div>
+      {/* Page Header Padrão Seed */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-heading">Viabilidade Econômica & Comercialização</h1>
+          <p className="page-subheading">
+            Modelagem de sensibilidade financeira, margem EBITDA, ponto de equilíbrio e gestão de travas de hedge
+          </p>
         </div>
 
-        {/* Page Header */}
-        <div className="page-header" style={{ marginTop: '4px' }}>
-          <div>
-            <h1 className="page-heading">Viabilidade Econômica & Comercialização</h1>
-            <p className="page-subheading">
-              Modelagem de sensibilidade financeira, margem EBITDA, ponto de equilíbrio e gestão de travas de hedge
-            </p>
-          </div>
-          <div className="header-actions">
-            <button className="btn btn-outline" onClick={() => setIsTalhaoModalOpen(true)}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0h-10.5m10.5 0a1.5 1.5 0 0 1-3 0m-4.5 0a1.5 1.5 0 0 1-3 0" />
-              </svg>
-              Breakeven por Talhão
-            </button>
-          </div>
+        <div className="header-actions">
+          <button
+            className="btn btn-outline"
+            onClick={() => showToast('Gerando Demonstração de Resultado do Exercício (DRE 2024/25) em PDF/XLS...')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Exportar DRE
+          </button>
+
+          <button className="btn btn-outline" onClick={() => setIsTalhaoModalOpen(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.25 2.25L15 7.5" />
+            </svg>
+            Breakeven por Talhão
+          </button>
+
+          <button className="btn btn-primary" onClick={() => setIsHedgeModalOpen(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Simular Contrato Hedge
+          </button>
         </div>
+      </div>
+
+      {/* Top Ticker de Mercado em Tempo Real */}
+      <div className="market-ticker" style={{ marginBottom: '24px' }}>
+        <div className="ticker-item">
+          <span className="label">SOJA CBOT:</span>
+          <span className="val">US$ 10,24/bu</span>
+          <span className="delta-up">+0.8%</span>
+        </div>
+        <span className="ticker-sep">|</span>
+        <div className="ticker-item">
+          <span className="label">MILHO B3:</span>
+          <span className="val">R$ 64,20/sc</span>
+          <span className="delta-up">+1.1%</span>
+        </div>
+        <span className="ticker-sep">|</span>
+        <div className="ticker-item">
+          <span className="label">DÓLAR PTAX:</span>
+          <span className="val">R$ 5,742</span>
+          <span className="delta-down">-0.3%</span>
+        </div>
+        <span className="ticker-sep">|</span>
+        <div className="ticker-item">
+          <span className="label">PRÊMIO PNG:</span>
+          <span className="val" style={{ color: 'var(--accent-text)' }}>+115 ¢/bu</span>
+        </div>
+      </div>
 
         {/* Master Financial KPIs Bar (4 Cards) */}
         <div className="kpi-bar">
@@ -996,7 +993,6 @@ export const Viabilidade: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* ============================================================ */}
       {/* MODAL 1: SIMULAR CONTRATO DE HEDGE / BARTER                  */}

@@ -61,7 +61,7 @@ Este documento define a linguagem visual definitiva do **Seed (Hub de Gestão e 
 
 ---
 
-## 4. Componentes Chave
+### 4. Componentes Chave
 
 ### 4.1 Botões
 * **Botão Primário:**
@@ -88,6 +88,7 @@ Este documento define a linguagem visual definitiva do **Seed (Hub de Gestão e 
 * `background: var(--bg-elevated);` (`#18181b`)
 * `border: 1px solid var(--border);` (`#27272a`)
 * `border-radius: 12px;`
+* **Padding interno padrão:** `18px` a `24px` (nunca menor que `16px`).
 * Hover: `border-color: #3f3f46;`
 
 ### 4.3 Badges de Status
@@ -96,3 +97,34 @@ Este documento define a linguagem visual definitiva do **Seed (Hub de Gestão e 
 
 ### 4.4 Ícones
 * Linhas finas monocromáticas (`stroke-width: 1.5`), sempre com `opacity: 0.7` em estado inativo e `1.0` em estado ativo.
+
+---
+
+## 5. Escala de Espaçamento & Respiro Obrigatório (Anti-Cramped Rules)
+
+Para evitar que telas pareçam amontoadas, coladas ou sem hierarquia:
+
+### 5.1 Macro-espaçamento (Página e Seções)
+* **Padding Geral da Página (`.page`):** `28px 32px 140px` (garante espaço no rodapé e laterais consistentes).
+* **Distância entre Seções Principais / Grids:** `margin-bottom: 24px` a `32px` (`gap: 16px` a `24px` nos layouts flex/grid).
+* **Page Header:** Margem inferior fixa de `24px` com separação clara entre título, subtítulo e grupo de botões de ação (`gap: 10px` a `12px`).
+
+### 5.2 Micro-espaçamento (Componentes e Elementos Internos)
+* **Gap entre Label e Input:** mínimo `6px` a `8px`. Nunca colar texto no campo.
+* **Padding interno de Inputs e Selects:** mínimo `10px 14px` (`font-size: 13.5px`).
+* **Distância entre Ícone e Texto em Linhas/Tabelas:** `gap: 8px` a `10px`.
+* **Padding de Células de Tabela / Linhas de Lista:** mínimo `12px 16px` verticais por linha para permitir leitura confortável.
+* **Separadores Estruturais:** usar divisores com borda sutil (`var(--border-subtle)`) com margem vertical de pelo menos `12px` a `16px`.
+
+---
+
+## 6. Protocolo de Desenvolvimento para Novas Telas
+
+Ao criar ou editar qualquer tela no Seed:
+1. **Reutilizar Classes Existentes de `index.css`:** Usar prioritariamente `.page`, `.page-header`, `.context-bar`, `.kpi-grid`, `.kpi-card`, `.section-card`, `.two-col`, `.three-col`, `.btn-primary`, `.btn-outline`.
+2. **Checagem de Respiro Pré-Entrega:**
+   - [ ] Não há textos grudados em bordas ou ícones.
+   - [ ] Os cards têm padding de pelo menos 18px.
+   - [ ] Inputs e botões têm espaçamento entre si (mínimo 10px a 16px).
+   - [ ] Números e métricas estão em `JetBrains Mono` com sufixo ou unidade em tom atenuado (`var(--text-muted)`).
+3. **Validação Visual:** Quando houver alterações estruturais em tela, inspecionar e validar layout via navegador antes de finalizar.

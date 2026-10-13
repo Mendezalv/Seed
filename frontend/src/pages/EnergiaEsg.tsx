@@ -223,68 +223,62 @@ export const EnergiaEsg: React.FC = () => {
 
   return (
     <>
-      <div className="page" style={{ paddingBottom: '140px' }}>
-        {/* Top Header com Breadcrumbs e Contexto Operacional */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          {/* Status Indicator Contextual */}
-          <div className="status-indicator">
-            <div className="status-dot"></div>
-            <span>MATRIZ: 68.4% RENOVÁVEL</span>
-            <span style={{ color: '#3f3f46' }}>•</span>
-            <span style={{ color: 'var(--accent-text)' }}>RATING A+ (PLANO ABC+)</span>
-            <span style={{ color: '#3f3f46' }}>•</span>
-            <span>39.4 CBIOs</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button className="btn btn-outline" onClick={() => handleOpenLaudo('2026-09')}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-              </svg>
-              Laudo Crédito Verde
-            </button>
-
-            <button className="btn btn-primary" onClick={() => setIsConsumoModalOpen(true)}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Registrar Consumo
-            </button>
-          </div>
+      {/* Page Header Padrão Seed */}
+      <div className="page-header">
+        <div>
+          <h1 className="page-heading">Sustentabilidade, Energia & ESG</h1>
+          <p className="page-subheading">
+            Inventário de emissões de carbono nos Escopos 1 e 2 (GHG Protocol Agrícola), balanço de fontes renováveis e elegibilidade técnica para financiamento verde com taxa bonificada pelo Plano ABC+.
+          </p>
         </div>
 
-        {/* Page Header */}
-        <div className="page-header" style={{ marginTop: '8px' }}>
-          <div>
-            <h1 className="page-heading">Sustentabilidade, Energia & ESG</h1>
-            <p className="page-subheading">
-              Inventário de emissões de carbono nos Escopos 1 e 2 (GHG Protocol Agrícola), balanço de fontes renováveis e elegibilidade técnica para financiamento verde com taxa bonificada pelo Plano ABC+.
-            </p>
+        <div className="header-actions">
+          <div style={{ width: '220px' }}>
+            <CustomSelect
+              value={selectedPeriod}
+              onChange={(val) => {
+                setSelectedPeriod(val);
+                showToast(`Filtro de período alterado para: ${val}`);
+              }}
+              options={PERIOD_OPTIONS}
+            />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '250px' }}>
-              <CustomSelect
-                value={selectedPeriod}
-                onChange={(val) => {
-                  setSelectedPeriod(val);
-                  showToast(`Filtro de período alterado para: ${val}`);
-                }}
-                options={PERIOD_OPTIONS}
-              />
-            </div>
+          <button
+            className="btn btn-outline"
+            onClick={() => showToast('Celery Worker disparado: recalculando balanço energético e inventário GHG Protocol...')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            Recalcular Balanço
+          </button>
 
-            <button
-              className="btn btn-outline"
-              onClick={() => showToast('Celery Worker disparado: recalculando balanço energético e inventário GHG Protocol...')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
-              Recalcular Balanço
-            </button>
-          </div>
+          <button className="btn btn-outline" onClick={() => handleOpenLaudo('2026-09')}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            Laudo Crédito Verde
+          </button>
+
+          <button className="btn btn-primary" onClick={() => setIsConsumoModalOpen(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Registrar Consumo
+          </button>
         </div>
+      </div>
+
+      {/* Status Indicator Contextual */}
+      <div className="status-indicator" style={{ marginBottom: '24px' }}>
+        <div className="status-dot"></div>
+        <span>MATRIZ: 68.4% RENOVÁVEL</span>
+        <span style={{ color: '#3f3f46' }}>•</span>
+        <span style={{ color: 'var(--accent-text)' }}>RATING A+ (PLANO ABC+)</span>
+        <span style={{ color: '#3f3f46' }}>•</span>
+        <span>39.4 CBIOs</span>
+      </div>
 
         {/* 4 KPI Cards: Indicadores Vitais ESG */}
         <section className="kpi-grid">
@@ -766,7 +760,6 @@ export const EnergiaEsg: React.FC = () => {
             </table>
           </div>
         </section>
-      </div>
 
       {/* ============================================================ */}
       {/* MODAL 1: REGISTRAR CONSUMO ENERGÉTICO (780px de Largura)     */}
