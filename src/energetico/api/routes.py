@@ -1,8 +1,9 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Query, Path, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 
+from src.shared.export.export_engine import ExportEngine
 from src.shared.database.session import get_session
 from src.shared.api.dependencies import get_current_propriedade_id
 from src.energetico.domain.schemas import (
@@ -71,3 +72,31 @@ async def obter_laudo_credito_verde(
     """
     from src.energetico.application.export_service import RelatorioESGExportService
     return await RelatorioESGExportService.gerar_laudo_credito_verde(id, propriedade_id, session)
+
+@router.get("/relatorios/export/pdf")
+async def exportar_laudo_esg_ultimo_pdf(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """Gera e exporta laudo técnico oficial em PDF do último período auditado."""
+    pdf_bytes = await ExportEngine.gerar_laudo_esg_pdf(propriedade_id, session)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="laudo_credito_verde_esg.pdf"'}
+    )
+
+@router.get("/relatorios/{id}/export/pdf")
+async def exportar_laudo_esg_pdf(
+    id: UUID = Path(...),
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """Gera e exporta laudo técnico oficial em PDF de conformidade ESG e Crédito Rural Verde."""
+    pdf_bytes = await ExportEngine.gerar_laudo_esg_pdf(propriedade_id, session, relatorio_id=id)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="laudo_credito_verde_esg_{id}.pdf"'}
+    )
+

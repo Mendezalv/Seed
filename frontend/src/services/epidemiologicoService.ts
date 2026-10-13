@@ -84,4 +84,9 @@ export const epidemiologicoService = {
     const qs = search.toString() ? `?${search.toString()}` : '';
     return api.get<MapaCalorApi>(`/epidemiologico/mapa-calor${qs}`);
   },
+
+  async exportarLaudoPdf(): Promise<void> {
+    return api.download('/epidemiologico/ocorrencias/export/pdf', 'laudo_fitossanitario.pdf');
+  },
 };
+

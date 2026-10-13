@@ -1,7 +1,9 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+
+from src.shared.export.export_engine import ExportEngine
 
 from src.shared.database.session import get_session
 from src.shared.api.dependencies import get_current_propriedade_id
@@ -38,6 +40,19 @@ async def listar_ocorrencias(
         stmt = stmt.where(OcorrenciaSanitaria.agente_identificado == agente)
     stmt = stmt.order_by(OcorrenciaSanitaria.observado_em.desc())
     return await paginate(session, stmt, pagination)
+
+@router.get("/ocorrencias/export/pdf")
+async def exportar_laudo_fitossanitario_pdf(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """Gera e exporta laudo técnico oficial fitossanitário em PDF com análise microclimática e prescrições agronômicas."""
+    pdf_bytes = await ExportEngine.gerar_laudo_fitossanitario_pdf(propriedade_id, session)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="laudo_fitossanitario.pdf"'}
+    )
 
 @router.get("/alertas", response_model=List[AlertaEpidemiologicoResponse])
 async def listar_alertas(

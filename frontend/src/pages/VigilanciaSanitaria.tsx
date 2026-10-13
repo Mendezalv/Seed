@@ -312,9 +312,22 @@ export const VigilanciaSanitaria: React.FC = () => {
     showToast('Parâmetros restaurados com telemetria direta da estação INMET da fazenda.');
   };
 
-  const handleExportReport = () => {
-    showToast('Laudo fitossanitário consolidado emitido em PDF com assinatura digital de responsabilidade técnica.');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const handleExportReport = async () => {
+    try {
+      setIsExportingPdf(true);
+      showToast('Compilando laudo técnico fitossanitário em PDF oficial com assinatura CREA...');
+      await epidemiologicoService.exportarLaudoPdf();
+      showToast('Laudo fitossanitário emitido e baixado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao gerar laudo em PDF. Verifique a conexão com a API.');
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
+
 
   // Estados do Modal 1: Registro de Ocorrência Fitossanitária em Campo
   const [occurTalhao, setOccurTalhao] = useState('Talhão 02 • Pivô Central');
@@ -459,11 +472,11 @@ export const VigilanciaSanitaria: React.FC = () => {
               2024/25 (Soja & Milho)
             </strong>
           </div>
-          <button className="btn btn-outline" onClick={handleExportReport}>
+          <button className="btn btn-outline" onClick={handleExportReport} disabled={isExportingPdf}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            Exportar Laudos
+            {isExportingPdf ? 'Gerando Laudo...' : 'Exportar Laudo'}
           </button>
           <button className="btn btn-primary" onClick={() => setModalNewOccurOpen(true)}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">

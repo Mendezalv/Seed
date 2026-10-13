@@ -149,6 +149,8 @@ export const EnergiaEsg: React.FC = () => {
   const [isLaudoModalOpen, setIsLaudoModalOpen] = useState<boolean>(false);
   const [isNovoMesModalOpen, setIsNovoMesModalOpen] = useState<boolean>(false);
   const [selectedLaudoPeriod, setSelectedLaudoPeriod] = useState<string>('2026-09');
+  const [selectedLaudoId, setSelectedLaudoId] = useState<string | undefined>(undefined);
+  const [isDownloadingLaudo, setIsDownloadingLaudo] = useState<boolean>(false);
 
   // Filtros da Tabela de Relatórios
   const [tableSearch, setTableSearch] = useState<string>('');
@@ -310,8 +312,9 @@ export const EnergiaEsg: React.FC = () => {
     }
   };
 
-  const handleOpenLaudo = (period: string) => {
+  const handleOpenLaudo = (period: string, id?: string) => {
     setSelectedLaudoPeriod(period);
+    setSelectedLaudoId(id);
     setIsLaudoModalOpen(true);
   };
 
@@ -930,7 +933,7 @@ export const EnergiaEsg: React.FC = () => {
                           <button
                             className="btn btn-outline"
                             style={{ padding: '4px 10px', fontSize: '11px' }}
-                            onClick={() => handleOpenLaudo(rep.period)}
+                            onClick={() => handleOpenLaudo(rep.period, rep.id)}
                           >
                             Prévia
                           </button>
@@ -939,7 +942,7 @@ export const EnergiaEsg: React.FC = () => {
                         <button
                           className="btn btn-outline"
                           style={{ padding: '4px 10px', fontSize: '11px' }}
-                          onClick={() => handleOpenLaudo(rep.period)}
+                          onClick={() => handleOpenLaudo(rep.period, rep.id)}
                         >
                           Ver Laudo
                         </button>
@@ -1238,15 +1241,27 @@ export const EnergiaEsg: React.FC = () => {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => {
-                  showToast('Compilando Laudo Oficial com assinatura criptográfica... Download iniciado!');
-                  setIsLaudoModalOpen(false);
+                disabled={isDownloadingLaudo}
+                onClick={async () => {
+                  try {
+                    setIsDownloadingLaudo(true);
+                    showToast('Compilando Laudo Oficial com assinatura criptográfica SHA-256...');
+                    const validId = selectedLaudoId && selectedLaudoId.includes('-') && selectedLaudoId.length > 20 ? selectedLaudoId : undefined;
+                    await energeticoService.exportarLaudoPdf(validId);
+                    showToast('Laudo de Crédito Rural Verde baixado com sucesso!');
+                    setIsLaudoModalOpen(false);
+                  } catch (err) {
+                    console.error(err);
+                    showToast('Erro ao baixar o laudo ESG. Verifique a conexão com o servidor.');
+                  } finally {
+                    setIsDownloadingLaudo(false);
+                  }
                 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24-1.076-.673-2.13-1.28-3.108a9 9 0 0 1-1.44-4.721M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                Exportar PDF Oficial (Auditável)
+                {isDownloadingLaudo ? 'Gerando Laudo...' : 'Exportar PDF Oficial (Auditável)'}
               </button>
             </div>
           </div>

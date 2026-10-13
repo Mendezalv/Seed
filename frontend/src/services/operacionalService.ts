@@ -144,6 +144,10 @@ export const operacionalService = {
   async getEstoquesBaixos(): Promise<LoteInsumoApi[]> {
     return api.get<LoteInsumoApi[]>('/operacional/insumos/estoques-baixos');
   },
+  async exportarInventarioXlsx(): Promise<void> {
+    return api.download('/operacional/insumos/export/xlsx', 'inventario_insumos_seed.xlsx');
+  },
+
 
   // Maquinários & Frotas
   async getMaquinarios(): Promise<MaquinarioApi[]> {

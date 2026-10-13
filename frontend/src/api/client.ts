@@ -66,6 +66,48 @@ export async function request<T>(
   return response.json();
 }
 
+export async function downloadBlob(endpoint: string, fallbackFilename: string): Promise<void> {
+  const token = localStorage.getItem('seed_token');
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: 'GET',
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorDetail = 'Erro ao baixar arquivo';
+    try {
+      const data = await response.json();
+      errorDetail = data.detail || data.message || errorDetail;
+    } catch {
+      // Ignora erro de parse de json
+    }
+    throw new ApiError(response.status, errorDetail);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition');
+  let filename = fallbackFilename;
+  if (disposition && disposition.includes('filename=')) {
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match && match[1]) {
+      filename = match[1].trim();
+    }
+  }
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+
 export const api = {
   get: <T>(url: string, headers?: Record<string, string>) =>
     request<T>(url, { method: 'GET', headers }),
@@ -83,4 +125,7 @@ export const api = {
     }),
   delete: <T>(url: string, headers?: Record<string, string>) =>
     request<T>(url, { method: 'DELETE', headers }),
+  download: (url: string, fallbackFilename: string) =>
+    downloadBlob(url, fallbackFilename),
 };
+

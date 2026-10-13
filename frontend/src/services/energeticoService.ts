@@ -92,4 +92,10 @@ export const energeticoService = {
   async getLaudoCreditoVerde(id: string): Promise<LaudoCreditoVerdeApi> {
     return api.get<LaudoCreditoVerdeApi>(`/energetico/relatorios/${id}/laudo-credito-verde`);
   },
+
+  async exportarLaudoPdf(id?: string): Promise<void> {
+    const url = id ? `/energetico/relatorios/${id}/export/pdf` : '/energetico/relatorios/export/pdf';
+    return api.download(url, 'laudo_credito_verde_esg.pdf');
+  },
 };
+

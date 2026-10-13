@@ -1,8 +1,10 @@
 from uuid import UUID
 from decimal import Decimal
-from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
+from fastapi import APIRouter, Depends, Query, Path, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+
+from src.shared.export.export_engine import ExportEngine
 
 from src.shared.database.session import get_session
 from src.shared.api.dependencies import get_current_propriedade_id
@@ -141,6 +143,19 @@ async def verificar_estoques_baixos(
     session: AsyncSession = Depends(get_session)
 ):
     return await RastreabilidadeService.verificar_estoques_baixos(propriedade_id, session)
+
+@router.get("/insumos/export/xlsx")
+async def exportar_inventario_insumos_xlsx(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session)
+):
+    """Exporta planilha formatada em Excel com o balanço de estoque e rastreabilidade de insumos."""
+    xlsx_bytes = await ExportEngine.gerar_inventario_insumos_xlsx(propriedade_id, session)
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="inventario_insumos_seed.xlsx"'}
+    )
 
 
 # ─── Maquinários & Frotas ───────────────────────────────────
