@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useSync } from '../../context/SyncContext';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -19,6 +20,23 @@ const ROUTE_NAMES: Record<string, string> = {
 export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
   const location = useLocation();
   const currentTitle = ROUTE_NAMES[location.pathname] || 'Visão Geral';
+  const { isOnline, isSyncing, pendingCount, lastSyncAt, syncNow } = useSync();
+
+  const getSyncLabel = () => {
+    if (isSyncing) return 'Sincronizando...';
+    if (!isOnline) {
+      return pendingCount > 0 ? `Offline (${pendingCount} na fila)` : 'Modo Offline';
+    }
+    if (pendingCount > 0) return `Sincronizando (${pendingCount})`;
+    if (lastSyncAt) return `Sincronizado às ${lastSyncAt}`;
+    return 'Sincronizado';
+  };
+
+  const getSyncClass = () => {
+    if (isSyncing) return 'sync-status syncing';
+    if (!isOnline) return 'sync-status offline';
+    return 'sync-status';
+  };
 
   return (
     <header className="topbar">
@@ -58,11 +76,29 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
           </div>
         </div>
 
-        {/* Sync Status */}
-        <div className="sync-status">
-          <div className="sync-dot" />
-          <span>Sincronizado</span>
-        </div>
+        {/* Sync Status Interativo */}
+        <button
+          className={getSyncClass()}
+          onClick={() => syncNow()}
+          title="Clique para sincronizar com o servidor central"
+        >
+          {isSyncing ? (
+            <svg
+              className="spin"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
+              stroke="currentColor"
+              style={{ width: '13px', height: '13px' }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+          ) : (
+            <div className="sync-dot" />
+          )}
+          <span>{getSyncLabel()}</span>
+        </button>
 
         {/* Botão Notificações */}
         <button className="topbar-btn" title="Notificações">

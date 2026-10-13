@@ -342,6 +342,36 @@ body {
   padding: 4px 10px;
   background: var(--accent-muted);
   border-radius: 100px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.sync-status:hover {
+  filter: brightness(1.15);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.sync-status.offline {
+  color: var(--warning);
+  background: var(--warning-muted);
+}
+.sync-status.offline .sync-dot {
+  background: var(--warning);
+  animation: none;
+}
+.sync-status.syncing {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+}
+.sync-status.syncing .sync-dot {
+  background: #38bdf8;
+}
+.sync-status svg.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 .sync-dot {
   width: 6px;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ModalEntradaInsumo } from '../components/modals/ModalEntradaInsumo';
 import { operacionalService } from '../services/operacionalService';
+import { useSync } from '../context/SyncContext';
 
 interface LoteItem {
   id: string;
@@ -133,6 +134,7 @@ const INITIAL_LOTES: LoteItem[] = [
 ];
 
 export const InsumosEstoque: React.FC = () => {
+  const { queueOperation } = useSync();
   const [lotes, setLotes] = useState<LoteItem[]>(INITIAL_LOTES);
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
@@ -218,6 +220,21 @@ export const InsumosEstoque: React.FC = () => {
       })
     );
     showToast(`Baixa de 80 L efetuada do lote ${loteCodigo} para aplicação no ${talhaoNome}!`);
+
+    // Registra mutação na fila de sincronização offline
+    queueOperation(
+      'alocacao_insumo',
+      'CREATE',
+      crypto.randomUUID(),
+      {
+        codigo_lote: loteCodigo,
+        talhao_nome: talhaoNome,
+        quantidade_baixada: 80,
+        unidade: 'L',
+        baixado_em: new Date().toISOString(),
+      },
+      'LWW'
+    ).catch(() => {});
 
     const target = lotes.find((l) => l.codigoLote === loteCodigo);
     if (target && target.id && target.id.includes('-')) {

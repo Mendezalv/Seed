@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { epidemiologicoService } from '../services/epidemiologicoService';
+import { useSync } from '../context/SyncContext';
 
 export interface OccurrenceItem {
   id: string;
@@ -136,6 +137,7 @@ const INITIAL_OCCURRENCES: OccurrenceItem[] = [
 ];
 
 export const VigilanciaSanitaria: React.FC = () => {
+  const { queueOperation } = useSync();
   const [occurrences, setOccurrences] = useState<OccurrenceItem[]>(INITIAL_OCCURRENCES);
   const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>('EPI-104');
 
@@ -388,7 +390,22 @@ export const VigilanciaSanitaria: React.FC = () => {
     showToast(`Ocorrência fitossanitária #${newId} cadastrada com sucesso e plotada no mapa!`);
     setModalNewOccurOpen(false);
 
-    // Sincronizar com FastAPI
+    // Sincronizar com FastAPI e fila offline
+    queueOperation(
+      'ocorrencia_sanitaria',
+      'CREATE',
+      newId,
+      {
+        tipo_cultura: 'Soja',
+        agente_identificado: agentSimple,
+        severidade: occurSeveridade,
+        latitude: parseFloat(occurLat) || -12.502,
+        longitude: parseFloat(occurLon) || -55.7015,
+        observado_em: new Date().toISOString(),
+      },
+      'LWW'
+    ).catch(() => {});
+
     epidemiologicoService.createOcorrencia({
       tipo_ameaca: 'DOENCA',
       agente_identificado: agentSimple,

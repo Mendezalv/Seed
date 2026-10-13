@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { operacionalService } from '../services/operacionalService';
+import { useSync } from '../context/SyncContext';
 
 interface Machine {
   id: string;
@@ -443,6 +444,7 @@ const INITIAL_ORDERS: MaintenanceOrder[] = [
 ];
 
 export const Maquinarios: React.FC = () => {
+  const { queueOperation } = useSync();
   const [machines, setMachines] = useState<Machine[]>(INITIAL_MACHINES);
   const [orders, setOrders] = useState<MaintenanceOrder[]>(INITIAL_ORDERS);
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
@@ -653,6 +655,22 @@ export const Maquinarios: React.FC = () => {
     showToast(
       `Ordem de Serviço ${newCode} registrada com sucesso para ${machineCode}! Custo orçado: R$ ${formCost.toLocaleString('pt-BR')},00`
     );
+
+    // Sincronizar na outbox offline
+    queueOperation(
+      'ordem_manutencao',
+      'CREATE',
+      newOrder.id,
+      {
+        codigo_os: newCode,
+        maquinario_codigo: machineCode,
+        tipo: formType,
+        descricao: formDesc,
+        horimetro: formHorimeter,
+        custo_estimado: formCost,
+      },
+      'LWW'
+    ).catch(() => {});
 
     // Sincronizar com FastAPI
     operacionalService.createOrdemManutencao({

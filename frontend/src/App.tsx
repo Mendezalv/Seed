@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SyncProvider } from './context/SyncContext';
 import { LayoutShell } from './components/layout/LayoutShell';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
@@ -46,34 +47,36 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 export const App: React.FC = () => {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Rota Pública de Autenticação */}
-          <Route path="/login" element={<Login />} />
+      <SyncProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Rota Pública de Autenticação */}
+            <Route path="/login" element={<Login />} />
 
-          {/* Rotas Protegidas sob o Layout Shell Unificado */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <LayoutShell />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Navigate to="/" replace />} />
-            <Route path="/talhoes" element={<TalhoesGis />} />
-            <Route path="/safras" element={<SafrasPlanejamento />} />
-            <Route path="/insumos" element={<InsumosEstoque />} />
-            <Route path="/maquinarios" element={<Maquinarios />} />
-            <Route path="/viabilidade" element={<Viabilidade />} />
-            <Route path="/vigilancia" element={<VigilanciaSanitaria />} />
-            <Route path="/energia-esg" element={<EnergiaEsg />} />
-          </Route>
+            {/* Rotas Protegidas sob o Layout Shell Unificado */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <LayoutShell />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Navigate to="/" replace />} />
+              <Route path="/talhoes" element={<TalhoesGis />} />
+              <Route path="/safras" element={<SafrasPlanejamento />} />
+              <Route path="/insumos" element={<InsumosEstoque />} />
+              <Route path="/maquinarios" element={<Maquinarios />} />
+              <Route path="/viabilidade" element={<Viabilidade />} />
+              <Route path="/vigilancia" element={<VigilanciaSanitaria />} />
+              <Route path="/energia-esg" element={<EnergiaEsg />} />
+            </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </SyncProvider>
     </AuthProvider>
   );
 };
