@@ -1016,7 +1016,8 @@ body {
 }
 
 /* ── Modal Customizado ────────────────────────────── */
-.modal-backdrop {
+.modal-backdrop,
+.modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.78);
@@ -1497,6 +1498,16 @@ select.form-input option, select option {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+}
+.status-filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 2px;
+  user-select: none;
 }
 .status-pill-filter {
   padding: 5px 10px;
@@ -1507,13 +1518,40 @@ select.form-input option, select option {
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 140ms ease;
+  user-select: none;
 }
-.status-pill-filter:hover { color: var(--text-secondary); }
+.status-pill-filter:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
 .status-pill-filter.active {
   background: var(--bg-surface);
   color: var(--text-primary);
   border-color: var(--border);
+  font-weight: 600;
+}
+.status-pill-filter .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-pill-filter .count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+.status-pill-filter.active .count {
+  background: var(--border);
+  color: var(--accent-text);
 }
 
 .table-wrap {
@@ -3666,6 +3704,36 @@ input[type="range"]::-webkit-slider-thumb {
   overflow-x: auto;
 }
 
+/* Sub-barra: Busca, Filtros de Status e Toggle Grid/Tabela */
+.fleet-filter-bar,
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 18px;
+  padding: 12px 18px;
+  background: #101014;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.fleet-filter-main {
+  display: flex;
+  align-items: center;
+  gap: 14px 20px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.fleet-filter-bar .search-input-wrap,
+.filter-bar .search-input-wrap {
+  width: 320px;
+  min-width: 240px;
+  max-width: 100%;
+  flex: 0 1 320px;
+}
+
 .fleet-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -4559,4 +4627,354 @@ input[type="range"]::-webkit-slider-thumb {
   .sim-body-layout { grid-template-columns: 1fr; }
   .sim-controls-panel { border-right: none; border-bottom: 1px solid var(--border); }
   .bottom-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Energia & Sustentabilidade ESG (Tela 09) ─────────────────── */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 4px 14px;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse-dot 2.5s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.badge-accent { background: var(--accent-muted); color: var(--accent-text); }
+.badge-warning { background: var(--warning-muted); color: var(--warning-text); }
+.badge-info { background: var(--info-muted); color: var(--info-text); }
+.badge-purple { background: var(--purple-muted); color: var(--purple-text); }
+
+.esg-progress-container {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-surface);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 2px;
+  position: relative;
+}
+.esg-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  border-radius: 3px;
+  transition: width 600ms ease;
+}
+
+.esg-main-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1.45fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.matrix-stacked-bar {
+  width: 100%;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+.matrix-segment {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #000;
+  transition: width 400ms ease, opacity 200ms ease;
+  position: relative;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+.matrix-segment:hover { filter: brightness(1.15); }
+.seg-solar { background: #10b981; }
+.seg-biodiesel { background: #06b6d4; }
+.seg-grid { background: #3b82f6; color: #fff; }
+.seg-fossil { background: #f59e0b; }
+
+.matrix-legend-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.matrix-legend-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.legend-color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.matrix-legend-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.energy-sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.source-row-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: border-color 160ms ease;
+}
+.source-row-card:hover { border-color: #3f3f46; }
+.source-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.source-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.source-icon-wrap svg { width: 18px; height: 18px; }
+.source-names {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.source-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.source-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.source-metrics {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  text-align: right;
+}
+.source-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.source-stat-lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+.source-stat-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Simulador ESG */
+.sim-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sim-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sim-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.sim-val-display {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+.sim-range {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #27272a;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.sim-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  transition: transform 140ms ease;
+}
+.sim-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+.sim-results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: rgba(16, 185, 129, 0.04);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.sim-result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.sim-result-lbl {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sim-result-val {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.status-pill.published {
+  background: var(--accent-muted);
+  color: var(--accent-text);
+}
+.status-pill.draft {
+  background: var(--warning-muted);
+  color: var(--warning-text);
+}
+
+/* Laudo Técnico */
+.laudo-document {
+  background: #0d0e11;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: var(--font-sans);
+}
+.laudo-header-box {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.laudo-tag {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  background: var(--accent-muted);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.laudo-kv-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.laudo-kv-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.laudo-kv-k {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.laudo-kv-v {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.laudo-seal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+}
+
+@media (max-width: 1080px) {
+  .esg-main-grid {
+    grid-template-columns: 1fr;
+  }
 }

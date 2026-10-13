@@ -505,6 +505,32 @@ export const Maquinarios: React.FC = () => {
     };
   }, [machines]);
 
+  // Contadores por status (respeitando a categoria selecionada)
+  const statusCounts = useMemo(() => {
+    const base = selectedCategory === 'TODOS'
+      ? machines
+      : machines.filter((m) => m.category === selectedCategory);
+    return {
+      TODOS: base.length,
+      OPERANDO: base.filter((m) => m.status === 'OPERANDO').length,
+      PATIO: base.filter((m) => m.status === 'PATIO').length,
+      MANUTENCAO: base.filter((m) => m.status === 'MANUTENCAO').length,
+      REVISAO: base.filter((m) => m.status === 'REVISAO').length,
+    };
+  }, [machines, selectedCategory]);
+
+  const statusFilterOptions: {
+    id: 'TODOS' | 'OPERANDO' | 'PATIO' | 'MANUTENCAO' | 'REVISAO';
+    label: string;
+    dotColor?: string;
+  }[] = [
+    { id: 'TODOS', label: 'Todos' },
+    { id: 'OPERANDO', label: 'Em Operação', dotColor: 'var(--accent)' },
+    { id: 'PATIO', label: 'Pátio / Standby', dotColor: '#71717a' },
+    { id: 'MANUTENCAO', label: 'Oficina', dotColor: 'var(--danger)' },
+    { id: 'REVISAO', label: 'Revisão Próxima', dotColor: 'var(--warning)' },
+  ];
+
   // Abertura de Modal de Telemetria
   const handleOpenTelemetry = (machine: Machine) => {
     setSelectedTelemetryMachine(machine);
@@ -724,57 +750,42 @@ export const Maquinarios: React.FC = () => {
         </div>
 
         {/* Sub-barra: Busca, Filtros de Status e Toggle Grid/Tabela */}
-        <div className="filter-bar">
-          <div className="search-input-wrap">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Buscar por prefixo (TR-01), modelo, operador ou talhão..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        <div className="fleet-filter-bar">
+          <div className="fleet-filter-main">
+            <div className="search-input-wrap">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Buscar por prefixo (TR-01), modelo, operador ou talhão..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
 
-          <div className="status-filters">
-            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginRight: '4px' }}>Status:</span>
-            <button
-              className={`status-pill ${selectedStatus === 'TODOS' ? 'active' : ''}`}
-              onClick={() => setSelectedStatus('TODOS')}
-            >
-              Todos
-            </button>
-            <button
-              className={`status-pill ${selectedStatus === 'OPERANDO' ? 'active' : ''}`}
-              onClick={() => setSelectedStatus('OPERANDO')}
-            >
-              Em Operação
-            </button>
-            <button
-              className={`status-pill ${selectedStatus === 'PATIO' ? 'active' : ''}`}
-              onClick={() => setSelectedStatus('PATIO')}
-            >
-              Pátio / Standby
-            </button>
-            <button
-              className={`status-pill ${selectedStatus === 'MANUTENCAO' ? 'active' : ''}`}
-              onClick={() => setSelectedStatus('MANUTENCAO')}
-            >
-              Oficina
-            </button>
-            <button
-              className={`status-pill ${selectedStatus === 'REVISAO' ? 'active' : ''}`}
-              onClick={() => setSelectedStatus('REVISAO')}
-            >
-              Revisão Próxima
-            </button>
+            <div className="status-filters">
+              <span className="status-filter-label">Status:</span>
+              {statusFilterOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`status-pill-filter ${selectedStatus === opt.id ? 'active' : ''}`}
+                  onClick={() => setSelectedStatus(opt.id)}
+                >
+                  {opt.dotColor && <span className="status-dot" style={{ background: opt.dotColor }} />}
+                  <span>{opt.label}</span>
+                  <span className="count">{statusCounts[opt.id]}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Toggle de Visualização: Cards vs Tabela OS */}
           <div className="view-toggle">
             <button
+              type="button"
               className={`view-toggle-btn ${viewMode === 'GRID' ? 'active' : ''}`}
               onClick={() => setViewMode('GRID')}
             >
@@ -784,6 +795,7 @@ export const Maquinarios: React.FC = () => {
               Grid de Máquinas ({filteredMachines.length})
             </button>
             <button
+              type="button"
               className={`view-toggle-btn ${viewMode === 'TABLE' ? 'active' : ''}`}
               onClick={() => setViewMode('TABLE')}
             >
