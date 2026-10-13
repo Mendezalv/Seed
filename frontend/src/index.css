@@ -4033,3 +4033,530 @@ input[type="range"]::-webkit-slider-thumb {
 
 
 
+
+/* ── Viabilidade Econômica & Comercialização (Tela 07) ────────── */
+.market-ticker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.ticker-item .label { color: var(--text-muted); font-size: 10px; font-weight: 600; }
+.ticker-item .val { color: var(--text-primary); font-weight: 600; }
+.ticker-item .delta-up { color: var(--accent-text); font-size: 10px; }
+.ticker-item .delta-down { color: var(--danger); font-size: 10px; }
+.ticker-sep { color: var(--border); font-size: 10px; }
+
+.kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.kpi-bar .kpi-cell {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-right: 1px solid var(--border);
+  transition: border-color 140ms ease, transform 140ms var(--ease-out);
+}
+.kpi-bar .kpi-cell:hover {
+  border-color: #3f3f46;
+  transform: translateY(-1px);
+}
+.kpi-cell-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.kpi-cell-val .curr {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+.kpi-cell-val .decimals {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.kpi-cell-val .unit {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 5px;
+}
+
+/* Banner de Oportunidade de Fixação */
+.market-alert-banner {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.market-alert-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.market-alert-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--accent-muted);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.market-alert-icon svg { width: 18px; height: 18px; }
+.market-alert-text { display: flex; flex-direction: column; gap: 2px; }
+.market-alert-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.market-alert-desc { font-size: 12px; color: var(--text-secondary); }
+.market-alert-desc strong { color: var(--accent-text); }
+.market-alert-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* Simulador de Sensibilidade Financeira */
+.sim-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.sim-card-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #0e0e11;
+}
+.sim-header-titles { display: flex; flex-direction: column; gap: 2px; }
+.sim-title { font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+.sim-subtitle { font-size: 11.5px; color: var(--text-muted); }
+
+.sim-body-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  min-height: 480px;
+}
+.sim-controls-panel {
+  padding: 20px;
+  border-right: 1px solid var(--border);
+  background: #121216;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.param-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.param-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.param-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.param-badge-val {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.custom-range {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: #27272a;
+  outline: none;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.custom-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  border: 2px solid #000;
+  transition: transform 120ms;
+}
+.custom-range::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.range-limits {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.scenario-results-box {
+  margin-top: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.scenario-box-title {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.scenario-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.scenario-stat-row .stat-name { color: var(--text-secondary); }
+.scenario-stat-row .stat-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.scenario-stat-row .stat-value.highlight { color: var(--accent-text); font-size: 13.5px; }
+
+.breakeven-indicator {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+.breakeven-indicator .be-label { color: var(--warning); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+.breakeven-indicator .be-val { font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); }
+
+/* Matriz de Sensibilidade */
+.sim-matrix-panel {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg-elevated);
+  overflow-x: auto;
+}
+.matrix-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.matrix-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+.legend-swatch.high { background: rgba(16, 185, 129, 0.35); border: 1px solid var(--accent); }
+.legend-swatch.med { background: rgba(59, 130, 246, 0.2); border: 1px solid var(--info); }
+.legend-swatch.low { background: rgba(245, 158, 11, 0.2); border: 1px solid var(--warning); }
+.legend-swatch.neg { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); }
+
+.matrix-table-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #0f1013;
+}
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: center;
+}
+.matrix-table th, .matrix-table td {
+  padding: 10px 8px;
+  border: 1px solid var(--border-subtle);
+}
+.matrix-table th {
+  background: #14151a;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.matrix-table th.axis-corner {
+  background: #101014;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  width: 120px;
+}
+.matrix-table th.col-price {
+  color: var(--text-primary);
+}
+.matrix-table td.row-prod {
+  background: #14151a;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left;
+  padding-left: 14px;
+}
+.matrix-cell {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+  position: relative;
+}
+.matrix-cell:hover {
+  filter: brightness(1.2);
+  transform: scale(1.03);
+  z-index: 2;
+}
+.cell-super { background: rgba(16, 185, 129, 0.22); color: #6ee7b7; }
+.cell-high { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+.cell-mid { background: rgba(59, 130, 246, 0.12); color: #93c5fd; }
+.cell-low { background: rgba(245, 158, 11, 0.12); color: #fcd34d; }
+.cell-neg { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+.cell-current-active {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5) inset;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.28) !important;
+  color: #fff !important;
+}
+
+/* Dual Cards: Contratos & DRE */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 20px;
+}
+.card-block {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.card-block-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #0e0e11;
+}
+.card-block-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hedge-progress-card {
+  padding: 14px 20px;
+  background: #141418;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hedge-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+.hedge-progress-bar-bg {
+  height: 8px;
+  border-radius: 100px;
+  background: #27272a;
+  overflow: hidden;
+  display: flex;
+}
+.hedge-fill-locked {
+  background: var(--accent);
+  height: 100%;
+  border-radius: 100px 0 0 100px;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+.hedge-fill-open {
+  background: #3f3f46;
+  height: 100%;
+  border-radius: 0 100px 100px 0;
+}
+.hedge-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.contracts-table-wrap {
+  flex: 1;
+  overflow-x: auto;
+}
+.contracts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  text-align: left;
+}
+.contracts-table th {
+  background: #14151a;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.contracts-table td {
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  vertical-align: middle;
+}
+.contracts-table tr:hover td {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.contract-code-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: inline-block;
+}
+.trading-name { font-weight: 600; color: var(--text-primary); }
+.trading-type { font-size: 11px; color: var(--text-muted); }
+
+.status-badge.executed { background: var(--accent-muted); color: var(--accent-text); border: 1px solid rgba(16, 185, 129, 0.25); }
+.status-badge.active { background: var(--info-muted); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.25); }
+.status-badge.open { background: var(--warning-muted); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.25); }
+
+/* Decomposição COT */
+.cost-breakdown-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cost-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.cost-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.cost-item-name { color: var(--text-secondary); font-weight: 500; }
+.cost-item-val {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cost-bar-bg {
+  height: 6px;
+  background: #27272a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cost-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+.cost-total-summary {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cost-total-label { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.cost-total-val {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+@media (max-width: 1280px) {
+  .kpi-bar { grid-template-columns: repeat(2, 1fr); }
+  .sim-body-layout { grid-template-columns: 1fr; }
+  .sim-controls-panel { border-right: none; border-bottom: 1px solid var(--border); }
+  .bottom-grid { grid-template-columns: 1fr; }
+}
