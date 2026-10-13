@@ -1,16 +1,17 @@
 import io
+from datetime import UTC, date, datetime
+from decimal import Decimal
+from uuid import UUID
+
+import openpyxl
 import pytest
 import pytest_asyncio
-import openpyxl
-from uuid import UUID
-from datetime import datetime, date, timezone
-from decimal import Decimal
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.operacional.domain.models import Insumo, LoteInsumo
-from src.epidemiologico.domain.models import OcorrenciaSanitaria
 from src.energetico.domain.models import RelatorioESG
+from src.epidemiologico.domain.models import OcorrenciaSanitaria
+from src.operacional.domain.models import Insumo, LoteInsumo
 
 
 @pytest_asyncio.fixture
@@ -22,7 +23,8 @@ async def produtor_auth(async_client: AsyncClient) -> tuple[str, UUID, UUID]:
         "role": "ADMIN"
     }
     await async_client.post("/api/v1/auth/registro", json=register_payload)
-    resp = await async_client.post("/api/v1/auth/login", json={"email": "export_auditor@seed.agro", "senha": "SenhaForte123!"})
+    login_payload = {"email": "export_auditor@seed.agro", "senha": "SenhaForte123!"}
+    resp = await async_client.post("/api/v1/auth/login", json=login_payload)
     token = resp.json()["access_token"]
 
     headers = {"Authorization": f"Bearer {token}"}
@@ -58,7 +60,7 @@ async def test_export_inventario_insumos_xlsx_flow(
         quantidade_inicial=Decimal("500.0"),
         quantidade_atual=Decimal("350.0"),
         data_validade=date(2027, 12, 31),
-        entrada_em=datetime.now(timezone.utc),
+        entrada_em=datetime.now(UTC),
         fornecedor="Bayer CropScience"
     )
     session.add(lote)
@@ -67,7 +69,8 @@ async def test_export_inventario_insumos_xlsx_flow(
     # Requisita exportação XLSX
     resp = await async_client.get("/api/v1/operacional/insumos/export/xlsx", headers=headers)
     assert resp.status_code == 200
-    assert "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in resp.headers["content-type"]
+    expected_xlsx_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert expected_xlsx_type in resp.headers["content-type"]
     assert "inventario_insumos_seed.xlsx" in resp.headers.get("content-disposition", "")
 
     # Valida bytes do Excel
@@ -98,13 +101,14 @@ async def test_export_laudo_fitossanitario_pdf_flow(
         longitude=-55.7015,
         reportado_por=user_id,
         origem="WEB",
-        observado_em=datetime.now(timezone.utc)
+        observado_em=datetime.now(UTC)
     )
     session.add(ocorrencia)
     await session.commit()
 
     # Requisita exportação PDF
-    resp = await async_client.get("/api/v1/epidemiologico/ocorrencias/export/pdf", headers=headers)
+    url_pdf = "/api/v1/epidemiologico/ocorrencias/export/pdf"
+    resp = await async_client.get(url_pdf, headers=headers)
     assert resp.status_code == 200
     assert "application/pdf" in resp.headers["content-type"]
     assert "laudo_fitossanitario.pdf" in resp.headers.get("content-disposition", "")
@@ -133,13 +137,15 @@ async def test_export_laudo_esg_pdf_flow(
     await session.commit()
 
     # 1. Teste de download por ID específico
-    resp_id = await async_client.get(f"/api/v1/energetico/relatorios/{relatorio.id}/export/pdf", headers=headers)
+    url_id = f"/api/v1/energetico/relatorios/{relatorio.id}/export/pdf"
+    resp_id = await async_client.get(url_id, headers=headers)
     assert resp_id.status_code == 200
     assert "application/pdf" in resp_id.headers["content-type"]
     assert resp_id.content.startswith(b"%PDF")
 
     # 2. Teste de download do último relatório (sem ID específico)
-    resp_latest = await async_client.get("/api/v1/energetico/relatorios/export/pdf", headers=headers)
+    url_latest = "/api/v1/energetico/relatorios/export/pdf"
+    resp_latest = await async_client.get(url_latest, headers=headers)
     assert resp_latest.status_code == 200
     assert "application/pdf" in resp_latest.headers["content-type"]
     assert resp_latest.content.startswith(b"%PDF")

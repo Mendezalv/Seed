@@ -8,23 +8,21 @@ Gera planilhas Excel formatadas (.xlsx) via openpyxl e laudos técnicos oficiais
 """
 
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import List, Optional
 from uuid import UUID
 
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
 from fpdf import FPDF
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.shared.database.models import Propriedade
-from src.operacional.domain.models import LoteInsumo, Insumo
+from src.energetico.domain.models import RelatorioESG
 from src.epidemiologico.domain.models import OcorrenciaSanitaria
-from src.energetico.domain.models import RelatorioESG, ConsumoEnergia, FonteEnergia
-
+from src.operacional.domain.models import Insumo, LoteInsumo
+from src.shared.database.models import Propriedade
 
 # ─── Cores e Estilos Padrão Seed ─────────────────────────────────────────────
 
@@ -71,7 +69,7 @@ class SeedPDFReport(FPDF):
         self.set_draw_color(228, 228, 231)
         self.line(10, self.get_y() - 2, 200, self.get_y() - 2)
 
-        data_hora = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC")
+        data_hora = datetime.now(UTC).strftime("%d/%m/%Y %H:%M UTC")
         self.cell(0, 8, f"Seed Agro | Autenticação Digital | Emitido em {data_hora} | Página {self.page_no()}", align="C")
 
 
@@ -365,7 +363,7 @@ class ExportEngine:
     async def gerar_laudo_esg_pdf(
         propriedade_id: UUID,
         session: AsyncSession,
-        relatorio_id: Optional[UUID] = None
+        relatorio_id: UUID | None = None
     ) -> bytes:
         """Gera laudo formal em PDF de elegibilidade técnica para financiamento verde Plano ABC+."""
         relatorio = None
