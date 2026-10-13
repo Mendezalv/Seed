@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 import geoalchemy2  # Ensure GeoAlchemy2 types are loaded
+import geoalchemy2.alembic_helpers
 
 # Add the project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
