@@ -50,3 +50,9 @@ class RastreabilidadeService:
         )
         result = await session.execute(stmt)
         return list(result.scalars().all())
+
+    @staticmethod
+    async def listar_lotes(propriedade_id: UUID, session: AsyncSession) -> list[LoteInsumo]:
+        stmt = select(LoteInsumo).where(LoteInsumo.propriedade_id == propriedade_id).order_by(LoteInsumo.entrada_em.desc())
+        result = await session.execute(stmt)
+        return list(result.scalars().all())

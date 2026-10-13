@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
+import { operacionalService } from '../services/operacionalService';
 
 interface Machine {
   id: string;
@@ -442,12 +443,83 @@ const INITIAL_ORDERS: MaintenanceOrder[] = [
 ];
 
 export const Maquinarios: React.FC = () => {
-  const [machines] = useState<Machine[]>(INITIAL_MACHINES);
+  const [machines, setMachines] = useState<Machine[]>(INITIAL_MACHINES);
   const [orders, setOrders] = useState<MaintenanceOrder[]>(INITIAL_ORDERS);
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [viewMode, setViewMode] = useState<'GRID' | 'TABLE'>('GRID');
+
+  useEffect(() => {
+    Promise.allSettled([
+      operacionalService.getMaquinarios(),
+      operacionalService.getOrdensManutencao(),
+    ])
+      .then(([resMaq, resOrd]) => {
+        if (resMaq.status === 'fulfilled' && resMaq.value && resMaq.value.length > 0) {
+          const mappedMaq: Machine[] = resMaq.value.map((m, idx) => ({
+            id: m.id || `api-maq-${idx}`,
+            code: m.modelo || `MQ-${idx + 1}`,
+            name: m.nome,
+            category: (m.tipo === 'COLHEITADEIRA' || m.tipo === 'PULVERIZADOR' || m.tipo === 'PLANTADEIRA') ? (m.tipo as any) : 'TRATOR',
+            typeTag: `${m.tipo} • ${m.modelo || 'Agrícola'}`,
+            status: (m.status === 'EM_MANUTENCAO' ? 'MANUTENCAO' : m.status === 'OPERANDO' ? 'OPERANDO' : 'PATIO'),
+            statusLabel: m.status,
+            iconType: m.tipo === 'COLHEITADEIRA' ? 'harvester' : m.tipo === 'PULVERIZADOR' ? 'sprayer' : 'tractor',
+            horimeter: Number(m.horimetro_atual || 0),
+            horimeterTarget: Number(m.intervalo_preventiva || 1000),
+            horimeterCyclePct: Math.min(100, Math.round((Number(m.horimetro_atual || 0) / Number(m.intervalo_preventiva || 1000)) * 100)),
+            horimeterSub1: 'Horímetro telemetrado',
+            horimeterSub2: `Próximo serviço em ${m.proximo_servico_em || 250}h`,
+            telemetry1Label: 'Consumo Instantâneo',
+            telemetry1Val: '16.5 L/h',
+            telemetry2Label: 'Nível Diesel',
+            telemetry2Val: '80%',
+            telemetry2IsFuel: true,
+            fuelPct: 80,
+            telemetry3Label: 'Sinal Telemetria',
+            telemetry3Val: 'Online GPS',
+            operator: 'Equipe Operacional',
+            operatorInitials: 'OP',
+            talhao: 'Sede / Campo',
+          }));
+          setMachines((prev) => {
+            const existingCodes = new Set(prev.map((p) => p.code));
+            const fresh = mappedMaq.filter((fm) => !existingCodes.has(fm.code));
+            return [...fresh, ...prev];
+          });
+        }
+
+        if (resOrd.status === 'fulfilled' && resOrd.value && resOrd.value.items && resOrd.value.items.length > 0) {
+          const mappedOrd: MaintenanceOrder[] = resOrd.value.items.map((o, idx) => ({
+            id: o.id || `api-os-${idx}`,
+            code: `OS-API-${idx + 1}`,
+            machineCode: 'MAQ',
+            machineName: 'Máquina',
+            machineSub: o.tipo || 'Preventiva',
+            type: o.tipo || 'Manutenção',
+            typeDesc: o.descricao || 'Ordem aberta via sistema',
+            horimeter: `${o.horimetro_na_abertura || 0} h`,
+            parts: 'Itens em análise',
+            partsOrigin: 'Almoxarifado',
+            mechanic: 'Oficina Central',
+            cost: Number(o.custo_estimado || 0),
+            status: o.status === 'CONCLUIDA' ? 'CONCLUIDA' : 'EM_EXECUCAO',
+            statusLabel: o.status || 'Em Execução',
+            statusClass: o.status === 'CONCLUIDA' ? 'operating' : 'maintenance',
+            date: new Date().toLocaleDateString('pt-BR'),
+          }));
+          setOrders((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const fresh = mappedOrd.filter((fo) => !existingIds.has(fo.id));
+            return [...fresh, ...prev];
+          });
+        }
+      })
+      .catch((err) => {
+        console.info('Modo demonstração ativo em Maquinários:', err);
+      });
+  }, []);
 
   // Modais
   const [modalNewOSOpen, setModalNewOSOpen] = useState(false);
@@ -581,6 +653,19 @@ export const Maquinarios: React.FC = () => {
     showToast(
       `Ordem de Serviço ${newCode} registrada com sucesso para ${machineCode}! Custo orçado: R$ ${formCost.toLocaleString('pt-BR')},00`
     );
+
+    // Sincronizar com FastAPI
+    operacionalService.createOrdemManutencao({
+      maquinario_id: '00000000-0000-0000-0000-000000000001',
+      tipo: formType.includes('Preventiva') ? 'PREVENTIVA' : 'CORRETIVA',
+      descricao: `${formDesc} (Ref: ${machineCode} - ${machineName})`,
+      horimetro_na_abertura: formHorimeter,
+      status: 'ABERTA',
+      prioridade: 'MEDIA',
+      custo_estimado: formCost,
+    }).catch((err) => {
+      console.info('Ordem de serviço registrada localmente em modo offline:', err);
+    });
   };
 
   const handleOpenOSDetail = (os: MaintenanceOrder) => {

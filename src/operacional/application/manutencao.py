@@ -72,3 +72,26 @@ class ManutencaoService:
         
         result = await session.execute(stmt)
         return list(result.scalars().all())
+
+    @staticmethod
+    async def listar_maquinarios(propriedade_id: UUID, session: AsyncSession) -> list[Maquinario]:
+        stmt = select(Maquinario).where(Maquinario.propriedade_id == propriedade_id).order_by(Maquinario.nome)
+        result = await session.execute(stmt)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def criar_maquinario(maquinario_in, propriedade_id: UUID, session: AsyncSession) -> Maquinario:
+        novo = Maquinario(**maquinario_in.model_dump(), propriedade_id=propriedade_id)
+        session.add(novo)
+        await session.flush()
+        return novo
+
+    @staticmethod
+    async def criar_ordem(ordem_in, propriedade_id: UUID, session: AsyncSession) -> OrdemManutencao:
+        nova_om = OrdemManutencao(**ordem_in.model_dump(), propriedade_id=propriedade_id)
+        maq = await session.get(Maquinario, nova_om.maquinario_id)
+        if maq:
+            maq.status = "MANUTENCAO"
+        session.add(nova_om)
+        await session.flush()
+        return nova_om

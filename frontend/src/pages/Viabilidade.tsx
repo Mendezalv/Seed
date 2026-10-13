@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { CustomDatePicker } from '../components/ui/CustomDatePicker';
+import { operacionalService } from '../services/operacionalService';
 
 interface HedgeContract {
   id: string;
@@ -157,6 +158,22 @@ export const Viabilidade: React.FC = () => {
 
   // Lista de Contratos
   const [contracts, setContracts] = useState<HedgeContract[]>(INITIAL_CONTRACTS);
+
+  useEffect(() => {
+    operacionalService.calcularViabilidade({
+      safra_id: '00000000-0000-0000-0000-000000000001',
+      custo_mao_obra: 850,
+      custo_frete: 420,
+      custo_impostos: 280,
+      preco_mercado_saca: priceVal,
+    }).then((res) => {
+      if (res && res.custo_por_saca) {
+        console.info('Cálculo de viabilidade via API executado com sucesso:', res);
+      }
+    }).catch((err) => {
+      console.info('Modo demonstração ativo em Viabilidade Econômica:', err);
+    });
+  }, [priceVal]);
 
   // Modais
   const [isHedgeModalOpen, setIsHedgeModalOpen] = useState<boolean>(false);
@@ -365,634 +382,634 @@ export const Viabilidade: React.FC = () => {
         </div>
       </div>
 
-        {/* Master Financial KPIs Bar (4 Cards) */}
-        <div className="kpi-bar">
-          {/* KPI 1 */}
-          <div className="kpi-cell">
-            <div className="kpi-cell-top">
-              <span className="kpi-cell-label">Receita Bruta Projetada</span>
-              <span className="kpi-tag good">+5.8% META</span>
-            </div>
-            <div className="kpi-cell-val">
-              <span className="curr">R$</span>21.480.000<span className="decimals">,00</span>
-            </div>
-            <div className="kpi-cell-sub">
-              <span>Safra 2024/25 • 3.200 ha (Soja + Milho)</span>
-            </div>
+      {/* Master Financial KPIs Bar (4 Cards) */}
+      <div className="kpi-bar">
+        {/* KPI 1 */}
+        <div className="kpi-cell">
+          <div className="kpi-cell-top">
+            <span className="kpi-cell-label">Receita Bruta Projetada</span>
+            <span className="kpi-tag good">+5.8% META</span>
           </div>
-
-          {/* KPI 2 */}
-          <div className="kpi-cell">
-            <div className="kpi-cell-top">
-              <span className="kpi-cell-label">Margem EBITDA Agrícola</span>
-              <span className="kpi-tag good">+3.2 p.p.</span>
-            </div>
-            <div className="kpi-cell-val">
-              38,4%
-              <span className="unit">R$ 8.248.320,00</span>
-            </div>
-            <div className="kpi-cell-sub">
-              <span>Margem líquida após COT e fixos</span>
-            </div>
+          <div className="kpi-cell-val">
+            <span className="curr">R$</span>21.480.000<span className="decimals">,00</span>
           </div>
-
-          {/* KPI 3 */}
-          <div className="kpi-cell">
-            <div className="kpi-cell-top">
-              <span className="kpi-cell-label">Custo Operacional Total (COT)</span>
-              <span className="kpi-tag info">PLANEJADO</span>
-            </div>
-            <div className="kpi-cell-val">
-              <span className="curr">R$</span>4.135<span className="decimals">,00</span>
-              <span className="unit">/ ha</span>
-            </div>
-            <div className="kpi-cell-sub">
-              <span>Insumos 54% • Frotas 21% • Fixos 25%</span>
-            </div>
-          </div>
-
-          {/* KPI 4 */}
-          <div className="kpi-cell">
-            <div className="kpi-cell-top">
-              <span className="kpi-cell-label">Comercialização Travada (Hedge)</span>
-              <span className="kpi-tag good">{hedgeStats.lockedPct.toFixed(1).replace('.', ',')}% FIXADO</span>
-            </div>
-            <div className="kpi-cell-val">
-              {hedgeStats.lockedVolume.toLocaleString('pt-BR')}
-              <span className="unit">sacas</span>
-            </div>
-            <div className="kpi-cell-sub">
-              <span>
-                Preço Médio Ponderado: <strong>R$ {hedgeStats.avgPrice.toFixed(2).replace('.', ',')} / sc</strong>
-              </span>
-            </div>
+          <div className="kpi-cell-sub">
+            <span>Safra 2024/25 • 3.200 ha (Soja + Milho)</span>
           </div>
         </div>
 
-        {/* Banner Inteligente de Oportunidade de Mercado */}
-        <div className="market-alert-banner">
-          <div className="market-alert-left">
-            <div className="market-alert-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+        {/* KPI 2 */}
+        <div className="kpi-cell">
+          <div className="kpi-cell-top">
+            <span className="kpi-cell-label">Margem EBITDA Agrícola</span>
+            <span className="kpi-tag good">+3.2 p.p.</span>
+          </div>
+          <div className="kpi-cell-val">
+            38,4%
+            <span className="unit">R$ 8.248.320,00</span>
+          </div>
+          <div className="kpi-cell-sub">
+            <span>Margem líquida após COT e fixos</span>
+          </div>
+        </div>
+
+        {/* KPI 3 */}
+        <div className="kpi-cell">
+          <div className="kpi-cell-top">
+            <span className="kpi-cell-label">Custo Operacional Total (COT)</span>
+            <span className="kpi-tag info">PLANEJADO</span>
+          </div>
+          <div className="kpi-cell-val">
+            <span className="curr">R$</span>4.135<span className="decimals">,00</span>
+            <span className="unit">/ ha</span>
+          </div>
+          <div className="kpi-cell-sub">
+            <span>Insumos 54% • Frotas 21% • Fixos 25%</span>
+          </div>
+        </div>
+
+        {/* KPI 4 */}
+        <div className="kpi-cell">
+          <div className="kpi-cell-top">
+            <span className="kpi-cell-label">Comercialização Travada (Hedge)</span>
+            <span className="kpi-tag good">{hedgeStats.lockedPct.toFixed(1).replace('.', ',')}% FIXADO</span>
+          </div>
+          <div className="kpi-cell-val">
+            {hedgeStats.lockedVolume.toLocaleString('pt-BR')}
+            <span className="unit">sacas</span>
+          </div>
+          <div className="kpi-cell-sub">
+            <span>
+              Preço Médio Ponderado: <strong>R$ {hedgeStats.avgPrice.toFixed(2).replace('.', ',')} / sc</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Banner Inteligente de Oportunidade de Mercado */}
+      <div className="market-alert-banner">
+        <div className="market-alert-left">
+          <div className="market-alert-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+            </svg>
+          </div>
+          <div className="market-alert-text">
+            <span className="market-alert-title">Oportunidade de Arbitragem & Fixação de Margem</span>
+            <span className="market-alert-desc">
+              A alta na CBOT (+0.8%) e dólar em R$ 5,74 elevaram a paridade de exportação em Paranaguá para{' '}
+              <strong>R$ 141,80 / saca</strong> (+R$ 3,30 acima do preço médio contratado). Recomendado fixar mais 15.000 sacas para atingir 70% de cobertura pré-colheita.
+            </span>
+          </div>
+        </div>
+        <div className="market-alert-actions">
+          <button
+            className="btn btn-outline"
+            style={{ padding: '6px 12px', fontSize: '11.5px' }}
+            onClick={() => showToast('Abrindo monitor de paridade cambial Paranaguá...')}
+          >
+            Ver Paridade
+          </button>
+          <button
+            className="btn btn-primary"
+            style={{ padding: '6px 14px', fontSize: '11.5px' }}
+            onClick={handleOpenArbitrage}
+          >
+            Fixar Lote Agora
+          </button>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* SEÇÃO 1: SIMULADOR PROFUNDO DE SENSIBILIDADE FINANCEIRA      */}
+      {/* ============================================================ */}
+      <div className="sim-card">
+        <div className="sim-card-header">
+          <div className="sim-header-titles">
+            <div className="sim-title">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+                style={{ width: '17px', height: '17px', color: 'var(--accent)' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
               </svg>
+              Simulador Profundo de Sensibilidade Financeira
             </div>
-            <div className="market-alert-text">
-              <span className="market-alert-title">Oportunidade de Arbitragem & Fixação de Margem</span>
-              <span className="market-alert-desc">
-                A alta na CBOT (+0.8%) e dólar em R$ 5,74 elevaram a paridade de exportação em Paranaguá para{' '}
-                <strong>R$ 141,80 / saca</strong> (+R$ 3,30 acima do preço médio contratado). Recomendado fixar mais 15.000 sacas para atingir 70% de cobertura pré-colheita.
-              </span>
+            <div className="sim-subtitle">
+              Modelagem em tempo real de preço, produtividade, custo operacional e sensibilidade da margem líquida
             </div>
           </div>
-          <div className="market-alert-actions">
-            <button
-              className="btn btn-outline"
-              style={{ padding: '6px 12px', fontSize: '11.5px' }}
-              onClick={() => showToast('Abrindo monitor de paridade cambial Paranaguá...')}
-            >
-              Ver Paridade
-            </button>
-            <button
-              className="btn btn-primary"
-              style={{ padding: '6px 14px', fontSize: '11.5px' }}
-              onClick={handleOpenArbitrage}
-            >
-              Fixar Lote Agora
-            </button>
-          </div>
+          <button className="btn btn-outline" style={{ padding: '5px 12px', fontSize: '11.5px' }} onClick={handleReset}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            Restaurar Padrão
+          </button>
         </div>
 
-        {/* ============================================================ */}
-        {/* SEÇÃO 1: SIMULADOR PROFUNDO DE SENSIBILIDADE FINANCEIRA      */}
-        {/* ============================================================ */}
-        <div className="sim-card">
-          <div className="sim-card-header">
-            <div className="sim-header-titles">
-              <div className="sim-title">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                  style={{ width: '17px', height: '17px', color: 'var(--accent)' }}
+        <div className="sim-body-layout">
+          {/* Lado Esquerdo: Controles Interativos */}
+          <div className="sim-controls-panel">
+            {/* Controle 1: Produtividade */}
+            <div className="param-group">
+              <div className="param-header">
+                <span className="param-label">Produtividade Esperada</span>
+                <span className="param-badge-val">{yieldVal} sc/ha</span>
+              </div>
+              <input
+                type="range"
+                className="custom-range"
+                min="50"
+                max="85"
+                step="1"
+                value={yieldVal}
+                onChange={(e) => setYieldVal(Number(e.target.value))}
+              />
+              <div className="range-limits">
+                <span>50 sc/ha</span>
+                <span>Média: 68</span>
+                <span>85 sc/ha</span>
+              </div>
+            </div>
+
+            {/* Controle 2: Preço da Saca */}
+            <div className="param-group">
+              <div className="param-header">
+                <span className="param-label">Preço Médio de Venda</span>
+                <span className="param-badge-val">R$ {priceVal.toFixed(2).replace('.', ',')} / sc</span>
+              </div>
+              <input
+                type="range"
+                className="custom-range"
+                min="110"
+                max="170"
+                step="1"
+                value={priceVal}
+                onChange={(e) => handlePriceChange(Number(e.target.value))}
+              />
+              <div className="range-limits">
+                <span>R$ 110</span>
+                <span>Spot: R$ 138</span>
+                <span>R$ 170</span>
+              </div>
+            </div>
+
+            {/* Controle 3: Custo COT por hectare */}
+            <div className="param-group">
+              <div className="param-header">
+                <span className="param-label">Custo Operacional (COT)</span>
+                <span className="param-badge-val">R$ {costVal.toLocaleString('pt-BR')},00 / ha</span>
+              </div>
+              <input
+                type="range"
+                className="custom-range"
+                min="3200"
+                max="5200"
+                step="50"
+                value={costVal}
+                onChange={(e) => setCostVal(Number(e.target.value))}
+              />
+              <div className="range-limits">
+                <span>R$ 3.200</span>
+                <span>Base: R$ 4.135</span>
+                <span>R$ 5.200</span>
+              </div>
+            </div>
+
+            {/* Controle 4: Dólar Câmbio */}
+            <div className="param-group">
+              <div className="param-header">
+                <span className="param-label">Dólar Médio Projetado</span>
+                <span className="param-badge-val">R$ {usdVal.toFixed(2).replace('.', ',')}</span>
+              </div>
+              <input
+                type="range"
+                className="custom-range"
+                min="4.80"
+                max="6.50"
+                step="0.05"
+                value={usdVal}
+                onChange={(e) => handleUsdChange(Number(e.target.value))}
+              />
+              <div className="range-limits">
+                <span>R$ 4,80</span>
+                <span style={{ color: 'var(--accent-text)', fontWeight: 600 }}>
+                  Paridade CBOT: US$ 24,00 × {usdVal.toFixed(2).replace('.', ',')} = R$ {priceVal},00
+                </span>
+                <span>R$ 6,50</span>
+              </div>
+            </div>
+
+            {/* Card de Resultados Vivos do Cenário */}
+            <div className="scenario-results-box">
+              <div className="scenario-box-title">
+                <span>Resultado do Cenário</span>
+                <span className={scenarioTag.className}>{scenarioTag.label}</span>
+              </div>
+
+              <div className="scenario-stat-row">
+                <span className="stat-name">Receita Bruta / ha:</span>
+                <span className="stat-value">
+                  R$ {grossPerHa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="scenario-stat-row">
+                <span className="stat-name">Custo COT / ha:</span>
+                <span className="stat-value">
+                  R$ {costVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="scenario-stat-row">
+                <span className="stat-name">Margem Líquida / ha:</span>
+                <span
+                  className="stat-value highlight"
+                  style={{ color: netPerHa >= 0 ? 'var(--accent-text)' : 'var(--danger)' }}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-                Simulador Profundo de Sensibilidade Financeira
-              </div>
-              <div className="sim-subtitle">
-                Modelagem em tempo real de preço, produtividade, custo operacional e sensibilidade da margem líquida
-              </div>
-            </div>
-            <button className="btn btn-outline" style={{ padding: '5px 12px', fontSize: '11.5px' }} onClick={handleReset}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-              </svg>
-              Restaurar Padrão
-            </button>
-          </div>
-
-          <div className="sim-body-layout">
-            {/* Lado Esquerdo: Controles Interativos */}
-            <div className="sim-controls-panel">
-              {/* Controle 1: Produtividade */}
-              <div className="param-group">
-                <div className="param-header">
-                  <span className="param-label">Produtividade Esperada</span>
-                  <span className="param-badge-val">{yieldVal} sc/ha</span>
-                </div>
-                <input
-                  type="range"
-                  className="custom-range"
-                  min="50"
-                  max="85"
-                  step="1"
-                  value={yieldVal}
-                  onChange={(e) => setYieldVal(Number(e.target.value))}
-                />
-                <div className="range-limits">
-                  <span>50 sc/ha</span>
-                  <span>Média: 68</span>
-                  <span>85 sc/ha</span>
-                </div>
+                  {netPerHa >= 0 ? '+R$ ' : '-R$ '}
+                  {Math.abs(netPerHa).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
 
-              {/* Controle 2: Preço da Saca */}
-              <div className="param-group">
-                <div className="param-header">
-                  <span className="param-label">Preço Médio de Venda</span>
-                  <span className="param-badge-val">R$ {priceVal.toFixed(2).replace('.', ',')} / sc</span>
-                </div>
-                <input
-                  type="range"
-                  className="custom-range"
-                  min="110"
-                  max="170"
-                  step="1"
-                  value={priceVal}
-                  onChange={(e) => handlePriceChange(Number(e.target.value))}
-                />
-                <div className="range-limits">
-                  <span>R$ 110</span>
-                  <span>Spot: R$ 138</span>
-                  <span>R$ 170</span>
-                </div>
-              </div>
-
-              {/* Controle 3: Custo COT por hectare */}
-              <div className="param-group">
-                <div className="param-header">
-                  <span className="param-label">Custo Operacional (COT)</span>
-                  <span className="param-badge-val">R$ {costVal.toLocaleString('pt-BR')},00 / ha</span>
-                </div>
-                <input
-                  type="range"
-                  className="custom-range"
-                  min="3200"
-                  max="5200"
-                  step="50"
-                  value={costVal}
-                  onChange={(e) => setCostVal(Number(e.target.value))}
-                />
-                <div className="range-limits">
-                  <span>R$ 3.200</span>
-                  <span>Base: R$ 4.135</span>
-                  <span>R$ 5.200</span>
-                </div>
-              </div>
-
-              {/* Controle 4: Dólar Câmbio */}
-              <div className="param-group">
-                <div className="param-header">
-                  <span className="param-label">Dólar Médio Projetado</span>
-                  <span className="param-badge-val">R$ {usdVal.toFixed(2).replace('.', ',')}</span>
-                </div>
-                <input
-                  type="range"
-                  className="custom-range"
-                  min="4.80"
-                  max="6.50"
-                  step="0.05"
-                  value={usdVal}
-                  onChange={(e) => handleUsdChange(Number(e.target.value))}
-                />
-                <div className="range-limits">
-                  <span>R$ 4,80</span>
-                  <span style={{ color: 'var(--accent-text)', fontWeight: 600 }}>
-                    Paridade CBOT: US$ 24,00 × {usdVal.toFixed(2).replace('.', ',')} = R$ {priceVal},00
-                  </span>
-                  <span>R$ 6,50</span>
-                </div>
-              </div>
-
-              {/* Card de Resultados Vivos do Cenário */}
-              <div className="scenario-results-box">
-                <div className="scenario-box-title">
-                  <span>Resultado do Cenário</span>
-                  <span className={scenarioTag.className}>{scenarioTag.label}</span>
-                </div>
-
-                <div className="scenario-stat-row">
-                  <span className="stat-name">Receita Bruta / ha:</span>
-                  <span className="stat-value">
-                    R$ {grossPerHa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-
-                <div className="scenario-stat-row">
-                  <span className="stat-name">Custo COT / ha:</span>
-                  <span className="stat-value">
-                    R$ {costVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-
-                <div className="scenario-stat-row">
-                  <span className="stat-name">Margem Líquida / ha:</span>
-                  <span
-                    className="stat-value highlight"
-                    style={{ color: netPerHa >= 0 ? 'var(--accent-text)' : 'var(--danger)' }}
-                  >
-                    {netPerHa >= 0 ? '+R$ ' : '-R$ '}
-                    {Math.abs(netPerHa).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-
-                <div className="scenario-stat-row">
-                  <span className="stat-name">Margem Líquida (%):</span>
-                  <span
-                    className="stat-value"
-                    style={{
-                      color:
-                        marginPct >= 30
-                          ? 'var(--accent-text)'
-                          : marginPct >= 0
+              <div className="scenario-stat-row">
+                <span className="stat-name">Margem Líquida (%):</span>
+                <span
+                  className="stat-value"
+                  style={{
+                    color:
+                      marginPct >= 30
+                        ? 'var(--accent-text)'
+                        : marginPct >= 0
                           ? 'var(--warning)'
                           : 'var(--danger)',
-                    }}
-                  >
-                    {marginPct.toFixed(1).replace('.', ',')}%
-                  </span>
-                </div>
-
-                {/* Ponto de Equilíbrio (Breakeven) */}
-                <div className="breakeven-indicator">
-                  <span className="be-label">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2"
-                      stroke="currentColor"
-                      style={{ width: '14px', height: '14px' }}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
-                      />
-                    </svg>
-                    Breakeven:
-                  </span>
-                  <span className="be-val">
-                    {beYield.toFixed(1).replace('.', ',')} sc/ha (R$ {bePrice.toFixed(2).replace('.', ',')}/sc)
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Lado Direito: Matriz Bidirecional de Sensibilidade */}
-            <div className="sim-matrix-panel">
-              <div className="matrix-toolbar">
-                <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Matriz de Margem Líquida (R$ / ha) — Produtividade vs. Preço
-                </div>
-                <div className="matrix-legend">
-                  <div className="legend-item">
-                    <span className="legend-swatch high"></span> &gt; R$ 4.000
-                  </div>
-                  <div className="legend-item">
-                    <span className="legend-swatch med"></span> R$ 2.500 a R$ 4.000
-                  </div>
-                  <div className="legend-item">
-                    <span className="legend-swatch low"></span> R$ 1.000 a R$ 2.500
-                  </div>
-                  <div className="legend-item">
-                    <span className="legend-swatch neg"></span> &lt; R$ 1.000 (Risco)
-                  </div>
-                </div>
-              </div>
-
-              <div className="matrix-table-wrap">
-                <table className="matrix-table">
-                  <thead>
-                    <tr>
-                      <th className="axis-corner">Produtividade \ Preço</th>
-                      {MATRIX_PRICES.map((p) => (
-                        <th key={p} className="col-price">
-                          R$ {p.toFixed(2).replace('.', ',')}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MATRIX_YIELDS.map((y) => {
-                      return (
-                        <tr key={y}>
-                          <td className="row-prod">{y} sc/ha</td>
-                          {MATRIX_PRICES.map((p) => {
-                            const net = y * p - costVal;
-
-                            // Color termográfico
-                            let colorClass = 'cell-neg';
-                            if (net >= 4000) colorClass = 'cell-super';
-                            else if (net >= 2500) colorClass = 'cell-high';
-                            else if (net >= 1000) colorClass = 'cell-mid';
-                            else if (net >= 0) colorClass = 'cell-low';
-
-                            // Distância até o ponto ativo atual para o destaque estrela
-                            const isClosest =
-                              closestCell.y === y && closestCell.p === p;
-
-                            return (
-                              <td
-                                key={p}
-                                className={`matrix-cell ${colorClass} ${isClosest ? 'cell-current-active' : ''}`}
-                                title={`Clique para simular: ${y} sc/ha @ R$ ${p}/sc`}
-                                onClick={() => {
-                                  setYieldVal(y);
-                                  handlePriceChange(p);
-                                  showToast(`Simulando cenário: ${y} sc/ha @ R$ ${p},00/sc`);
-                                }}
-                              >
-                                {net >= 0 ? 'R$ ' : '-R$ '}
-                                {Math.abs(Math.round(net)).toLocaleString('pt-BR')}
-                                {isClosest && ' ★'}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div
-                style={{
-                  fontSize: '11px',
-                  color: 'var(--text-muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '8px',
-                }}
-              >
-                <span>
-                  * Valores calculados com COT base de R$ {costVal.toLocaleString('pt-BR')},00/ha. Célula com borda destacada representa a aproximação do cenário ativo.
+                  }}
+                >
+                  {marginPct.toFixed(1).replace('.', ',')}%
                 </span>
-                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-text)' }}>
-                  Margem EBITDA &gt; 35% em 88% da matriz
+              </div>
+
+              {/* Ponto de Equilíbrio (Breakeven) */}
+              <div className="breakeven-indicator">
+                <span className="be-label">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    style={{ width: '14px', height: '14px' }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+                    />
+                  </svg>
+                  Breakeven:
+                </span>
+                <span className="be-val">
+                  {beYield.toFixed(1).replace('.', ',')} sc/ha (R$ {bePrice.toFixed(2).replace('.', ',')}/sc)
                 </span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ============================================================ */}
-        {/* SEÇÃO 2: DUAL CARDS (Contratos de Hedge & Decomposição COT)  */}
-        {/* ============================================================ */}
-        <div className="bottom-grid">
-          {/* Bloco 1: Gestão de Contratos de Hedge & Comercialização */}
-          <div className="card-block">
-            <div className="card-block-header">
-              <div className="card-block-title">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                  style={{ width: '16px', height: '16px', color: 'var(--accent)' }}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
-                  />
-                </svg>
-                Livro de Contratos de Comercialização & Hedge
+          {/* Lado Direito: Matriz Bidirecional de Sensibilidade */}
+          <div className="sim-matrix-panel">
+            <div className="matrix-toolbar">
+              <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Matriz de Margem Líquida (R$ / ha) — Produtividade vs. Preço
               </div>
-              <button
-                className="btn btn-outline"
-                style={{ padding: '4px 10px', fontSize: '11px' }}
-                onClick={() => setIsHedgeModalOpen(true)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-                Novo Contrato
-              </button>
-            </div>
-
-            {/* Barra de Travamento de Safra */}
-            <div className="hedge-progress-card">
-              <div className="hedge-progress-top">
-                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Progresso de Fixação da Safra (Soja)</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent-text)' }}>
-                  {hedgeStats.lockedPct.toFixed(1).replace('.', ',')}% Concluído
-                </span>
-              </div>
-              <div className="hedge-progress-bar-bg">
-                <div className="hedge-fill-locked" style={{ width: `${Math.min(100, hedgeStats.lockedPct)}%` }}></div>
-                <div className="hedge-fill-open" style={{ width: `${Math.max(0, 100 - hedgeStats.lockedPct)}%` }}></div>
-              </div>
-              <div className="hedge-progress-meta">
-                <span>
-                  Fixado: <strong>{hedgeStats.lockedVolume.toLocaleString('pt-BR')} sc</strong> (Méd. R${' '}
-                  {hedgeStats.avgPrice.toFixed(2).replace('.', ',')})
-                </span>
-                <span>
-                  Aberto (Spot): <strong>{hedgeStats.spotVolume.toLocaleString('pt-BR')} sc</strong> (Meta R$ 142,00)
-                </span>
+              <div className="matrix-legend">
+                <div className="legend-item">
+                  <span className="legend-swatch high"></span> &gt; R$ 4.000
+                </div>
+                <div className="legend-item">
+                  <span className="legend-swatch med"></span> R$ 2.500 a R$ 4.000
+                </div>
+                <div className="legend-item">
+                  <span className="legend-swatch low"></span> R$ 1.000 a R$ 2.500
+                </div>
+                <div className="legend-item">
+                  <span className="legend-swatch neg"></span> &lt; R$ 1.000 (Risco)
+                </div>
               </div>
             </div>
 
-            {/* Tabela de Contratos */}
-            <div className="contracts-table-wrap">
-              <table className="contracts-table">
+            <div className="matrix-table-wrap">
+              <table className="matrix-table">
                 <thead>
                   <tr>
-                    <th>Contrato</th>
-                    <th>Comprador / Trading</th>
-                    <th>Volume (sc)</th>
-                    <th>Preço Líquido</th>
-                    <th>Modalidade</th>
-                    <th>Vencimento</th>
-                    <th>Status</th>
+                    <th className="axis-corner">Produtividade \ Preço</th>
+                    {MATRIX_PRICES.map((p) => (
+                      <th key={p} className="col-price">
+                        R$ {p.toFixed(2).replace('.', ',')}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {contracts.map((ctr) => {
-                    let badgeClass = 'status-badge open';
-                    if (ctr.status === 'EXECUTED') badgeClass = 'status-badge executed';
-                    else if (ctr.status === 'ACTIVE') badgeClass = 'status-badge active';
-
+                  {MATRIX_YIELDS.map((y) => {
                     return (
-                      <tr key={ctr.id}>
-                        <td>
-                          <span className="contract-code-tag">{ctr.code}</span>
-                        </td>
-                        <td>
-                          <div className="trading-name">{ctr.buyer}</div>
-                          <div className="trading-type">{ctr.buyerUnit}</div>
-                        </td>
-                        <td>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
-                            {ctr.volume.toLocaleString('pt-BR')} sc
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-mono)',
-                              fontWeight: 700,
-                              color: ctr.status === 'OPEN' ? 'var(--text-muted)' : 'var(--accent-text)',
-                            }}
-                          >
-                            R$ {ctr.price.toFixed(2).replace('.', ',')}
-                          </span>
-                        </td>
-                        <td>{ctr.modality}</td>
-                        <td>{ctr.dueDate}</td>
-                        <td>
-                          <span className={badgeClass}>{ctr.statusLabel}</span>
-                        </td>
+                      <tr key={y}>
+                        <td className="row-prod">{y} sc/ha</td>
+                        {MATRIX_PRICES.map((p) => {
+                          const net = y * p - costVal;
+
+                          // Color termográfico
+                          let colorClass = 'cell-neg';
+                          if (net >= 4000) colorClass = 'cell-super';
+                          else if (net >= 2500) colorClass = 'cell-high';
+                          else if (net >= 1000) colorClass = 'cell-mid';
+                          else if (net >= 0) colorClass = 'cell-low';
+
+                          // Distância até o ponto ativo atual para o destaque estrela
+                          const isClosest =
+                            closestCell.y === y && closestCell.p === p;
+
+                          return (
+                            <td
+                              key={p}
+                              className={`matrix-cell ${colorClass} ${isClosest ? 'cell-current-active' : ''}`}
+                              title={`Clique para simular: ${y} sc/ha @ R$ ${p}/sc`}
+                              onClick={() => {
+                                setYieldVal(y);
+                                handlePriceChange(p);
+                                showToast(`Simulando cenário: ${y} sc/ha @ R$ ${p},00/sc`);
+                              }}
+                            >
+                              {net >= 0 ? 'R$ ' : '-R$ '}
+                              {Math.abs(Math.round(net)).toLocaleString('pt-BR')}
+                              {isClosest && ' ★'}
+                            </td>
+                          );
+                        })}
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-          </div>
 
-          {/* Bloco 2: Decomposição do COT (Custo Operacional Total) */}
-          <div className="card-block">
-            <div className="card-block-header">
-              <div className="card-block-title">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                  style={{ width: '16px', height: '16px', color: 'var(--info)' }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
-                </svg>
-                Composição do COT (Custo / ha)
-              </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
-                Base: 3.200 ha
+            <div
+              style={{
+                fontSize: '11px',
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+              }}
+            >
+              <span>
+                * Valores calculados com COT base de R$ {costVal.toLocaleString('pt-BR')},00/ha. Célula com borda destacada representa a aproximação do cenário ativo.
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-text)' }}>
+                Margem EBITDA &gt; 35% em 88% da matriz
               </span>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div className="cost-breakdown-body">
-              {/* Insumo: Fertilizantes */}
-              <div className="cost-item">
-                <div className="cost-item-top">
-                  <span className="cost-item-name">Fertilizantes & Corretivos de Solo</span>
-                  <span className="cost-item-val">
-                    R$ 1.340,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(32,4%)</span>
-                  </span>
-                </div>
-                <div className="cost-bar-bg">
-                  <div className="cost-bar-fill" style={{ width: '32.4%', background: '#10b981' }}></div>
-                </div>
+      {/* ============================================================ */}
+      {/* SEÇÃO 2: DUAL CARDS (Contratos de Hedge & Decomposição COT)  */}
+      {/* ============================================================ */}
+      <div className="bottom-grid">
+        {/* Bloco 1: Gestão de Contratos de Hedge & Comercialização */}
+        <div className="card-block">
+          <div className="card-block-header">
+            <div className="card-block-title">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+                style={{ width: '16px', height: '16px', color: 'var(--accent)' }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                />
+              </svg>
+              Livro de Contratos de Comercialização & Hedge
+            </div>
+            <button
+              className="btn btn-outline"
+              style={{ padding: '4px 10px', fontSize: '11px' }}
+              onClick={() => setIsHedgeModalOpen(true)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Novo Contrato
+            </button>
+          </div>
+
+          {/* Barra de Travamento de Safra */}
+          <div className="hedge-progress-card">
+            <div className="hedge-progress-top">
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Progresso de Fixação da Safra (Soja)</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent-text)' }}>
+                {hedgeStats.lockedPct.toFixed(1).replace('.', ',')}% Concluído
+              </span>
+            </div>
+            <div className="hedge-progress-bar-bg">
+              <div className="hedge-fill-locked" style={{ width: `${Math.min(100, hedgeStats.lockedPct)}%` }}></div>
+              <div className="hedge-fill-open" style={{ width: `${Math.max(0, 100 - hedgeStats.lockedPct)}%` }}></div>
+            </div>
+            <div className="hedge-progress-meta">
+              <span>
+                Fixado: <strong>{hedgeStats.lockedVolume.toLocaleString('pt-BR')} sc</strong> (Méd. R${' '}
+                {hedgeStats.avgPrice.toFixed(2).replace('.', ',')})
+              </span>
+              <span>
+                Aberto (Spot): <strong>{hedgeStats.spotVolume.toLocaleString('pt-BR')} sc</strong> (Meta R$ 142,00)
+              </span>
+            </div>
+          </div>
+
+          {/* Tabela de Contratos */}
+          <div className="contracts-table-wrap">
+            <table className="contracts-table">
+              <thead>
+                <tr>
+                  <th>Contrato</th>
+                  <th>Comprador / Trading</th>
+                  <th>Volume (sc)</th>
+                  <th>Preço Líquido</th>
+                  <th>Modalidade</th>
+                  <th>Vencimento</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contracts.map((ctr) => {
+                  let badgeClass = 'status-badge open';
+                  if (ctr.status === 'EXECUTED') badgeClass = 'status-badge executed';
+                  else if (ctr.status === 'ACTIVE') badgeClass = 'status-badge active';
+
+                  return (
+                    <tr key={ctr.id}>
+                      <td>
+                        <span className="contract-code-tag">{ctr.code}</span>
+                      </td>
+                      <td>
+                        <div className="trading-name">{ctr.buyer}</div>
+                        <div className="trading-type">{ctr.buyerUnit}</div>
+                      </td>
+                      <td>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                          {ctr.volume.toLocaleString('pt-BR')} sc
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontWeight: 700,
+                            color: ctr.status === 'OPEN' ? 'var(--text-muted)' : 'var(--accent-text)',
+                          }}
+                        >
+                          R$ {ctr.price.toFixed(2).replace('.', ',')}
+                        </span>
+                      </td>
+                      <td>{ctr.modality}</td>
+                      <td>{ctr.dueDate}</td>
+                      <td>
+                        <span className={badgeClass}>{ctr.statusLabel}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Bloco 2: Decomposição do COT (Custo Operacional Total) */}
+        <div className="card-block">
+          <div className="card-block-header">
+            <div className="card-block-title">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+                style={{ width: '16px', height: '16px', color: 'var(--info)' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+              </svg>
+              Composição do COT (Custo / ha)
+            </div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
+              Base: 3.200 ha
+            </span>
+          </div>
+
+          <div className="cost-breakdown-body">
+            {/* Insumo: Fertilizantes */}
+            <div className="cost-item">
+              <div className="cost-item-top">
+                <span className="cost-item-name">Fertilizantes & Corretivos de Solo</span>
+                <span className="cost-item-val">
+                  R$ 1.340,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(32,4%)</span>
+                </span>
               </div>
-
-              {/* Insumo: Defensivos */}
-              <div className="cost-item">
-                <div className="cost-item-top">
-                  <span className="cost-item-name">Defensivos (Fungicidas & Herbicidas)</span>
-                  <span className="cost-item-val">
-                    R$ 980,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(23,7%)</span>
-                  </span>
-                </div>
-                <div className="cost-bar-bg">
-                  <div className="cost-bar-fill" style={{ width: '23.7%', background: '#3b82f6' }}></div>
-                </div>
+              <div className="cost-bar-bg">
+                <div className="cost-bar-fill" style={{ width: '32.4%', background: '#10b981' }}></div>
               </div>
+            </div>
 
-              {/* Frotas: Combustível */}
-              <div className="cost-item">
-                <div className="cost-item-top">
-                  <span className="cost-item-name">Diesel S10 & Lubrificantes (Frotas)</span>
-                  <span className="cost-item-val">
-                    R$ 480,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(11,6%)</span>
-                  </span>
-                </div>
-                <div className="cost-bar-bg">
-                  <div className="cost-bar-fill" style={{ width: '11.6%', background: '#f59e0b' }}></div>
-                </div>
+            {/* Insumo: Defensivos */}
+            <div className="cost-item">
+              <div className="cost-item-top">
+                <span className="cost-item-name">Defensivos (Fungicidas & Herbicidas)</span>
+                <span className="cost-item-val">
+                  R$ 980,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(23,7%)</span>
+                </span>
               </div>
-
-              {/* Insumo: Sementes */}
-              <div className="cost-item">
-                <div className="cost-item-top">
-                  <span className="cost-item-name">Sementes Certificadas (Tratamento Industrial)</span>
-                  <span className="cost-item-val">
-                    R$ 420,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(10,2%)</span>
-                  </span>
-                </div>
-                <div className="cost-bar-bg">
-                  <div className="cost-bar-fill" style={{ width: '10.2%', background: '#a855f7' }}></div>
-                </div>
+              <div className="cost-bar-bg">
+                <div className="cost-bar-fill" style={{ width: '23.7%', background: '#3b82f6' }}></div>
               </div>
+            </div>
 
-              {/* Máquinas: Manutenção */}
-              <div className="cost-item">
-                <div className="cost-item-top">
-                  <span className="cost-item-name">Manutenção Mecânica & Peças (OS)</span>
-                  <span className="cost-item-val">
-                    R$ 390,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(9,4%)</span>
-                  </span>
-                </div>
-                <div className="cost-bar-bg">
-                  <div className="cost-bar-fill" style={{ width: '9.4%', background: '#06b6d4' }}></div>
-                </div>
+            {/* Frotas: Combustível */}
+            <div className="cost-item">
+              <div className="cost-item-top">
+                <span className="cost-item-name">Diesel S10 & Lubrificantes (Frotas)</span>
+                <span className="cost-item-val">
+                  R$ 480,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(11,6%)</span>
+                </span>
               </div>
-
-              {/* Fixos: Mão de Obra */}
-              <div className="cost-item">
-                <div className="cost-item-top">
-                  <span className="cost-item-name">Mão de Obra, Energia & Encargos</span>
-                  <span className="cost-item-val">
-                    R$ 525,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(12,7%)</span>
-                  </span>
-                </div>
-                <div className="cost-bar-bg">
-                  <div className="cost-bar-fill" style={{ width: '12.7%', background: '#71717a' }}></div>
-                </div>
+              <div className="cost-bar-bg">
+                <div className="cost-bar-fill" style={{ width: '11.6%', background: '#f59e0b' }}></div>
               </div>
+            </div>
 
-              {/* Resumo Totalizador */}
-              <div className="cost-total-summary">
-                <div>
-                  <div className="cost-total-label">Custo Operacional Total (COT)</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Investimento consolidado por hectare</div>
-                </div>
-                <div className="cost-total-val" style={{ color: 'var(--accent-text)' }}>
-                  R$ {costVal.toLocaleString('pt-BR')},00{' '}
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)' }}>/ ha</span>
-                </div>
+            {/* Insumo: Sementes */}
+            <div className="cost-item">
+              <div className="cost-item-top">
+                <span className="cost-item-name">Sementes Certificadas (Tratamento Industrial)</span>
+                <span className="cost-item-val">
+                  R$ 420,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(10,2%)</span>
+                </span>
+              </div>
+              <div className="cost-bar-bg">
+                <div className="cost-bar-fill" style={{ width: '10.2%', background: '#a855f7' }}></div>
+              </div>
+            </div>
+
+            {/* Máquinas: Manutenção */}
+            <div className="cost-item">
+              <div className="cost-item-top">
+                <span className="cost-item-name">Manutenção Mecânica & Peças (OS)</span>
+                <span className="cost-item-val">
+                  R$ 390,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(9,4%)</span>
+                </span>
+              </div>
+              <div className="cost-bar-bg">
+                <div className="cost-bar-fill" style={{ width: '9.4%', background: '#06b6d4' }}></div>
+              </div>
+            </div>
+
+            {/* Fixos: Mão de Obra */}
+            <div className="cost-item">
+              <div className="cost-item-top">
+                <span className="cost-item-name">Mão de Obra, Energia & Encargos</span>
+                <span className="cost-item-val">
+                  R$ 525,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(12,7%)</span>
+                </span>
+              </div>
+              <div className="cost-bar-bg">
+                <div className="cost-bar-fill" style={{ width: '12.7%', background: '#71717a' }}></div>
+              </div>
+            </div>
+
+            {/* Resumo Totalizador */}
+            <div className="cost-total-summary">
+              <div>
+                <div className="cost-total-label">Custo Operacional Total (COT)</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Investimento consolidado por hectare</div>
+              </div>
+              <div className="cost-total-val" style={{ color: 'var(--accent-text)' }}>
+                R$ {costVal.toLocaleString('pt-BR')},00{' '}
+                <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)' }}>/ ha</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
       {/* ============================================================ */}
       {/* MODAL 1: SIMULAR CONTRATO DE HEDGE / BARTER                  */}
@@ -1110,7 +1127,7 @@ export const Viabilidade: React.FC = () => {
 
                   {/* Data de Vencimento com CustomDatePicker */}
                   <div className="form-group">
-                    <label className="form-label">Data Limite de Liquidação / Entrega</label>
+                    <label className="form-label">Data Limite de Liquidação</label>
                     <CustomDatePicker
                       value={formDueDate}
                       onChange={(val) => setFormDueDate(val)}

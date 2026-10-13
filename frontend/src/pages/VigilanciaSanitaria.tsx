@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
+import { epidemiologicoService } from '../services/epidemiologicoService';
 
 export interface OccurrenceItem {
   id: string;
@@ -137,6 +138,47 @@ const INITIAL_OCCURRENCES: OccurrenceItem[] = [
 export const VigilanciaSanitaria: React.FC = () => {
   const [occurrences, setOccurrences] = useState<OccurrenceItem[]>(INITIAL_OCCURRENCES);
   const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>('EPI-104');
+
+  useEffect(() => {
+    epidemiologicoService.getOcorrencias()
+      .then((res) => {
+        if (res && res.items && res.items.length > 0) {
+          const mapped: OccurrenceItem[] = res.items.map((occ, idx) => ({
+            id: occ.id || `api-occ-${idx}`,
+            code: `#EPI-API-${idx + 1}`,
+            title: `Foco #${idx + 1} (${occ.agente_identificado})`,
+            badge: `${occ.severidade} • ${occ.agente_identificado.toUpperCase()}`,
+            badgeClass: occ.severidade === 'CRITICA' ? 'badge-danger' : occ.severidade === 'ALTA' ? 'badge-warn' : 'badge-info',
+            date: 'Hoje',
+            timestamp: occ.observado_em ? new Date(occ.observado_em).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR'),
+            agent: occ.agente_identificado,
+            agentScientific: occ.agente_identificado,
+            category: occ.agente_identificado.toLowerCase().includes('ferrugem') ? 'FERRUGEM' : 'LAGARTA',
+            talhao: 'Talhão Georreferenciado',
+            talhaoShort: 'T-GEO',
+            crop: 'Cultura Registrada',
+            gps: `${occ.latitude.toFixed(4)}°, ${occ.longitude.toFixed(4)}°`,
+            severity: `${occ.severidade}`,
+            severityLevel: (occ.severidade === 'CRITICA' || occ.severidade === 'ALTA' || occ.severidade === 'MEDIA' || occ.severidade === 'BAIXA') ? occ.severidade as any : 'MEDIA',
+            prescription: occ.observacoes || 'Monitoramento recomendado.',
+            productName: 'Defensivo Compatível',
+            stockAvailable: 'Em verificação',
+            status: 'EM ABERTO',
+            img: occ.foto_url || 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80',
+            boxLabel: occ.agente_identificado,
+            confidence: 95.0,
+          }));
+          setOccurrences((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const fresh = mapped.filter((m) => !existingIds.has(m.id));
+            return [...fresh, ...prev];
+          });
+        }
+      })
+      .catch((err) => {
+        console.info('Modo demonstração ativo em Vigilância Sanitária:', err);
+      });
+  }, []);
   
   // Filtros de mapa e tabela
   const [mapAgentFilter, setMapAgentFilter] = useState<string>('ALL');
@@ -345,6 +387,20 @@ export const VigilanciaSanitaria: React.FC = () => {
     setSelectedOccurrenceId(newId);
     showToast(`Ocorrência fitossanitária #${newId} cadastrada com sucesso e plotada no mapa!`);
     setModalNewOccurOpen(false);
+
+    // Sincronizar com FastAPI
+    epidemiologicoService.createOcorrencia({
+      tipo_ameaca: 'DOENCA',
+      agente_identificado: agentSimple,
+      severidade: occurSeveridade,
+      latitude: parseFloat(occurLat) || -12.502,
+      longitude: parseFloat(occurLon) || -55.7015,
+      observado_em: new Date().toISOString(),
+      observacoes: occurObs,
+      notificar_orgao_defesa: occurSeveridade === 'CRITICA',
+    }).catch((err) => {
+      console.info('Ocorrência registrada localmente em modo offline:', err);
+    });
   };
 
   return (

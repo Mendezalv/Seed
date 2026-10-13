@@ -1,5 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
+import { operacionalService } from '../services/operacionalService';
+import { epidemiologicoService } from '../services/epidemiologicoService';
 
 export interface AplicacaoHist {
   data: string;
@@ -359,6 +361,46 @@ export const TalhoesGis: React.FC = () => {
   const [modalApontamentoOpen, setModalApontamentoOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  // Carregar Talhões reais do Backend
+  useEffect(() => {
+    async function carregarTalhoes() {
+      try {
+        const talhoesApi = await operacionalService.getTalhoes();
+        if (talhoesApi && talhoesApi.length > 0) {
+          setTalhoes((prev) => {
+            const apiMapped: Talhao[] = talhoesApi.map((t, idx) => ({
+              id: 100 + idx,
+              code: `T-0${idx + 1}`,
+              nome: t.nome,
+              area: `${Number(t.area_hectares).toFixed(1).replace('.', ',')} ha`,
+              areaNum: Number(t.area_hectares),
+              cultura: (t.cultura_atual?.toLowerCase().includes('milho') ? 'milho' : 'soja') as 'soja' | 'milho' | 'pousio',
+              culturaDisplay: t.cultura_atual || 'Soja',
+              variedade: 'BRS 511',
+              estagio: 'V6 Vegetativo',
+              produtividade: '66,0 sc/ha',
+              status: 'NORMAL',
+              plantio: '20/10/2024',
+              colheita: '15/02/2025',
+              geoId: `#TLH-0${idx + 1}`,
+              x: 50 + ((idx * 200) % 550),
+              y: 95 + Math.floor(idx / 3) * 150,
+              width: 185,
+              height: 140,
+              color: '#10b981',
+              ndvi: 0.78,
+              aplicacoes: [],
+            }));
+            return [...apiMapped, ...prev.filter(p => !apiMapped.some(a => a.nome === p.nome))];
+          });
+        }
+      } catch (err) {
+        console.info('Modo demonstração ativo para GIS/Talhões:', err);
+      }
+    }
+    carregarTalhoes();
+  }, []);
+
   // Form states de Prescrição Agronômica
   const [prescricaoInsumo, setPrescricaoInsumo] = useState('Fungicida Fox Xpro');
   const [prescricaoDose, setPrescricaoDose] = useState<number>(0.5);
@@ -504,6 +546,16 @@ export const TalhoesGis: React.FC = () => {
         return t;
       })
     );
+    operacionalService.alocarInsumo({
+      lote_insumo_id: '00000000-0000-0000-0000-000000000001',
+      safra_id: '00000000-0000-0000-0000-000000000001',
+      talhao_id: '00000000-0000-0000-0000-000000000001',
+      quantidade: volumeTotal,
+      area_hectares: selectedTalhao.areaNum,
+      operador_id: '00000000-0000-0000-0000-000000000001',
+      aplicado_em: new Date().toISOString(),
+    }).catch((err) => console.info('Offline prescricao sync:', err));
+
     showToast(`Prescrição de ${prescricaoInsumo} alocada com sucesso ao ${selectedTalhao.nome}!`);
     setModalPrescricaoOpen(false);
   };
@@ -512,6 +564,18 @@ export const TalhoesGis: React.FC = () => {
   const handleSalvarApontamento = (e: React.FormEvent) => {
     e.preventDefault();
     const isAlerta = apontamentoSeveridade === 'ALERTA_FERRUGEM';
+
+    if (isAlerta) {
+      epidemiologicoService.createOcorrencia({
+        tipo_ameaca: 'DOENCA',
+        agente_identificado: apontamentoTipo.includes('Ferrugem') ? 'Ferrugem Asiática' : apontamentoTipo,
+        severidade: 'ALTA',
+        latitude: -12.5020,
+        longitude: -55.7015,
+        observado_em: new Date().toISOString(),
+        observacoes: apontamentoObs,
+      }).catch((err) => console.info('Offline apontamento sync:', err));
+    }
 
     setTalhoes((prev) =>
       prev.map((t) => {

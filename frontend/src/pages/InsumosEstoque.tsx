@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ModalEntradaInsumo } from '../components/modals/ModalEntradaInsumo';
+import { operacionalService } from '../services/operacionalService';
 
 interface LoteItem {
   id: string;
@@ -144,6 +145,40 @@ export const InsumosEstoque: React.FC = () => {
     setTimeout(() => setToastMsg(null), 4000);
   };
 
+  useEffect(() => {
+    operacionalService.getLotes()
+      .then((apiLotes) => {
+        if (apiLotes && apiLotes.length > 0) {
+          const mapped: LoteItem[] = apiLotes.map((l, idx) => ({
+            id: l.id || `api-${idx}`,
+            nome: l.codigo_lote || `Lote ${idx + 1}`,
+            principioAtivo: 'Registrado via API de Rastreabilidade',
+            categoria: 'DEFENSIVO',
+            codigoLote: l.codigo_lote,
+            fornecedor: l.fornecedor || 'Fornecedor Registrado',
+            localizacao: 'Galpão 01 — Armazém',
+            quantidadeAtual: Number(l.quantidade_atual),
+            quantidadeTotal: Number(l.quantidade_inicial),
+            unidade: 'L',
+            custoUnitario: 120,
+            custoTotal: Number(l.quantidade_atual) * 120,
+            validade: l.data_validade ? new Date(l.data_validade).toLocaleDateString('pt-BR') : '31/12/2026',
+            validadeStatus: 'good',
+            validadeTexto: 'Vigente',
+            status: Number(l.quantidade_atual) < 100 ? 'BAIXO' : 'REGULAR',
+          }));
+          setLotes((prev) => {
+            const existingCodes = new Set(prev.map((p) => p.codigoLote));
+            const fresh = mapped.filter((m) => !existingCodes.has(m.codigoLote));
+            return [...fresh, ...prev];
+          });
+        }
+      })
+      .catch((err) => {
+        console.info('Modo demonstração ativo em Insumos (API offline):', err);
+      });
+  }, []);
+
   const handleSuccessNovoLote = (novo: { nome: string; quantidade: number; custo: number }) => {
     const novoItem: LoteItem = {
       id: String(Date.now()),
@@ -183,6 +218,21 @@ export const InsumosEstoque: React.FC = () => {
       })
     );
     showToast(`Baixa de 80 L efetuada do lote ${loteCodigo} para aplicação no ${talhaoNome}!`);
+
+    const target = lotes.find((l) => l.codigoLote === loteCodigo);
+    if (target && target.id && target.id.includes('-')) {
+      operacionalService.alocarInsumo({
+        lote_insumo_id: target.id,
+        safra_id: '00000000-0000-0000-0000-000000000001',
+        talhao_id: '00000000-0000-0000-0000-000000000001',
+        quantidade: 80,
+        area_hectares: 10,
+        operador_id: '00000000-0000-0000-0000-000000000001',
+        aplicado_em: new Date().toISOString(),
+      }).catch((err) => {
+        console.info('Alocação registrada localmente:', err);
+      });
+    }
   };
 
   // Filtragem combinada

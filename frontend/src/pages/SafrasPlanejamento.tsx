@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { CustomDatePicker } from '../components/ui/CustomDatePicker';
+import { operacionalService } from '../services/operacionalService';
 
 export interface SafraTalhao {
   id: number;
@@ -207,6 +208,41 @@ export const SafrasPlanejamento: React.FC = () => {
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  // Carregar Safras da API
+  useEffect(() => {
+    async function carregarSafras() {
+      try {
+        const safrasApi = await operacionalService.getSafras();
+        if (safrasApi && safrasApi.length > 0) {
+          setSafrasData((prev) => {
+            const apiMapped: SafraTalhao[] = safrasApi.map((s, idx) => ({
+              id: 200 + idx,
+              talhaoNome: `Talhão ${idx + 1}`,
+              talhaoDesc: `Safra ${s.cultura} • ${s.status}`,
+              area: '120,0 ha',
+              areaNum: 120,
+              cultura: s.cultura.toLowerCase().includes('milho') ? 'milho' : 'soja',
+              culturaNome: s.cultura,
+              variedade: s.variedade || 'Variedade Certificada',
+              dataPlantio: s.data_plantio.split('-').reverse().join('/'),
+              dae: '35 DAE',
+              estagio: 'V4 Vegetativo',
+              estagioPct: 35,
+              produtividade: `${s.produtividade_estimada || 68} sc/ha`,
+              volume: `${Math.round(120 * (Number(s.produtividade_estimada) || 68)).toLocaleString('pt-BR')} sc`,
+              custoHa: 'R$ 4.150',
+              status: s.status === 'COLHIDA' ? 'PRÉ-COLHEITA' : 'EM ANDAMENTO',
+            }));
+            return [...apiMapped, ...prev.filter(p => !apiMapped.some(a => a.talhaoNome === p.talhaoNome))];
+          });
+        }
+      } catch (err) {
+        console.info('Modo demonstração ativo para Planejamento de Safras:', err);
+      }
+    }
+    carregarSafras();
+  }, []);
+
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 4000);
@@ -262,6 +298,16 @@ export const SafrasPlanejamento: React.FC = () => {
     const areaMatch = formData.talhao.match(/\((\d+)\s*ha\)/);
     const areaNum = areaMatch ? parseFloat(areaMatch[1]) : 100;
     const volumeTotal = Math.round(areaNum * formData.metaProd);
+
+    // Sincronizar com API Backend
+    operacionalService.createSafra({
+      talhao_id: '00000000-0000-0000-0000-000000000001',
+      cultura: formData.cultura,
+      variedade: formData.variedade,
+      data_plantio: formData.dataPlantio,
+      produtividade_estimada: formData.metaProd,
+      status: 'PLANEJADA',
+    }).catch((err) => console.info('Offline safra sync:', err));
 
     const newEntry: SafraTalhao = {
       id: Date.now(),
