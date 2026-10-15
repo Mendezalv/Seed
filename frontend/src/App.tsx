@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SyncProvider } from './context/SyncContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { CotacoesProvider } from './context/CotacoesContext';
 import { ToastNotification } from './components/common/ToastNotification';
 import { LayoutShell } from './components/layout/LayoutShell';
 import { Login } from './pages/Login';
@@ -51,7 +52,8 @@ export const App: React.FC = () => {
     <AuthProvider>
       <SyncProvider>
         <NotificationProvider>
-          <BrowserRouter>
+          <CotacoesProvider>
+            <BrowserRouter>
             <ToastNotification />
             <Routes>
               {/* Rota Pública de Autenticação */}
@@ -80,7 +82,8 @@ export const App: React.FC = () => {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
-        </NotificationProvider>
+        </CotacoesProvider>
+      </NotificationProvider>
       </SyncProvider>
     </AuthProvider>
   );

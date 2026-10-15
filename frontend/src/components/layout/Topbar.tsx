@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSync } from '../../context/SyncContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { useCotacoes } from '../../context/CotacoesContext';
 import { NotificationPopover } from '../common/NotificationPopover';
+import { ModalCotacoesMercado } from '../modals/ModalCotacoesMercado';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -24,7 +26,9 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
   const currentTitle = ROUTE_NAMES[location.pathname] || 'Visão Geral';
   const { isOnline, isSyncing, pendingCount, lastSyncAt, syncNow } = useSync();
   const { unreadCount, notifications } = useNotifications();
+  const { cotacoes } = useCotacoes();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isCotacoesModalOpen, setIsCotacoesModalOpen] = useState(false);
 
   const hasCriticalUnread = notifications.some(
     (n) => !n.lida && (n.severidade === 'CRITICA' || n.severidade === 'ALTA')
@@ -63,25 +67,32 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
       </div>
 
       <div className="topbar-right">
-        {/* Cotações CEPEA */}
-        <div className="ticker-bar">
-          <div className="ticker-item">
-            <span>SOJA:</span>
-            <strong>R$ 138,40</strong>
-            <span className="up">+0.8%</span>
-          </div>
-          <div className="ticker-sep" />
-          <div className="ticker-item">
-            <span>MILHO:</span>
-            <strong>R$ 59,20</strong>
-            <span className="down">-0.3%</span>
-          </div>
-          <div className="ticker-sep" />
-          <div className="ticker-item">
-            <span>BOI:</span>
-            <strong>R$ 242,50</strong>
-            <span className="up">+1.2%</span>
-          </div>
+        {/* Cotações CEPEA Dinâmicas em Tempo Real */}
+        <div
+          className="ticker-bar"
+          onClick={() => setIsCotacoesModalOpen(true)}
+          title="Clique para abrir painel do pregão em tempo real e simular oscilações"
+          style={{ cursor: 'pointer' }}
+          role="button"
+          tabIndex={0}
+        >
+          {cotacoes.slice(0, 3).map((item, idx) => {
+            const isPositive = item.variacao_pct >= 0;
+            return (
+              <React.Fragment key={item.codigo}>
+                {idx > 0 && <div className="ticker-sep" />}
+                <div className="ticker-item">
+                  <span>{item.codigo}:</span>
+                  <strong>
+                    R$ {item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </strong>
+                  <span className={isPositive ? 'up' : 'down'}>
+                    {isPositive ? '+' : ''}{item.variacao_pct.toFixed(1)}%
+                  </span>
+                </div>
+              </React.Fragment>
+            );
+          })}
         </div>
 
         {/* Sync Status Interativo */}
@@ -150,6 +161,11 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
           <NotificationPopover isOpen={isPopoverOpen} onClose={() => setIsPopoverOpen(false)} />
         </div>
       </div>
+
+      <ModalCotacoesMercado
+        isOpen={isCotacoesModalOpen}
+        onClose={() => setIsCotacoesModalOpen(false)}
+      />
     </header>
   );
 };
