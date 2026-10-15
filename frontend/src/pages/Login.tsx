@@ -55,18 +55,21 @@ export const Login: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div
             style={{
-              width: '32px',
-              height: '32px',
+              width: '36px',
+              height: '36px',
               background: 'var(--accent)',
-              borderRadius: '8px',
+              borderRadius: '9px',
               display: 'grid',
               placeItems: 'center',
-              fontWeight: 700,
-              fontSize: '14px',
-              color: '#000',
             }}
           >
-            S
+            <svg viewBox="0 0 256 256" width="24" height="24" fill="#09090B" role="img" aria-label="Seed Logo">
+              <path d="M 120 28 A 100 100 0 0 0 28 120 L 60 120 A 68 68 0 0 1 120 60 Z" />
+              <path d="M 136 60 A 68 68 0 0 1 196 120 L 228 120 A 100 100 0 0 0 136 28 Z" />
+              <path d="M 60 136 L 28 136 A 100 100 0 0 0 120 228 L 120 196 A 68 68 0 0 1 60 136 Z" />
+              <path d="M 196 136 A 68 68 0 0 1 136 196 L 136 228 A 100 100 0 0 0 228 136 Z" />
+              <path d="M 128 72 C 142 98 154 118 154 132 C 154 146 142 158 128 158 C 114 158 102 146 102 132 C 102 118 114 98 128 72 Z" />
+            </svg>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '-0.02em' }}>

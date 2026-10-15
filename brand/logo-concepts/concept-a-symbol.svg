@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t-a"><title id="t-a">Seed Logo — Conceito A: Bio-Vector S</title><g id="symbol" fill="#000000">
+  <!-- Folha Superior do S (Cotilédone Norte-Leste) -->
+  <path d="M 212 44
+           C 170 16 112 18 72 48
+           C 38 74 34 116 52 152
+           L 88 116
+           C 76 96 82 78 102 64
+           C 130 46 170 46 196 64
+           L 212 44 Z" />
+           
+  <!-- Folha Inferior do S (Cotilédone Sul-Oeste — Simetria Exata 180°) -->
+  <path d="M 44 212
+           C 86 240 144 238 184 208
+           C 218 182 222 140 204 104
+           L 168 140
+           C 180 160 174 178 154 192
+           C 126 210 86 210 60 192
+           L 44 212 Z" />
+           
+  <!-- Espinha Central: Vetor Diagonal 45° Perfeito -->
+  <path d="M 72 156
+           L 156 72
+           C 166 62 180 66 186 78
+           C 192 90 188 104 178 114
+           L 94 198
+           C 84 208 70 204 64 192
+           C 58 180 62 166 72 156 Z" />
+</g></svg>

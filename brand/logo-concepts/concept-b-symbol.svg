@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t-b"><title id="t-b">Seed Logo — Conceito B: The Hybrid Grain</title><g id="symbol" fill="#000000">
+  <!-- Metade Esquerda: Casca Botânica Viva do Grão -->
+  <path d="M 122 28
+           C 108 52 48 116 48 162
+           C 48 198 76 226 122 230
+           L 122 188
+           C 96 184 80 166 80 148
+           C 80 120 110 76 122 54
+           L 122 28 Z" />
+           
+  <!-- Núcleo Germinativo / Embrião -->
+  <path d="M 122 84
+           C 114 100 96 130 96 150
+           C 96 164 106 174 122 176
+           L 122 84 Z" />
+
+  <!-- Metade Direita: 3 Faixas de Telemetria de Precisão -->
+  <!-- Faixa 1 (Satélite & GIS - corte 45° exato: dx=50, dy=50) -->
+  <path d="M 134 44
+           L 184 94
+           C 174 100 162 104 148 104
+           L 134 104
+           L 134 44 Z" />
+           
+  <!-- Faixa 2 (Telemetria CAN Bus de Frotas) -->
+  <path d="M 134 118
+           L 198 118
+           C 206 132 208 146 208 160
+           L 134 160
+           L 134 118 Z" />
+           
+  <!-- Faixa 3 (Crédito ESG & Rentabilidade) -->
+  <path d="M 134 174
+           L 204 174
+           C 196 204 168 226 134 230
+           L 134 174 Z" />
+</g></svg>

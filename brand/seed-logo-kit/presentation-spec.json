@@ -1,0 +1,50 @@
+{
+  "brand": "Seed",
+  "tagline": "Agro Intelligence OS",
+  "brief": "Plataforma enterprise de inteligência agronômica de alta tecnologia: telemetria IoT de maquinário, sensoriamento remoto via satélite, radar meteorológico e modelagem econômica de safras em interface dark mode.",
+  "adjectives": [
+    "precisão",
+    "tecnológico",
+    "inteligente",
+    "sólido",
+    "confiável"
+  ],
+  "criteria": "Critérios de Sucesso: símbolo proprietário e geométrico, 100% legível a 16px como favicon e telemetria, compatível com dark mode e impressão industrial (silos e maquinário agrícola).",
+  "industry": "saas",
+  "mockups": ["website", "app-icon", "payment-card", "signage", "badge", "favicon-tab"],
+  "nav": ["Dashboard", "Talhões GIS", "Telemetria IoT", "Hedge & Grãos"],
+  "brand_color": "#10B981",
+  "tile_color": "#09090B",
+  "greyscale": false,
+  "final": true,
+  "round": 2,
+  "deck_title": "Identidade Visual Oficial",
+  "designer": "Antigravity Logo Design Studio",
+  "concepts": [
+    {
+      "name": "GIS Radar Seed",
+      "symbol": "vectors/seed-symbol-color.svg",
+      "lockup": "vectors/seed-horizontal-light.svg",
+      "stacked": "vectors/seed-stacked-light.svg",
+      "avatar": "vectors/seed-symbol-color.svg",
+      "symbol_on_dark": "vectors/seed-symbol-color.svg",
+      "lockup_on_dark": "vectors/seed-horizontal-dark.svg",
+      "stacked_on_dark": "vectors/seed-stacked-dark.svg",
+      "symbol_on_tile": "vectors/seed-symbol-color.svg",
+      "stacked_on_tile": "vectors/seed-stacked-dark.svg",
+      "lockup_on_tile": "vectors/seed-horizontal-dark.svg",
+      "idea": "Fusão entre o radar de sensoriamento remoto orbital e o núcleo biológico germinativo de uma semente.",
+      "rationale": [
+        "4 quadrantes de radar satelital representam a cobertura geoespacial e talhões agrícolas",
+        "A gota central representa a semente e o ponto germinativo de dados de alta precisão",
+        "Construção com simetria óptica perfeita, 100/100 no audit de produção e corte óptico para 16px"
+      ]
+    }
+  ],
+  "recommendation": "GIS Radar Seed transmite a convergência exata entre ciência de dados geoespacial e agronegócio de ponta.",
+  "next_steps": [
+    "Integração do favicon.ico e logos no frontend web",
+    "Aplicação nos relatórios executivos em PDF e dashboards",
+    "Manuais de aplicação de marca em silos e frotas de máquinas"
+  ]
+}

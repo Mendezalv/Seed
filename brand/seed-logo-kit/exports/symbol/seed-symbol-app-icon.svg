@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256"><title>Seed Symbol</title><rect width="256" height="256" rx="57.6" fill="#09090B"/><g transform="translate(25.6 25.6) scale(0.8)" fill="#10B981">
+  <title id="sym-title">Seed Symbol — Corte Óptico Reduzido (Favicon)</title>
+  <g id="symbol" fill="#10B981">
+  <!-- Versão Óptica Reduzida (16px - 24px) -->
+  <path d="M 118 24
+           A 104 104 0 0 0 24 118
+           L 62 118
+           A 66 66 0 0 1 118 62
+           Z" />
+           
+  <path d="M 138 62
+           A 66 66 0 0 1 194 118
+           L 232 118
+           A 104 104 0 0 0 138 24
+           Z" />
+           
+  <path d="M 62 138
+           L 24 138
+           A 104 104 0 0 0 118 232
+           L 118 194
+           A 66 66 0 0 1 62 138
+           Z" />
+           
+  <path d="M 194 138
+           A 66 66 0 0 1 138 194
+           L 138 232
+           A 104 104 0 0 0 232 138
+           Z" />
+           
+  <!-- Semente com Peso Óptico Reforçado -->
+  <path d="M 128 68
+           C 144 96 158 116 158 132
+           C 158 148 144 162 128 162
+           C 112 162 98 148 98 132
+           C 98 116 112 96 128 68 Z" />
+  </g>
+</g></svg>
