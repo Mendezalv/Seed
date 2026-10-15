@@ -42,6 +42,10 @@ async def engine():
         dbapi_connection.create_function("DisableSpatialIndex", 2, lambda a, b: 1)
         dbapi_connection.create_function("DiscardGeometryColumn", 2, lambda a, b: 1)
         dbapi_connection.create_function("AsEWKB", 1, lambda x: x)
+        dbapi_connection.create_function("ST_Contains", 2, lambda a, b: 1)
+        dbapi_connection.create_function("ST_Point", 2, lambda a, b: f"POINT({a} {b})")
+        dbapi_connection.create_function("ST_SetSRID", 2, lambda a, b: a)
+        dbapi_connection.create_function("ST_AsGeoJSON", 1, lambda a: '{"type":"Polygon"}')
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

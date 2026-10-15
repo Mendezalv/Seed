@@ -1,34 +1,41 @@
-from uuid import UUID
 from decimal import Decimal
-from fastapi import APIRouter, Depends, Query, Path, HTTPException, status, Response
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
 
-from src.shared.export.export_engine import ExportEngine
-
-from src.shared.database.session import get_session
-from src.shared.api.dependencies import get_current_propriedade_id
-from src.operacional.domain.schemas import (
-    LoteInsumoCreate, LoteInsumoResponse,
-    AlocacaoInsumoCreate, AlocacaoInsumoResponse,
-    TalhaoCreate, TalhaoResponse, TalhaoUpdate,
-    SafraCreate, SafraResponse, SafraUpdate,
-    MaquinarioCreate, MaquinarioResponse,
-    OrdemManutencaoCreate, OrdemManutencaoResponse,
-    ViabilidadeRequest, ViabilidadeResponse,
-)
-from src.operacional.application.rastreabilidade import RastreabilidadeService
-from src.operacional.application.viabilidade import ViabilidadeService
 from src.operacional.application.manutencao import ManutencaoService
-from src.operacional.application.talhoes import TalhoesService, SafrasService
-from src.shared.utils.pagination import PaginationParams, PaginatedResponse, paginate
+from src.operacional.application.rastreabilidade import RastreabilidadeService
+from src.operacional.application.talhoes import SafrasService, TalhoesService
+from src.operacional.application.viabilidade import ViabilidadeService
+from src.operacional.domain.schemas import (
+    AlocacaoInsumoCreate,
+    AlocacaoInsumoResponse,
+    LoteInsumoCreate,
+    LoteInsumoResponse,
+    MaquinarioCreate,
+    MaquinarioResponse,
+    OrdemManutencaoCreate,
+    OrdemManutencaoResponse,
+    SafraCreate,
+    SafraResponse,
+    SafraUpdate,
+    TalhaoCreate,
+    TalhaoResponse,
+    ViabilidadeRequest,
+    ViabilidadeResponse,
+)
+from src.shared.api.dependencies import get_current_propriedade_id
+from src.shared.database.session import get_session
+from src.shared.export.export_engine import ExportEngine
+from src.shared.utils.pagination import PaginatedResponse, PaginationParams, paginate
 
 router = APIRouter(prefix="/operacional", tags=["Operacional"])
 
 
 # ─── Talhões & GIS ───────────────────────────────────────────
 
-@router.get("/talhoes", response_model=List[TalhaoResponse])
+@router.get("/talhoes", response_model=list[TalhaoResponse])
 async def listar_talhoes(
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
@@ -44,6 +51,35 @@ async def criar_talhao(
 ):
     """Cadastra um novo talhão."""
     return await TalhoesService.criar_talhao(talhao_in, propriedade_id, session)
+
+
+@router.get("/talhoes/resumo-gis")
+async def obter_resumo_gis(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """Calcula estatísticas agregadas de cobertura geoespacial dos talhões da propriedade."""
+    return await TalhoesService.obter_resumo_gis(propriedade_id, session)
+
+
+@router.get("/talhoes/localizar-ponto", response_model=TalhaoResponse)
+async def localizar_talhao_por_ponto(
+    latitude: float = Query(..., ge=-90.0, le=90.0, description="Latitude do ponto em WGS84"),
+    longitude: float = Query(..., ge=-180.0, le=180.0, description="Longitude do ponto em WGS84"),
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """Localiza o talhão que contém as coordenadas (Point-in-Polygon via GiST PostGIS)."""
+    talhao = await TalhoesService.buscar_talhao_por_ponto(
+        latitude, longitude, propriedade_id, session
+    )
+    if not talhao:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nenhum talhão encontrado para as coordenadas informadas na propriedade.",
+        )
+    return talhao
+
 
 @router.get("/talhoes/{talhao_id}", response_model=TalhaoResponse)
 async def obter_talhao(
@@ -72,7 +108,7 @@ async def excluir_talhao(
 
 # ─── Planejamento de Safras ─────────────────────────────────
 
-@router.get("/safras", response_model=List[SafraResponse])
+@router.get("/safras", response_model=list[SafraResponse])
 async def listar_safras(
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
@@ -105,7 +141,7 @@ async def atualizar_safra(
 
 # ─── Insumos & Lotes ────────────────────────────────────────
 
-@router.get("/insumos/lotes", response_model=List[LoteInsumoResponse])
+@router.get("/insumos/lotes", response_model=list[LoteInsumoResponse])
 async def listar_lotes_insumo(
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
@@ -113,7 +149,11 @@ async def listar_lotes_insumo(
     """Lista todos os lotes de insumos cadastrados na propriedade."""
     return await RastreabilidadeService.listar_lotes(propriedade_id, session)
 
-@router.post("/insumos/lotes", response_model=LoteInsumoResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/insumos/lotes",
+    response_model=LoteInsumoResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def registrar_entrada_insumo(
     lote: LoteInsumoCreate,
     propriedade_id: UUID = Depends(get_current_propriedade_id),
@@ -129,15 +169,17 @@ async def alocar_insumo(
 ):
     return await RastreabilidadeService.alocar_insumo(alocacao, propriedade_id, session)
 
-@router.get("/insumos/rastreabilidade/{talhao_id}", response_model=List[AlocacaoInsumoResponse])
+@router.get("/insumos/rastreabilidade/{talhao_id}", response_model=list[AlocacaoInsumoResponse])
 async def consultar_rastreabilidade(
     talhao_id: UUID = Path(...),
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
 ):
-    return await RastreabilidadeService.consultar_rastreabilidade_talhao(talhao_id, propriedade_id, session)
+    return await RastreabilidadeService.consultar_rastreabilidade_talhao(
+        talhao_id, propriedade_id, session
+    )
 
-@router.get("/insumos/estoques-baixos", response_model=List[LoteInsumoResponse])
+@router.get("/insumos/estoques-baixos", response_model=list[LoteInsumoResponse])
 async def verificar_estoques_baixos(
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
@@ -160,7 +202,7 @@ async def exportar_inventario_insumos_xlsx(
 
 # ─── Maquinários & Frotas ───────────────────────────────────
 
-@router.get("/maquinarios", response_model=List[MaquinarioResponse])
+@router.get("/maquinarios", response_model=list[MaquinarioResponse])
 async def listar_maquinarios(
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
@@ -188,20 +230,27 @@ async def atualizar_horimetro(
 
 @router.get("/manutencao/ordens", response_model=PaginatedResponse[OrdemManutencaoResponse])
 async def listar_ordens(
-    status: Optional[str] = None,
+    status: str | None = None,
     pagination: PaginationParams = Depends(),
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
 ):
     from sqlalchemy import select
+
     from src.operacional.domain.models import OrdemManutencao
+
     stmt = select(OrdemManutencao).where(OrdemManutencao.propriedade_id == propriedade_id)
     if status:
         stmt = stmt.where(OrdemManutencao.status == status)
     stmt = stmt.order_by(OrdemManutencao.created_at.desc())
     return await paginate(session, stmt, pagination)
 
-@router.post("/manutencao/ordens", response_model=OrdemManutencaoResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/manutencao/ordens",
+    response_model=OrdemManutencaoResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def criar_ordem_manutencao(
     ordem_in: OrdemManutencaoCreate,
     propriedade_id: UUID = Depends(get_current_propriedade_id),
@@ -231,4 +280,4 @@ async def calcular_viabilidade(
     try:
         return await ViabilidadeService.calcular_viabilidade(request, propriedade_id, session)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e

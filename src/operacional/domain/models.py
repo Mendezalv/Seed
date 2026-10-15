@@ -1,10 +1,10 @@
 from uuid import UUID
 from datetime import date, datetime
 from decimal import Decimal
-from sqlalchemy import String, Integer, Date, DateTime, Numeric, JSON, ForeignKey
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, JSON, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from geoalchemy2 import Geometry
-from src.shared.database.base import Base, TimestampMixin, TenantMixin, generate_uuid7
+from src.shared.database.base import Base, TenantMixin, TimestampMixin, generate_uuid7
 
 class Insumo(Base, TimestampMixin):
     __tablename__ = 'insumos'
@@ -32,9 +32,14 @@ class Talhao(Base, TimestampMixin, TenantMixin):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
     nome: Mapped[str] = mapped_column(String(255))
     area_hectares: Mapped[Decimal] = mapped_column(Numeric(10, 2))
-    geometria = mapped_column(Geometry('POLYGON'), nullable=True)
+    geometria = mapped_column(Geometry('POLYGON', srid=4326, spatial_index=True), nullable=True)
     cultura_atual: Mapped[str | None] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="ATIVO")
+
+    __table_args__ = (
+        Index("idx_talhoes_geometria_gist", "geometria", postgresql_using="gist"),
+        Index("idx_talhoes_propriedade_status", "propriedade_id", "status"),
+    )
 
 class Safra(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'safras'
@@ -47,6 +52,11 @@ class Safra(Base, TimestampMixin, TenantMixin):
     produtividade_estimada: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     produtividade_real: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="PLANEJADA")
+
+    __table_args__ = (
+        Index("idx_safras_talhao_status", "talhao_id", "status"),
+        Index("idx_safras_propriedade_datas", "propriedade_id", "data_plantio", "data_colheita"),
+    )
 
     talhao: Mapped["Talhao"] = relationship()
 

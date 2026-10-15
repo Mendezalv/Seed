@@ -1,8 +1,19 @@
+from datetime import date, datetime
 from uuid import UUID
-from datetime import datetime, date
-from sqlalchemy import String, Float, Integer, Date, DateTime, JSON, ForeignKey, Boolean, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
-from src.shared.database.base import Base, TimestampMixin, TenantMixin, generate_uuid7
+from src.shared.database.base import Base, TenantMixin, TimestampMixin, generate_uuid7
 
 class OcorrenciaSanitaria(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'ocorrencias_sanitarias'
@@ -22,6 +33,11 @@ class OcorrenciaSanitaria(Base, TimestampMixin, TenantMixin):
     origem: Mapped[str] = mapped_column(String(50)) # APP_CAMPO|WEB|SENSOR|API_EXTERNA
     sync_id: Mapped[UUID | None] = mapped_column(unique=True, nullable=True)
 
+    __table_args__ = (
+        Index("idx_ocorrencias_coords", "latitude", "longitude"),
+        Index("idx_ocorrencias_propriedade_cat", "propriedade_id", "categoria", "severidade"),
+    )
+
 class DadosClimaticoCache(Base):
     __tablename__ = 'dados_climaticos_cache'
     id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
@@ -38,7 +54,14 @@ class DadosClimaticoCache(Base):
     fonte: Mapped[str] = mapped_column(String(50)) # INMET|CPTEC|OPENWEATHER
 
     __table_args__ = (
-        UniqueConstraint('latitude', 'longitude', 'data_referencia', 'fonte', name='uix_dados_climaticos_cache'),
+        UniqueConstraint(
+            'latitude',
+            'longitude',
+            'data_referencia',
+            'fonte',
+            name='uix_dados_climaticos_cache',
+        ),
+        Index("idx_dados_climaticos_coords_data", "latitude", "longitude", "data_referencia"),
     )
 
 class AlertaEpidemiologico(Base, TimestampMixin, TenantMixin):
@@ -53,3 +76,7 @@ class AlertaEpidemiologico(Base, TimestampMixin, TenantMixin):
     raio_km: Mapped[float] = mapped_column(Float)
     notificado: Mapped[bool] = mapped_column(Boolean, default=False)
     valido_ate: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("idx_alertas_propriedade_risco", "propriedade_id", "risco_score"),
+    )

@@ -4,6 +4,8 @@ from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_excep
 from typing import Any, Optional
 import time
 
+from src.shared.cache import cache_manager
+
 logger = structlog.get_logger()
 
 class IntegrationError(Exception):
@@ -40,17 +42,17 @@ class BaseAPIClient:
         cache_key = self._get_cache_key("GET", url, params)
 
         if cache_ttl is not None:
-            cached = self._cache.get(cache_key)
-            if cached and (time.time() - cached["timestamp"]) < cache_ttl:
-                logger.debug("Cache hit", url=url)
-                return cached["data"]
+            cached = await cache_manager.get_json(cache_key)
+            if cached is not None:
+                logger.debug("Cache hit", url=url, key=cache_key)
+                return cached
 
         logger.info("Executando requisição GET", url=url, params=params)
         async with httpx.AsyncClient(timeout=self.timeout, headers=self.headers) as client:
             try:
                 response = await client.get(url, params=params)
                 response.raise_for_status()
-                
+
                 content_type = response.headers.get("content-type", "")
                 if "application/json" in content_type:
                     data = response.json()
@@ -58,10 +60,7 @@ class BaseAPIClient:
                     data = response.text
 
                 if cache_ttl is not None:
-                    self._cache[cache_key] = {
-                        "timestamp": time.time(),
-                        "data": data
-                    }
+                    await cache_manager.set_json(cache_key, data, ttl=cache_ttl)
 
                 return data
             except httpx.HTTPStatusError as e:
