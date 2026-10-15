@@ -122,4 +122,13 @@ export const cotacoesService = {
       return { codigo, dias, pontos: [] };
     }
   },
+
+  async exportarXlsx(): Promise<void> {
+    return api.download('/cotacoes/export/xlsx', 'boletim_cotacoes_seed.xlsx');
+  },
+
+  async exportarPdf(): Promise<void> {
+    return api.download('/cotacoes/export/pdf', 'boletim_mercado_seed.pdf');
+  },
 };
+

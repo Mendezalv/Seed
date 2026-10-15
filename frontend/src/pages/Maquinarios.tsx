@@ -542,6 +542,7 @@ export const Maquinarios: React.FC = () => {
 
   // Toasts
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
 
   const showToast = (text: string) => {
     const id = String(Date.now());
@@ -549,6 +550,18 @@ export const Maquinarios: React.FC = () => {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 3800);
+  };
+
+  const handleExportMaquinariosXlsx = async () => {
+    try {
+      setIsExporting(true);
+      await operacionalService.exportarMaquinariosXlsx();
+      showToast('Planilha de frota e ordens de serviço (.xlsx) baixada com sucesso!');
+    } catch {
+      showToast('Erro ao exportar planilha de maquinários. Verifique a conexão com a API.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Filtragem de máquinas
@@ -723,12 +736,13 @@ export const Maquinarios: React.FC = () => {
         <div className="header-actions">
           <button
             className="btn btn-outline"
-            onClick={() => showToast('Exportando relatório consolidado de manutenções (PDF / CSV)...')}
+            onClick={handleExportMaquinariosXlsx}
+            disabled={isExporting}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            Exportar Relatório OS
+            {isExporting ? 'Exportando...' : 'Exportar Relatório OS'}
           </button>
           <button className="btn btn-primary" onClick={() => setModalNewOSOpen(true)}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">

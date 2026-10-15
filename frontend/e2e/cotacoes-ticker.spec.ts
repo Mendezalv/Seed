@@ -41,4 +41,23 @@ test.describe('Cotações de Commodities e Simulação de Pregão em Tempo Real'
     await modal.locator('.modal-footer button.btn-primary').click();
     await expect(modal).not.toBeVisible();
   });
+
+  test('deve exibir botões de exportação executiva em Excel (.xlsx) e Boletim (.pdf) no modal de cotações', async ({ page }) => {
+    const ticker = page.locator('.ticker-bar');
+    await ticker.click();
+
+    const modal = page.locator('.modal-card:has-text("Pregão de Commodities & Câmbio em Tempo Real")');
+    await expect(modal).toBeVisible();
+
+    // Botões de exportação devem estar presentes e acessíveis
+    const btnExcel = modal.getByRole('button', { name: /Excel \(\.xlsx\)/i });
+    const btnPdf = modal.getByRole('button', { name: /Boletim \(\.pdf\)/i });
+
+    await expect(btnExcel).toBeVisible();
+    await expect(btnPdf).toBeVisible();
+
+    // Fecha o modal
+    await modal.locator('.modal-footer button.btn-primary').click();
+    await expect(modal).not.toBeVisible();
+  });
 });

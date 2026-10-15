@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCotacoes } from '../../context/CotacoesContext';
+import { cotacoesService } from '../../services/cotacoesService';
 
 interface ModalCotacoesMercadoProps {
   isOpen: boolean;
@@ -8,6 +9,37 @@ interface ModalCotacoesMercadoProps {
 
 export const ModalCotacoesMercado: React.FC<ModalCotacoesMercadoProps> = ({ isOpen, onClose }) => {
   const { cotacoes, isSimulating, lastUpdate, simularAgora } = useCotacoes();
+  const [isExportingXlsx, setIsExportingXlsx] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleExportXlsx = async () => {
+    try {
+      setIsExportingXlsx(true);
+      await cotacoesService.exportarXlsx();
+      setToastMessage('Planilha Excel (.xlsx) baixada com sucesso!');
+      setTimeout(() => setToastMessage(null), 3500);
+    } catch {
+      setToastMessage('Erro ao exportar planilha Excel.');
+      setTimeout(() => setToastMessage(null), 3500);
+    } finally {
+      setIsExportingXlsx(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    try {
+      setIsExportingPdf(true);
+      await cotacoesService.exportarPdf();
+      setToastMessage('Boletim oficial (.pdf) baixado com sucesso!');
+      setTimeout(() => setToastMessage(null), 3500);
+    } catch {
+      setToastMessage('Erro ao exportar boletim PDF.');
+      setTimeout(() => setToastMessage(null), 3500);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -15,7 +47,7 @@ export const ModalCotacoesMercado: React.FC<ModalCotacoesMercadoProps> = ({ isOp
     <div className="modal-backdrop open" onClick={onClose}>
       <div
         className="modal-card"
-        style={{ maxWidth: '680px', width: '100%' }}
+        style={{ maxWidth: '720px', width: '100%' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">
@@ -155,32 +187,114 @@ export const ModalCotacoesMercado: React.FC<ModalCotacoesMercadoProps> = ({ isOp
               );
             })}
           </div>
+
+          {toastMessage && (
+            <div
+              style={{
+                marginTop: '12px',
+                padding: '8px 12px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--accent-text)',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+                style={{ width: '16px', height: '16px' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+              <span>{toastMessage}</span>
+            </div>
+          )}
         </div>
 
-        <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
-          <button
-            type="button"
-            className="btn btn-outline"
-            onClick={() => simularAgora()}
-            disabled={isSimulating}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              style={{ width: '15px', height: '15px', animation: isSimulating ? 'spin 1s linear infinite' : 'none' }}
+        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => simularAgora()}
+              disabled={isSimulating}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              title="Dispara nova rodada do pregão com flutuação de preços"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-              />
-            </svg>
-            {isSimulating ? 'Oscilando Pregão...' : 'Simular Variação de Pregão'}
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                style={{ width: '15px', height: '15px', animation: isSimulating ? 'spin 1s linear infinite' : 'none' }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                />
+              </svg>
+              {isSimulating ? 'Oscilando Pregão...' : 'Simular Variação de Pregão'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={handleExportXlsx}
+              disabled={isExportingXlsx}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              title="Baixar planilha consolidada em formato Excel (.xlsx)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                style={{ width: '15px', height: '15px' }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                />
+              </svg>
+              {isExportingXlsx ? 'Exportando...' : 'Excel (.xlsx)'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={handleExportPdf}
+              disabled={isExportingPdf}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              title="Baixar boletim diário oficial em formato PDF"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                style={{ width: '15px', height: '15px' }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                />
+              </svg>
+              {isExportingPdf ? 'Gerando...' : 'Boletim (.pdf)'}
+            </button>
+          </div>
 
           <button type="button" className="btn btn-primary" onClick={onClose}>
             Fechar

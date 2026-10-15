@@ -185,6 +185,10 @@ export const operacionalService = {
   async concluirOrdemManutencao(id: string, custoReal: number): Promise<OrdemManutencaoApi> {
     return api.patch<OrdemManutencaoApi>(`/operacional/manutencao/ordens/${id}/concluir?custo_real=${custoReal}`);
   },
+  async exportarMaquinariosXlsx(): Promise<void> {
+    return api.download('/operacional/maquinarios/export/xlsx', 'frota_maquinarios_seed.xlsx');
+  },
+
 
   // Viabilidade
   async calcularViabilidade(data: ViabilidadeApiRequest): Promise<ViabilidadeApiResponse> {

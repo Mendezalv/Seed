@@ -228,6 +228,21 @@ async def atualizar_horimetro(
 ):
     return await ManutencaoService.atualizar_horimetro(id, horas, propriedade_id, session)
 
+
+@router.get("/maquinarios/export/xlsx")
+async def exportar_relatorio_maquinarios_xlsx(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """Exporta planilha formatada em Excel com a frota de maquinários e ordens de serviço."""
+    xlsx_bytes = await ExportEngine.gerar_relatorio_maquinarios_xlsx(propriedade_id, session)
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="frota_maquinarios_seed.xlsx"'},
+    )
+
+
 @router.get("/manutencao/ordens", response_model=PaginatedResponse[OrdemManutencaoResponse])
 async def listar_ordens(
     status: str | None = None,

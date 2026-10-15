@@ -3,8 +3,9 @@ Rotas da API de Cotações de Commodities e Moedas em Tempo Real.
 """
 
 from typing import Any
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 
+from src.shared.export import ExportEngine
 from src.shared.integrations.cotacoes.service import cotacoes_service
 
 router = APIRouter(prefix="/cotacoes", tags=["Cotações & Mercado"])
@@ -75,3 +76,44 @@ async def obter_resumo_ticker() -> list[dict[str, Any]]:
         }
         for c in cotacoes
     ]
+
+
+@router.get(
+    "/export/xlsx",
+    summary="Exporta planilha Excel executiva (.xlsx) com cotações e séries históricas",
+)
+async def exportar_cotacoes_xlsx() -> Response:
+    """Gera e exporta planilha formatada em Excel com telemetria oficial e séries temporais."""
+    cotacoes = await cotacoes_service.obter_cotacoes_em_tempo_real()
+    historicos: dict[str, list[dict[str, Any]]] = {}
+    for item in cotacoes:
+        cod = item["codigo"]
+        historicos[cod] = await cotacoes_service.obter_historico(commodity_codigo=cod, dias=7)
+
+    xlsx_bytes = ExportEngine.gerar_cotacoes_mercado_xlsx(cotacoes, historicos)
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="boletim_cotacoes_seed.xlsx"'},
+    )
+
+
+@router.get(
+    "/export/pdf",
+    summary="Exporta boletim executivo de mercado e commodities em formato PDF oficial",
+)
+async def exportar_boletim_mercado_pdf() -> Response:
+    """Gera e exporta boletim técnico oficial em PDF com layout institucional Seed."""
+    cotacoes = await cotacoes_service.obter_cotacoes_em_tempo_real()
+    historicos: dict[str, list[dict[str, Any]]] = {}
+    for item in cotacoes:
+        cod = item["codigo"]
+        historicos[cod] = await cotacoes_service.obter_historico(commodity_codigo=cod, dias=7)
+
+    pdf_bytes = ExportEngine.gerar_boletim_mercado_pdf(cotacoes, historicos)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="boletim_mercado_seed.pdf"'},
+    )
+

@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.energetico.domain.models import RelatorioESG
 from src.epidemiologico.domain.models import OcorrenciaSanitaria
-from src.operacional.domain.models import Insumo, LoteInsumo
+from src.operacional.domain.models import Insumo, LoteInsumo, Maquinario
 
 
 @pytest_asyncio.fixture
@@ -149,3 +149,63 @@ async def test_export_laudo_esg_pdf_flow(
     assert resp_latest.status_code == 200
     assert "application/pdf" in resp_latest.headers["content-type"]
     assert resp_latest.content.startswith(b"%PDF")
+
+
+@pytest.mark.asyncio
+async def test_export_cotacoes_xlsx_flow(async_client: AsyncClient):
+    resp = await async_client.get("/api/v1/cotacoes/export/xlsx")
+    assert resp.status_code == 200
+    expected_xlsx_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert expected_xlsx_type in resp.headers["content-type"]
+    assert "boletim_cotacoes_seed.xlsx" in resp.headers.get("content-disposition", "")
+
+    wb = openpyxl.load_workbook(io.BytesIO(resp.content))
+    assert "Cotações em Tempo Real" in wb.sheetnames
+    assert "Série Histórica (7D)" in wb.sheetnames
+    ws = wb["Cotações em Tempo Real"]
+    assert "SEED AGRO" in str(ws["A1"].value)
+
+
+@pytest.mark.asyncio
+async def test_export_boletim_mercado_pdf_flow(async_client: AsyncClient):
+    resp = await async_client.get("/api/v1/cotacoes/export/pdf")
+    assert resp.status_code == 200
+    assert "application/pdf" in resp.headers["content-type"]
+    assert "boletim_mercado_seed.pdf" in resp.headers.get("content-disposition", "")
+    assert resp.content.startswith(b"%PDF")
+    assert len(resp.content) > 1000
+
+
+@pytest.mark.asyncio
+async def test_export_maquinarios_xlsx_flow(
+    async_client: AsyncClient,
+    produtor_auth: tuple[str, UUID, UUID],
+    session: AsyncSession,
+):
+    token, _, prop_id = produtor_auth
+    headers = {"Authorization": f"Bearer {token}"}
+
+    maq = Maquinario(
+        propriedade_id=prop_id,
+        nome="Pulverizador Uniport 3030",
+        tipo="PULVERIZADOR",
+        modelo="Uniport 3030",
+        ano_fabricacao=2024,
+        horimetro_atual=Decimal("840.0"),
+        intervalo_preventiva=Decimal("250.0"),
+        proximo_servico_em=Decimal("1000.0"),
+        status="OPERACIONAL",
+    )
+    session.add(maq)
+    await session.commit()
+
+    resp = await async_client.get("/api/v1/operacional/maquinarios/export/xlsx", headers=headers)
+    assert resp.status_code == 200
+    expected_xlsx_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert expected_xlsx_type in resp.headers["content-type"]
+    assert "frota_maquinarios_seed.xlsx" in resp.headers.get("content-disposition", "")
+
+    wb = openpyxl.load_workbook(io.BytesIO(resp.content))
+    assert "Frota de Maquinários" in wb.sheetnames
+    assert "Ordens de Serviço" in wb.sheetnames
+
