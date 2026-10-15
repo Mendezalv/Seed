@@ -1,7 +1,9 @@
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
+
 from src.shared.auth.jwt import decode_token
+
 
 class TenantMiddleware(BaseHTTPMiddleware):
     """
@@ -9,9 +11,10 @@ class TenantMiddleware(BaseHTTPMiddleware):
     e definir o tenant_id (propriedade_id) no estado da requisição.
     Ignora rotas públicas.
     """
+
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        public_paths = ["/health", "/docs", "/openapi.json", "/"]
-        
+        public_paths = ["/health", "/api/v1/health", "/docs", "/openapi.json", "/"]
+
         if request.url.path in public_paths:
             return await call_next(request)
 

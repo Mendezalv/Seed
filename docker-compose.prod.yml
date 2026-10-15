@@ -1,0 +1,208 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: seed_frontend_prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - seed-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: seed_api_prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - path: .env.prod
+        required: false
+      - path: .env
+        required: false
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-seed}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-seed}
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - RUN_MIGRATIONS=true
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 4 --proxy-headers --forwarded-allow-ips='*'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    networks:
+      - seed-network
+
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: seed_postgres_prod
+    restart: always
+    shm_size: 256m
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-seed}
+      POSTGRES_USER: ${POSTGRES_USER:-seed}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-seed} -d ${POSTGRES_DB:-seed}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - seed-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: seed_redis_prod
+    restart: always
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - seed-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: seed_worker_prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - path: .env.prod
+        required: false
+      - path: .env
+        required: false
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-seed}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-seed}
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - RUN_MIGRATIONS=false
+    command: celery -A workers.celery_app worker --loglevel=info --concurrency=4
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - seed-network
+
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: seed_beat_prod
+    restart: always
+    depends_on:
+      - worker
+    env_file:
+      - path: .env.prod
+        required: false
+      - path: .env
+        required: false
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-seed}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-seed}
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - RUN_MIGRATIONS=false
+    volumes:
+      - celerybeat_data:/app
+    command: celery -A workers.celery_app beat --loglevel=info -s /app/celerybeat-schedule
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - seed-network
+
+networks:
+  seed-network:
+    name: seed_prod_network
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: seed_prod_postgres_data
+  redis_data:
+    name: seed_prod_redis_data
+  celerybeat_data:
+    name: seed_prod_celerybeat_data
