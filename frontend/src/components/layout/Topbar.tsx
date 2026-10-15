@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSync } from '../../context/SyncContext';
+import { useNotifications } from '../../context/NotificationContext';
+import { NotificationPopover } from '../common/NotificationPopover';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -21,6 +23,12 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
   const location = useLocation();
   const currentTitle = ROUTE_NAMES[location.pathname] || 'Visão Geral';
   const { isOnline, isSyncing, pendingCount, lastSyncAt, syncNow } = useSync();
+  const { unreadCount, notifications } = useNotifications();
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  const hasCriticalUnread = notifications.some(
+    (n) => !n.lida && (n.severidade === 'CRITICA' || n.severidade === 'ALTA')
+  );
 
   const getSyncLabel = () => {
     if (isSyncing) return 'Sincronizando...';
@@ -100,12 +108,47 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
           <span>{getSyncLabel()}</span>
         </button>
 
-        {/* Botão Notificações */}
-        <button className="topbar-btn" title="Notificações">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-          </svg>
-        </button>
+        {/* Botão Notificações com Popover em Tempo Real */}
+        <div style={{ position: 'relative' }}>
+          <button
+            className={`topbar-btn ${hasCriticalUnread ? 'pulse-alert' : ''}`}
+            onClick={() => setIsPopoverOpen((prev) => !prev)}
+            title="Notificações e Alertas em Tempo Real"
+            aria-label="Abrir notificações"
+            style={{ position: 'relative' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+            </svg>
+            {unreadCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  minWidth: '17px',
+                  height: '17px',
+                  padding: '0 4px',
+                  borderRadius: '999px',
+                  background: hasCriticalUnread ? '#ef4444' : 'var(--accent)',
+                  color: hasCriticalUnread ? '#ffffff' : '#052e16',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-mono)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  border: '2px solid var(--bg-primary)',
+                  boxShadow: hasCriticalUnread ? '0 0 8px rgba(239, 68, 68, 0.6)' : 'none',
+                  lineHeight: 1,
+                }}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          <NotificationPopover isOpen={isPopoverOpen} onClose={() => setIsPopoverOpen(false)} />
+        </div>
       </div>
     </header>
   );

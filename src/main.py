@@ -10,13 +10,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.energetico.api.routes import router as energetico_router
+from src.epidemiologico.api.routes import router as epidemiologico_router
+from src.operacional.api.routes import router as operacional_router
+from src.shared.auth.middleware import TenantMiddleware
 from src.shared.config import get_settings
 from src.shared.database.session import init_db
-from src.shared.auth.middleware import TenantMiddleware
-
-from src.operacional.api.routes import router as operacional_router
-from src.epidemiologico.api.routes import router as epidemiologico_router
-from src.energetico.api.routes import router as energetico_router
 from src.sync_engine.api.routes import router as sync_router
 
 # Configurações de log
@@ -62,12 +61,14 @@ app.include_router(epidemiologico_router, prefix="/api/v1")
 app.include_router(energetico_router, prefix="/api/v1")
 app.include_router(sync_router, prefix="/api/v1")
 
-# Roteadores de autenticação e propriedade
-from src.shared.auth.routes import router as auth_router
+# Roteadores de autenticação, propriedade e notificações em tempo real
 from src.shared.auth.propriedade_routes import router as propriedade_router
+from src.shared.auth.routes import router as auth_router
+from src.shared.notifications.routes import router as notificacoes_router
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(propriedade_router, prefix="/api/v1")
+app.include_router(notificacoes_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["Health"])

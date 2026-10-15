@@ -5,16 +5,14 @@ Toda entidade no sistema referencia uma propriedade_id,
 garantindo isolamento de dados entre propriedades rurais.
 """
 
-from uuid import UUID
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
+from uuid import UUID
 
-from sqlalchemy import String, Numeric, ForeignKey, DateTime
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from uuid_utils import uuid7
-
-from src.shared.database.base import Base, TimestampMixin, generate_uuid7
+from src.shared.database.base import Base, TenantMixin, TimestampMixin, generate_uuid7
 
 
 class Propriedade(Base, TimestampMixin):
@@ -49,5 +47,24 @@ class Usuario(Base, TimestampMixin):
     role: Mapped[str] = mapped_column(String(20), default='OPERADOR')
     ativo: Mapped[bool] = mapped_column(default=True)
     ultimo_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    
+
     propriedade: Mapped['Propriedade'] = relationship()
+
+
+class Notificacao(Base, TimestampMixin, TenantMixin):
+    """
+    Notificação em tempo real do ecossistema Seed.
+    Alerta o produtor sobre ocorrências fitossanitárias, manutenções de maquinários,
+    estoque crítico de insumos e alertas climáticos.
+    """
+    __tablename__ = "notificacoes"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=generate_uuid7)
+    tipo: Mapped[str] = mapped_column(String(50), nullable=False)  # EPIDEMIOLOGICO | MANUTENCAO | ESTOQUE | CLIMA | ESG | SISTEMA
+    titulo: Mapped[str] = mapped_column(String(255), nullable=False)
+    mensagem: Mapped[str] = mapped_column(String(1000), nullable=False)
+    severidade: Mapped[str] = mapped_column(String(20), default="INFO")  # CRITICA | ALTA | MEDIA | INFO
+    lida: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    lida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    link_acao: Mapped[str | None] = mapped_column(String(255), nullable=True)  # ex: /vigilancia, /maquinarios
+    metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)

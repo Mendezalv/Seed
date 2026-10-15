@@ -5025,3 +5025,52 @@ input[type="range"]::-webkit-slider-thumb {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Notificações em Tempo Real & WebSocket ────────────────────────────── */
+@keyframes slideInToast {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulseRedRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.pulse-alert {
+  animation: pulseRedRing 2s infinite cubic-bezier(0.45, 0, 0.55, 1);
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  color: #ef4444 !important;
+}
+
+.notif-popover::-webkit-scrollbar {
+  width: 6px;
+}
+.notif-popover::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}

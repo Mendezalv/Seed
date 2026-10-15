@@ -7,11 +7,13 @@ e insumos de referência no banco de dados para uma propriedade ou setup global.
 
 from decimal import Decimal
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.energetico.domain.models import FonteEnergia
 from src.operacional.domain.models import Insumo
+from src.shared.database.models import Notificacao
 
 # Fontes de energia padrão para o agronegócio com fatores de emissão MCTI (kgCO2e por unidade)
 FONTES_PADRAO = [
@@ -108,5 +110,50 @@ async def seed_insumos_padrao(session: AsyncSession) -> int:
             session.add(novo_insumo)
             inseridos += 1
     if inseridos > 0:
+        await session.commit()
+    return inseridos
+
+
+async def seed_notificacoes_padrao(session: AsyncSession, propriedade_id: UUID) -> int:
+    """Popula notificações de exemplo para enriquecer o painel operacional da fazenda."""
+    notificacoes_exemplo = [
+        {
+            "tipo": "EPIDEMIOLOGICO",
+            "titulo": "Alerta Fitossanitário: Ferrugem Asiática",
+            "mensagem": "Condições microclimáticas críticas no Talhão 04 (molhamento foliar > 10h). Inspecione a área.",
+            "severidade": "CRITICA",
+            "link_acao": "/vigilancia",
+        },
+        {
+            "tipo": "MANUTENCAO",
+            "titulo": "Manutenção Preventiva Próxima",
+            "mensagem": "Trator John Deere 8R atingiu 485h (limite 500h). Agende a troca de filtros e óleo.",
+            "severidade": "ALTA",
+            "link_acao": "/maquinarios",
+        },
+        {
+            "tipo": "ESTOQUE",
+            "titulo": "Estoque Baixo de Insumo",
+            "mensagem": "Lote de Fungicida Fox Xpro com apenas 15% da capacidade inicial. Reabasteça o depósito.",
+            "severidade": "MEDIA",
+            "link_acao": "/insumos",
+        },
+        {
+            "tipo": "ESG",
+            "titulo": "Certificação ABC+ Aprovada",
+            "mensagem": "Laudo de conformidade homologado: Matriz 78.5% renovável (-1.0% a.a. juros verdes).",
+            "severidade": "INFO",
+            "link_acao": "/energia-esg",
+        },
+    ]
+
+    inseridos = 0
+    stmt = select(Notificacao).where(Notificacao.propriedade_id == propriedade_id)
+    res = await session.execute(stmt)
+    if not res.scalars().first():
+        for notif_data in notificacoes_exemplo:
+            notificacao = Notificacao(**notif_data, propriedade_id=propriedade_id)
+            session.add(notificacao)
+            inseridos += 1
         await session.commit()
     return inseridos
