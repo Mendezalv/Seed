@@ -11,6 +11,7 @@
   /* Superfícies */
   --bg-primary: #09090b;       /* Fundo principal do app e sidebar */
   --bg-elevated: #18181b;      /* Cards, context-bar e containers elevados */
+  --bg-card: #18181b;          /* Cards e menus flutuantes */
   --bg-surface: #1c1c21;       /* Sub-cards e elementos internos */
   --bg-hover: #27272a;         /* Estados de hover em botões e menus */
   
@@ -87,7 +88,7 @@ body {
   top: 0;
   left: 0;
   bottom: 0;
-  z-index: 30;
+  z-index: 120;
   transition: transform 300ms var(--ease-out);
 }
 
@@ -243,10 +244,8 @@ body {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 20;
-  background: rgba(9, 9, 11, 0.82);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  z-index: 100;
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border);
   padding: 0 32px;
   height: 56px;
@@ -400,7 +399,7 @@ body {
   justify-content: space-between;
   margin-bottom: 24px;
   position: relative;
-  z-index: 50;
+  z-index: 5;
 }
 .page-header-left {
   display: flex;
@@ -423,7 +422,7 @@ body {
   align-items: center;
   gap: 10px;
   position: relative;
-  z-index: 50;
+  z-index: 5;
 }
 
 .btn {
@@ -1021,8 +1020,8 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 25;
+  background: rgba(0,0,0,0.6);
+  z-index: 110;
 }
 
 /* ── Responsive ──────────────────────────────────── */
@@ -1066,7 +1065,7 @@ body {
   background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 100;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
