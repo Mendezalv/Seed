@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from typing import Any
+from uuid import UUID
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
