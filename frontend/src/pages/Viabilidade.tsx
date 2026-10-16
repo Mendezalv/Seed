@@ -379,7 +379,7 @@ export const Viabilidade: React.FC = () => {
     <>
       {/* Page Header Padrão Seed */}
       <div className="page-header">
-        <div>
+        <div className="page-header-left">
           <h1 className="page-heading">Viabilidade Econômica & Comercialização</h1>
           <p className="page-subheading">
             Modelagem de sensibilidade financeira, margem EBITDA, ponto de equilíbrio e gestão de travas de hedge

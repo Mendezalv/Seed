@@ -353,7 +353,7 @@ export const InsumosEstoque: React.FC = () => {
 
       {/* Cabeçalho de Página */}
       <div className="page-header stagger-item">
-        <div>
+        <div className="page-header-left">
           <h1 className="page-heading">Gestão de Insumos & Rastreabilidade de Lotes</h1>
           <p className="page-subheading">
             Inventário fitossanitário, defensivos químicos, fertilizantes, sementes e conformidade MAPA / inpEV

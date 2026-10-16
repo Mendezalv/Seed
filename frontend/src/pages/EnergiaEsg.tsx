@@ -338,7 +338,7 @@ export const EnergiaEsg: React.FC = () => {
         <div className="page-header-left">
           <h1 className="page-heading">Sustentabilidade, Energia & ESG</h1>
           <p className="page-subheading">
-            Inventário de emissões de carbono nos Escopos 1 e 2 (GHG Protocol Agrícola), balanço de fontes renováveis e elegibilidade técnica para financiamento verde com taxa bonificada pelo Plano ABC+.
+            Inventário de emissões Escopos 1 e 2, matriz renovável e elegibilidade ao Plano ABC+
           </p>
         </div>
 
