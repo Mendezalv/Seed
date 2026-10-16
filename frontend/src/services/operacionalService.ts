@@ -194,4 +194,19 @@ export const operacionalService = {
   async calcularViabilidade(data: ViabilidadeApiRequest): Promise<ViabilidadeApiResponse> {
     return api.post<ViabilidadeApiResponse>('/operacional/viabilidade/calcular', data);
   },
+  async exportarDrePdf(cultura?: string, safraId?: string): Promise<void> {
+    const params = new URLSearchParams();
+    if (cultura) params.append('cultura', cultura);
+    if (safraId) params.append('safra_id', safraId);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return api.download(`/operacional/viabilidade/export/pdf${qs}`, 'dre_viabilidade_seed.pdf');
+  },
+  async exportarDreXlsx(cultura?: string, safraId?: string): Promise<void> {
+    const params = new URLSearchParams();
+    if (cultura) params.append('cultura', cultura);
+    if (safraId) params.append('safra_id', safraId);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return api.download(`/operacional/viabilidade/export/xlsx${qs}`, 'dre_viabilidade_seed.xlsx');
+  },
 };
+

@@ -209,3 +209,84 @@ async def test_export_maquinarios_xlsx_flow(
     assert "Frota de Maquinários" in wb.sheetnames
     assert "Ordens de Serviço" in wb.sheetnames
 
+
+@pytest.mark.asyncio
+async def test_export_dre_xlsx_flow(
+    async_client: AsyncClient,
+    produtor_auth: tuple[str, UUID, UUID],
+):
+    token, _, _ = produtor_auth
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = await async_client.get(
+        "/api/v1/operacional/viabilidade/export/xlsx?cultura=Soja", headers=headers
+    )
+    assert resp.status_code == 200
+    expected_xlsx_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert expected_xlsx_type in resp.headers["content-type"]
+    assert "dre_viabilidade_seed.xlsx" in resp.headers.get("content-disposition", "")
+
+    wb = openpyxl.load_workbook(io.BytesIO(resp.content))
+    assert "DRE Executivo" in wb.sheetnames
+    ws = wb["DRE Executivo"]
+    assert "DEMONSTRAÇÃO DE RESULTADO" in str(ws["A1"].value)
+
+
+@pytest.mark.asyncio
+async def test_export_dre_pdf_flow(
+    async_client: AsyncClient,
+    produtor_auth: tuple[str, UUID, UUID],
+):
+    token, _, _ = produtor_auth
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = await async_client.get(
+        "/api/v1/operacional/viabilidade/export/pdf?cultura=Milho", headers=headers
+    )
+    assert resp.status_code == 200
+    assert "application/pdf" in resp.headers["content-type"]
+    assert "dre_viabilidade_seed.pdf" in resp.headers.get("content-disposition", "")
+    assert resp.content.startswith(b"%PDF")
+    assert len(resp.content) > 1000
+
+
+@pytest.mark.asyncio
+async def test_export_dashboard_consolidado_pdf_flow(
+    async_client: AsyncClient,
+    produtor_auth: tuple[str, UUID, UUID],
+):
+    token, _, _ = produtor_auth
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = await async_client.get(
+        "/api/v1/propriedades/minha/dashboard/export/pdf", headers=headers
+    )
+    assert resp.status_code == 200
+    assert "application/pdf" in resp.headers["content-type"]
+    assert "relatorio_executivo_fazenda.pdf" in resp.headers.get("content-disposition", "")
+    assert resp.content.startswith(b"%PDF")
+    assert len(resp.content) > 1000
+
+
+@pytest.mark.asyncio
+async def test_export_dashboard_consolidado_xlsx_flow(
+    async_client: AsyncClient,
+    produtor_auth: tuple[str, UUID, UUID],
+):
+    token, _, _ = produtor_auth
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = await async_client.get(
+        "/api/v1/propriedades/minha/dashboard/export/xlsx", headers=headers
+    )
+    assert resp.status_code == 200
+    expected_xlsx_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert expected_xlsx_type in resp.headers["content-type"]
+    assert "relatorio_executivo_fazenda.xlsx" in resp.headers.get("content-disposition", "")
+
+    wb = openpyxl.load_workbook(io.BytesIO(resp.content))
+    assert "Resumo Executivo" in wb.sheetnames
+    ws = wb["Resumo Executivo"]
+    assert "SEED AGRO" in str(ws["A1"].value)
+
+

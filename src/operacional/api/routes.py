@@ -296,3 +296,72 @@ async def calcular_viabilidade(
         return await ViabilidadeService.calcular_viabilidade(request, propriedade_id, session)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.get("/viabilidade/export/xlsx")
+async def exportar_dre_viabilidade_xlsx(
+    safra_id: UUID | None = None,
+    cultura: str = "Soja",
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """Exporta a Demonstração de Resultado do Exercício (DRE) em planilha Excel (.xlsx)."""
+    from src.shared.database.models import Propriedade
+
+    propriedade = await session.get(Propriedade, propriedade_id)
+    viab_data: dict[str, Any] = {}
+    if safra_id:
+        try:
+            req = ViabilidadeRequest(
+                safra_id=safra_id,
+                preco_mercado_saca=Decimal("138.40"),
+                custo_mao_obra=Decimal("180000.00"),
+                custo_frete=Decimal("95000.00"),
+                custo_impostos=Decimal("60000.00"),
+            )
+            resp = await ViabilidadeService.calcular_viabilidade(req, propriedade_id, session)
+            viab_data = resp.model_dump()
+        except Exception:
+            pass
+
+    xlsx_bytes = ExportEngine.gerar_dre_viabilidade_xlsx(viab_data, propriedade, cultura=cultura)
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="dre_viabilidade_seed.xlsx"'},
+    )
+
+
+@router.get("/viabilidade/export/pdf")
+async def exportar_dre_viabilidade_pdf(
+    safra_id: UUID | None = None,
+    cultura: str = "Soja",
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """Exporta a Demonstração de Resultado do Exercício (DRE) em formato PDF oficial."""
+    from src.shared.database.models import Propriedade
+
+    propriedade = await session.get(Propriedade, propriedade_id)
+    viab_data: dict[str, Any] = {}
+    if safra_id:
+        try:
+            req = ViabilidadeRequest(
+                safra_id=safra_id,
+                preco_mercado_saca=Decimal("138.40"),
+                custo_mao_obra=Decimal("180000.00"),
+                custo_frete=Decimal("95000.00"),
+                custo_impostos=Decimal("60000.00"),
+            )
+            resp = await ViabilidadeService.calcular_viabilidade(req, propriedade_id, session)
+            viab_data = resp.model_dump()
+        except Exception:
+            pass
+
+    pdf_bytes = ExportEngine.gerar_dre_viabilidade_pdf(viab_data, propriedade, cultura=cultura)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="dre_viabilidade_seed.pdf"'},
+    )
+

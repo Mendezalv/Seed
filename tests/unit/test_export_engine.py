@@ -159,3 +159,112 @@ async def test_gerar_relatorio_maquinarios_xlsx(session):
 
     ws_os = wb["Ordens de Serviço"]
     assert ws_os["B4"].value == "Trator John Deere 8R 370"
+
+
+def test_gerar_dre_viabilidade_xlsx():
+    sample_data = {
+        "receita_bruta": 2768000.0,
+        "custo_total": 1425000.0,
+        "lucro_liquido": 1343000.0,
+        "margem_percentual": 48.5,
+        "custo_por_saca": 71.25,
+        "break_even_sacas": 10178.5,
+        "cenarios": [
+            {
+                "nome": "Pessimista (-20%)",
+                "preco_saca": 110.72,
+                "receita_bruta": 2214400.0,
+                "lucro_liquido": 789400.0,
+                "margem_percentual": 35.6,
+            },
+            {
+                "nome": "Base",
+                "preco_saca": 138.40,
+                "receita_bruta": 2768000.0,
+                "lucro_liquido": 1343000.0,
+                "margem_percentual": 48.5,
+            },
+            {
+                "nome": "Otimista (+20%)",
+                "preco_saca": 166.08,
+                "receita_bruta": 3321600.0,
+                "lucro_liquido": 1896600.0,
+                "margem_percentual": 57.1,
+            },
+        ],
+    }
+
+    prop = Propriedade(
+        id=uuid4(),
+        nome="Fazenda Santa Maria",
+        car_numero="MT-5105259-88B124F6C123",
+        municipio="Lucas do Rio Verde",
+        estado="MT",
+    )
+
+    xlsx_bytes = ExportEngine.gerar_dre_viabilidade_xlsx(
+        sample_data, prop, cultura="Soja Safra 2026"
+    )
+    assert isinstance(xlsx_bytes, bytes)
+    assert len(xlsx_bytes) > 0
+
+    wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
+    assert "DRE Executivo" in wb.sheetnames
+    ws = wb["DRE Executivo"]
+    assert "DEMONSTRAÇÃO DE RESULTADO" in str(ws["A1"].value)
+    assert ws["A4"].value == "Conta Contábil / Indicador"
+    assert ws["A5"].value == "(+) RECEITA OPERACIONAL BRUTA"
+
+
+def test_gerar_dre_viabilidade_pdf():
+    sample_data = {
+        "receita_bruta": 2768000.0,
+        "custo_total": 1425000.0,
+        "lucro_liquido": 1343000.0,
+        "margem_percentual": 48.5,
+        "custo_por_saca": 71.25,
+        "break_even_sacas": 10178.5,
+    }
+
+    prop = Propriedade(
+        id=uuid4(),
+        nome="Fazenda Santa Maria",
+        car_numero="MT-5105259-88B124F6C123",
+        municipio="Lucas do Rio Verde",
+        estado="MT",
+    )
+
+    pdf_bytes = ExportEngine.gerar_dre_viabilidade_pdf(sample_data, prop, cultura="Soja")
+    assert isinstance(pdf_bytes, bytes)
+    assert pdf_bytes.startswith(b"%PDF")
+    assert len(pdf_bytes) > 1000
+
+
+@pytest.mark.asyncio
+async def test_gerar_relatorio_executivo_consolidado_pdf_and_xlsx(session):
+    prop_id = uuid4()
+    propriedade = Propriedade(
+        id=prop_id,
+        nome="Fazenda Pioneira",
+        car_numero="MT-5105259-CONSOL",
+        municipio="Sorriso",
+        estado="MT",
+    )
+    session.add(propriedade)
+    await session.commit()
+
+    # Teste PDF
+    pdf_bytes = await ExportEngine.gerar_relatorio_executivo_consolidado_pdf(prop_id, session)
+    assert isinstance(pdf_bytes, bytes)
+    assert pdf_bytes.startswith(b"%PDF")
+    assert len(pdf_bytes) > 1000
+
+    # Teste XLSX
+    xlsx_bytes = await ExportEngine.gerar_relatorio_executivo_consolidado_xlsx(prop_id, session)
+    assert isinstance(xlsx_bytes, bytes)
+    assert len(xlsx_bytes) > 0
+    wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes))
+    assert "Resumo Executivo" in wb.sheetnames
+    ws = wb["Resumo Executivo"]
+    assert "SEED AGRO" in str(ws["A1"].value)
+

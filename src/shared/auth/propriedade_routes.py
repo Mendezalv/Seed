@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
 
@@ -129,6 +129,45 @@ async def obter_dashboard_consolidado(
     operacionais, financeiros, alertas epidemiológicos, clima e sustentabilidade ESG.
     """
     return await DashboardService.obter_consolidado(propriedade_id, session)
+
+
+@router.get(
+    "/minha/dashboard/export/pdf",
+    dependencies=[Depends(require_permission("read:dashboard"))],
+)
+async def exportar_dashboard_consolidado_pdf(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """Exporta o Relatório Executivo Consolidado da Fazenda em formato PDF oficial Seed."""
+    from src.shared.export import ExportEngine
+
+    pdf_bytes = await ExportEngine.gerar_relatorio_executivo_consolidado_pdf(propriedade_id, session)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="relatorio_executivo_fazenda.pdf"'},
+    )
+
+
+@router.get(
+    "/minha/dashboard/export/xlsx",
+    dependencies=[Depends(require_permission("read:dashboard"))],
+)
+async def exportar_dashboard_consolidado_xlsx(
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+    session: AsyncSession = Depends(get_session),
+):
+    """Exporta o Relatório Executivo Consolidado da Fazenda em formato Excel (.xlsx)."""
+    from src.shared.export import ExportEngine
+
+    xlsx_bytes = await ExportEngine.gerar_relatorio_executivo_consolidado_xlsx(propriedade_id, session)
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="relatorio_executivo_fazenda.xlsx"'},
+    )
+
 
 @router.get("/minha/membros", response_model=list[UsuarioResponse], dependencies=[Depends(require_permission("read:dashboard"))])
 async def listar_membros(

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { CustomDatePicker } from '../components/ui/CustomDatePicker';
 import { operacionalService } from '../services/operacionalService';
@@ -179,6 +179,54 @@ export const Viabilidade: React.FC = () => {
   const [isHedgeModalOpen, setIsHedgeModalOpen] = useState<boolean>(false);
   const [isTalhaoModalOpen, setIsTalhaoModalOpen] = useState<boolean>(false);
 
+  // Estados de exportação do DRE
+  const [showExportMenu, setShowExportMenu] = useState<boolean>(false);
+  const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
+  const [isExportingXlsx, setIsExportingXlsx] = useState<boolean>(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    }
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showExportMenu]);
+
+  const handleExportDrePdf = async () => {
+    setShowExportMenu(false);
+    setIsExportingPdf(true);
+    showToast('Gerando Demonstração de Resultado do Exercício (DRE) em PDF oficial...');
+    try {
+      await operacionalService.exportarDrePdf('Soja');
+      showToast('DRE oficial em PDF baixado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao exportar DRE em PDF. Verifique a conexão com o servidor.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleExportDreXlsx = async () => {
+    setShowExportMenu(false);
+    setIsExportingXlsx(true);
+    showToast('Gerando planilha contábil DRE em formato Excel (.xlsx)...');
+    try {
+      await operacionalService.exportarDreXlsx('Soja');
+      showToast('Planilha DRE Excel baixada com sucesso!');
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao exportar DRE em Excel. Verifique a conexão com o servidor.');
+    } finally {
+      setIsExportingXlsx(false);
+    }
+  };
+
   // Formulário do Modal de Hedge
   const [formTrading, setFormTrading] = useState<string>('Cargill Agrícola (Sorriso / MT)');
   const [formVolume, setFormVolume] = useState<number>(15000);
@@ -330,15 +378,103 @@ export const Viabilidade: React.FC = () => {
         </div>
 
         <div className="header-actions">
-          <button
-            className="btn btn-outline"
-            onClick={() => showToast('Gerando Demonstração de Resultado do Exercício (DRE 2024/25) em PDF/XLS...')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            Exportar DRE
-          </button>
+          <div ref={exportMenuRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={isExportingPdf || isExportingXlsx}
+              aria-haspopup="true"
+              aria-expanded={showExportMenu}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              <span>{isExportingPdf ? 'Gerando PDF...' : isExportingXlsx ? 'Exportando...' : 'Exportar DRE'}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" style={{ width: '12px', height: '12px', marginLeft: '2px' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+
+            {showExportMenu && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                    right: 0,
+                    width: '270px',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-lg, 0 10px 25px -5px rgba(0,0,0,0.3))',
+                    padding: '8px',
+                    zIndex: 999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleExportDrePdf}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontSize: '13px',
+                      transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" style={{ width: '20px', height: '20px', color: '#ef4444', flexShrink: 0 }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Laudo Técnico DRE (PDF)</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Demonstrativo contábil e margens</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExportDreXlsx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontSize: '13px',
+                      transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" style={{ width: '20px', height: '20px', color: '#10b981', flexShrink: 0 }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Planilha Contábil (.XLSX)</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Cenários e sensibilidade</div>
+                    </div>
+                  </button>
+                </div>
+            )}
+          </div>
 
           <button className="btn btn-outline" onClick={() => setIsTalhaoModalOpen(true)}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">

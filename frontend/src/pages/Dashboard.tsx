@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { dashboardService } from '../services/dashboardService';
 import { useAuth } from '../context/AuthContext';
 import { ModalEntradaInsumo } from '../components/modals/ModalEntradaInsumo';
 import { ModalOcorrenciaSanitaria } from '../components/modals/ModalOcorrenciaSanitaria';
@@ -61,9 +62,57 @@ export const Dashboard: React.FC = () => {
   const [showModalViabilidade, setShowModalViabilidade] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  // Estados de exportação de relatórios
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingXlsx, setIsExportingXlsx] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    }
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showExportMenu]);
+
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 4500);
+  };
+
+  const handleExportConsolidadoPdf = async () => {
+    setShowExportMenu(false);
+    setIsExportingPdf(true);
+    showToast('Gerando Relatório Executivo Consolidado em PDF oficial...');
+    try {
+      await dashboardService.exportarPdf();
+      showToast('Relatório Executivo PDF baixado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao exportar relatório PDF. Verifique o servidor.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleExportConsolidadoXlsx = async () => {
+    setShowExportMenu(false);
+    setIsExportingXlsx(true);
+    showToast('Gerando Planilha Consolidada da Fazenda em Excel...');
+    try {
+      await dashboardService.exportarXlsx();
+      showToast('Planilha Consolidada Excel baixada com sucesso!');
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao exportar planilha Excel. Verifique o servidor.');
+    } finally {
+      setIsExportingXlsx(false);
+    }
   };
 
   useEffect(() => {
@@ -228,12 +277,103 @@ export const Dashboard: React.FC = () => {
           <p className="page-subheading">Visão consolidada da operação, saúde sanitária e sustentabilidade</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-outline">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            Exportar
-          </button>
+          <div ref={exportMenuRef} style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={isExportingPdf || isExportingXlsx}
+              aria-haspopup="true"
+              aria-expanded={showExportMenu}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              <span>{isExportingPdf ? 'Gerando PDF...' : isExportingXlsx ? 'Exportando...' : 'Exportar Relatório'}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" style={{ width: '12px', height: '12px', marginLeft: '2px' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+
+            {showExportMenu && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                    right: 0,
+                    width: '270px',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-lg, 0 10px 25px -5px rgba(0,0,0,0.3))',
+                    padding: '8px',
+                    zIndex: 999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={handleExportConsolidadoPdf}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontSize: '13px',
+                      transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" style={{ width: '20px', height: '20px', color: '#ef4444', flexShrink: 0 }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m6.75 12-3-3m0 0-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Relatório Oficial (PDF)</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Laudo executivo consolidado</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleExportConsolidadoXlsx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px 12px',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      color: 'var(--text-primary)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontSize: '13px',
+                      transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" style={{ width: '20px', height: '20px', color: '#10b981', flexShrink: 0 }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>Planilha Gerencial (.XLSX)</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Matriz analítica da fazenda</div>
+                    </div>
+                  </button>
+                </div>
+            )}
+          </div>
           <button className="btn btn-primary" onClick={() => setShowModalViabilidade(true)}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
