@@ -56,3 +56,47 @@ class RastreabilidadeService:
         stmt = select(LoteInsumo).where(LoteInsumo.propriedade_id == propriedade_id).order_by(LoteInsumo.entrada_em.desc())
         result = await session.execute(stmt)
         return list(result.scalars().all())
+
+    @staticmethod
+    async def importar_itens_nfe(
+        itens: list[Any],
+        fornecedor_padrao: str | None,
+        propriedade_id: UUID,
+        session: AsyncSession,
+    ) -> list[LoteInsumo]:
+        from datetime import datetime, timezone
+        from src.operacional.domain.models import Insumo
+
+        lotes_criados: list[LoteInsumo] = []
+        for item in itens:
+            # 1. Localiza ou cria o catálogo de Insumo
+            stmt_insumo = select(Insumo).where(Insumo.nome.ilike(item.nome_produto.strip()))
+            res_insumo = await session.execute(stmt_insumo)
+            insumo = res_insumo.scalar_one_or_none()
+
+            if not insumo:
+                insumo = Insumo(
+                    tipo=item.categoria,
+                    nome=item.nome_produto.strip(),
+                    unidade_medida=item.unidade,
+                    preco_unitario=item.custo_unitario,
+                )
+                session.add(insumo)
+                await session.flush()
+
+            # 2. Cria o novo lote
+            lote = LoteInsumo(
+                insumo_id=insumo.id,
+                codigo_lote=item.codigo_lote,
+                quantidade_inicial=item.quantidade,
+                quantidade_atual=item.quantidade,
+                data_validade=item.data_validade,
+                fornecedor=item.fornecedor or fornecedor_padrao or "NF-e Fornecedor",
+                entrada_em=datetime.now(timezone.utc),
+                propriedade_id=propriedade_id,
+            )
+            session.add(lote)
+            lotes_criados.append(lote)
+
+        await session.flush()
+        return lotes_criados

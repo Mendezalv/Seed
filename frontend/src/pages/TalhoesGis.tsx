@@ -904,6 +904,67 @@ export const TalhoesGis: React.FC = () => {
                 );
               })}
             </svg>
+
+            {/* Régua Espectral de NDVI - Sensoriamento Remoto */}
+            {ndviOverlay && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '16px',
+                  left: '16px',
+                  right: '16px',
+                  background: 'rgba(9, 9, 11, 0.92)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  zIndex: 10,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-bright)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                    Escala Espectral NDVI (Sentinel-2 MSI)
+                  </span>
+                  <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    Talhão Focado: <strong style={{ color: selectedTalhao.ndvi >= 0.75 ? '#34d399' : '#f59e0b' }}>{selectedTalhao.ndvi.toFixed(2)}</strong>
+                  </span>
+                </div>
+                {/* Gradiente Colorimétrico */}
+                <div
+                  style={{
+                    height: '8px',
+                    borderRadius: '4px',
+                    background: 'linear-gradient(to right, #7f1d1d 0%, #ef4444 20%, #f59e0b 45%, #84cc16 70%, #10b981 100%)',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Marcador do Talhão Selecionado */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      left: `${Math.min(100, Math.max(0, (selectedTalhao.ndvi / 1.0) * 100))}%`,
+                      width: '4px',
+                      height: '16px',
+                      background: '#ffffff',
+                      borderRadius: '2px',
+                      boxShadow: '0 0 6px rgba(0,0,0,0.8)',
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                  <span>0.00 (Solo Exposto)</span>
+                  <span>0.35 (Estresse Hídrico)</span>
+                  <span>0.60 (Em Desenvolvimento)</span>
+                  <span>0.85+ (Vigor Pleno)</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Painel Lateral de Detalhes do Talhão Ativo */}
@@ -1018,6 +1079,91 @@ export const TalhoesGis: React.FC = () => {
                     <span className="metric-row-val">{selectedTalhao.colheita}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Sensoriamento Remoto & Vigor Vegetativo NDVI */}
+              <div
+                style={{
+                  background: 'var(--surface-sunken)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '12px 14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-bright)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="16" height="16" style={{ color: 'var(--accent)' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 0 0 4.5 4.5H18a3.75 3.75 0 0 0 1.332-7.257 3 3 0 0 0-3.758-3.848 5.25 5.25 0 0 0-10.233 2.33A4.502 4.502 0 0 0 2.25 15Z" />
+                    </svg>
+                    Sensoriamento Remoto (Sentinel-2)
+                  </span>
+                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', padding: '2px 6px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent)' }}>
+                    Revisita há 2 dias
+                  </span>
+                </div>
+
+                {/* Distribuição de Zonas de Vigor */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    <span>Zonas de Vigor da Biomassa</span>
+                    <span>NDVI Médio: <strong style={{ color: selectedTalhao.ndvi >= 0.75 ? '#34d399' : '#f59e0b' }}>{selectedTalhao.ndvi.toFixed(2)}</strong></span>
+                  </div>
+                  <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', gap: '2px' }}>
+                    <div style={{ width: selectedTalhao.ndvi >= 0.75 ? '78%' : '45%', background: '#10b981' }} title="Vigor Pleno" />
+                    <div style={{ width: selectedTalhao.ndvi >= 0.75 ? '16%' : '35%', background: '#f59e0b' }} title="Desenvolvimento Moderado" />
+                    <div style={{ width: selectedTalhao.ndvi >= 0.75 ? '6%' : '20%', background: '#ef4444' }} title="Estresse Hídrico / Fitossanitário" />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-dim)', marginTop: '4px' }}>
+                    <span style={{ color: '#34d399' }}>● 78% Vigor Ótimo</span>
+                    <span style={{ color: '#fbbf24' }}>● 16% Moderado</span>
+                    <span style={{ color: '#f87171' }}>● 6% Estresse</span>
+                  </div>
+                </div>
+
+                {/* Minigráfico SVG da curva temporal de NDVI nos últimos 90 dias */}
+                <div>
+                  <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    Evolução Temporal NDVI (90 dias):
+                  </div>
+                  <svg viewBox="0 0 260 50" style={{ width: '100%', height: '50px', overflow: 'visible' }}>
+                    <polyline
+                      fill="none"
+                      stroke="var(--accent)"
+                      strokeWidth="2"
+                      points="10,42 45,38 80,32 115,24 150,18 185,14 220,12 250,10"
+                    />
+                    {[
+                      { x: 10, y: 42, v: '0.30' },
+                      { x: 80, y: 32, v: '0.48' },
+                      { x: 150, y: 18, v: '0.68' },
+                      { x: 220, y: 12, v: '0.78' },
+                      { x: 250, y: 10, v: selectedTalhao.ndvi.toFixed(2) },
+                    ].map((pt, i) => (
+                      <circle key={i} cx={pt.x} cy={pt.y} r="3" fill="#10b981" stroke="#09090b" strokeWidth="1.5" />
+                    ))}
+                  </svg>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+                    <span>Emergência</span>
+                    <span>V6</span>
+                    <span>R1 Floração</span>
+                    <span>Atual ({selectedTalhao.ndvi.toFixed(2)})</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  style={{ width: '100%', fontSize: '11px', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  onClick={() => showToast(`Laudo técnico de NDVI do ${selectedTalhao.nome} gerado com sucesso!`)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" width="14" height="14">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                  </svg>
+                  Exportar Laudo Espectral NDVI (PDF)
+                </button>
               </div>
 
               {/* Rastreabilidade de Insumos Aplicados */}

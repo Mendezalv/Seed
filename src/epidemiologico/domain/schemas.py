@@ -71,3 +71,10 @@ class MapaCalorResponse(BaseModel):
     total_pontos: int
     total_ocorrencias: int
     pontos: List[MapaCalorPontoResponse]
+
+
+class CopilotoConsultaRequest(BaseModel):
+    pergunta: str
+    cultura: str = "Soja"
+    talhao_nome: Optional[str] = None
+    insumos_estoque: Optional[List[str]] = None

@@ -5,6 +5,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { useCotacoes } from '../../context/CotacoesContext';
 import { NotificationPopover } from '../common/NotificationPopover';
 import { ModalCotacoesMercado } from '../modals/ModalCotacoesMercado';
+import { CopilotoAgroModal } from '../modals/CopilotoAgroModal';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -30,6 +31,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
   const { cotacoes } = useCotacoes();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isCotacoesModalOpen, setIsCotacoesModalOpen] = useState(false);
+  const [isCopilotoOpen, setIsCopilotoOpen] = useState(false);
 
   const hasCriticalUnread = notifications.some(
     (n) => !n.lida && (n.severidade === 'CRITICA' || n.severidade === 'ALTA')
@@ -120,6 +122,29 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
           <span>{getSyncLabel()}</span>
         </button>
 
+        {/* Botão Copiloto Agronômico IA */}
+        <button
+          className="topbar-btn"
+          onClick={() => setIsCopilotoOpen(true)}
+          title="Abrir Copiloto Agronômico com IA (Agrofit / MAPA)"
+          style={{
+            background: 'rgba(16, 185, 129, 0.12)',
+            borderColor: 'rgba(16, 185, 129, 0.35)',
+            color: 'var(--accent)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 10px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" width="15" height="15">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+          </svg>
+          <span style={{ fontSize: '11.5px', fontWeight: 700 }}>Copiloto IA</span>
+        </button>
+
         {/* Botão Notificações com Popover em Tempo Real */}
         <div style={{ position: 'relative' }}>
           <button
@@ -166,6 +191,11 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
       <ModalCotacoesMercado
         isOpen={isCotacoesModalOpen}
         onClose={() => setIsCotacoesModalOpen(false)}
+      />
+
+      <CopilotoAgroModal
+        isOpen={isCopilotoOpen}
+        onClose={() => setIsCopilotoOpen(false)}
       />
     </header>
   );

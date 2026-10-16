@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { CustomDatePicker } from '../components/ui/CustomDatePicker';
+import { PainelDreLcdpr } from '../components/financeiro/PainelDreLcdpr';
 import { operacionalService } from '../services/operacionalService';
 
 interface HedgeContract {
@@ -174,6 +175,9 @@ export const Viabilidade: React.FC = () => {
       console.info('Modo demonstração ativo em Viabilidade Econômica:', err);
     });
   }, [priceVal]);
+
+  // Abas de navegação
+  const [abaPrincipal, setAbaPrincipal] = useState<'SIMULACAO' | 'DRE_LCDPR'>('SIMULACAO');
 
   // Modais
   const [isHedgeModalOpen, setIsHedgeModalOpen] = useState<boolean>(false);
@@ -492,8 +496,42 @@ export const Viabilidade: React.FC = () => {
         </div>
       </div>
 
-      {/* Top Ticker de Mercado em Tempo Real */}
-      <div className="market-ticker" style={{ marginBottom: '24px' }}>
+      {/* Abas de Navegação Executiva */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '20px',
+          borderBottom: '1px solid var(--border)',
+          paddingBottom: '12px',
+        }}
+      >
+        <button
+          type="button"
+          className={`btn ${abaPrincipal === 'SIMULACAO' ? 'btn-primary' : 'btn-outline'}`}
+          style={{ fontSize: '12.5px', padding: '7px 16px' }}
+          onClick={() => setAbaPrincipal('SIMULACAO')}
+        >
+          📈 Simulação de Viabilidade & Travas de Hedge
+        </button>
+        <button
+          type="button"
+          className={`btn ${abaPrincipal === 'DRE_LCDPR' ? 'btn-primary' : 'btn-outline'}`}
+          style={{ fontSize: '12.5px', padding: '7px 16px' }}
+          onClick={() => setAbaPrincipal('DRE_LCDPR')}
+        >
+          📑 DRE de Safra por Talhão & Livro Caixa (LCDPR)
+        </button>
+      </div>
+
+      {abaPrincipal === 'DRE_LCDPR' && (
+        <PainelDreLcdpr onShowToast={showToast} />
+      )}
+
+      {abaPrincipal === 'SIMULACAO' && (
+        <>
+          {/* Top Ticker de Mercado em Tempo Real */}
+          <div className="market-ticker" style={{ marginBottom: '24px' }}>
         <div className="ticker-item">
           <span className="label">SOJA CBOT:</span>
           <span className="val">US$ 10,24/bu</span>
@@ -1146,6 +1184,8 @@ export const Viabilidade: React.FC = () => {
           </div>
         </div>
       </div>
+      </>
+      )}
 
       {/* ============================================================ */}
       {/* MODAL 1: SIMULAR CONTRATO DE HEDGE / BARTER                  */}

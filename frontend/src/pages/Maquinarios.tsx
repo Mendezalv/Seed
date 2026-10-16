@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
+import { PainelTelemetriaAoVivo } from '../components/maquinarios/PainelTelemetriaAoVivo';
 import { operacionalService } from '../services/operacionalService';
 import { useSync } from '../context/SyncContext';
 
@@ -447,10 +448,11 @@ export const Maquinarios: React.FC = () => {
   const { queueOperation } = useSync();
   const [machines, setMachines] = useState<Machine[]>(INITIAL_MACHINES);
   const [orders, setOrders] = useState<MaintenanceOrder[]>(INITIAL_ORDERS);
+
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'GRID' | 'TABLE'>('GRID');
+  const [viewMode, setViewMode] = useState<'GRID' | 'TABLE' | 'TELEMETRIA'>('GRID');
 
   useEffect(() => {
     Promise.allSettled([
@@ -921,8 +923,39 @@ export const Maquinarios: React.FC = () => {
               </svg>
               Tabela de OS ({orders.length})
             </button>
+            <button
+              type="button"
+              className={`view-toggle-btn ${viewMode === 'TELEMETRIA' ? 'active' : ''}`}
+              onClick={() => setViewMode('TELEMETRIA')}
+              style={{
+                borderColor: viewMode === 'TELEMETRIA' ? 'var(--accent)' : undefined,
+                color: viewMode === 'TELEMETRIA' ? 'var(--accent)' : undefined,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  boxShadow: '0 0 6px #10b981',
+                  display: 'inline-block',
+                }}
+              />
+              Telemetria ao Vivo
+            </button>
           </div>
         </div>
+
+        {/* ── VISÃO 0: TELEMETRIA & RASTREAMENTO AO VIVO ── */}
+        {viewMode === 'TELEMETRIA' && (
+          <div style={{ marginTop: '16px' }}>
+            <PainelTelemetriaAoVivo />
+          </div>
+        )}
 
         {/* ── VISÃO 1: GRID DE MÁQUINAS (Cards com Telemetria) ── */}
         {viewMode === 'GRID' && (

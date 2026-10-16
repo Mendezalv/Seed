@@ -193,3 +193,30 @@ class ViabilidadeResponse(BaseModel):
     receita_bruta: Decimal
     lucro_liquido: Decimal
     cenarios: List[CenarioViabilidade]
+
+
+# ─── NF-e Agro Schemas ────────────────────────────────────────
+class NfeParseRequest(BaseModel):
+    xml_content: str
+
+class NfeItemImport(BaseModel):
+    nome_produto: str
+    categoria: str = "DEFENSIVO"
+    unidade: str = "L"
+    quantidade: Decimal = Field(gt=0)
+    custo_unitario: Decimal = Field(ge=0)
+    codigo_lote: str
+    data_validade: Optional[date] = None
+    fornecedor: Optional[str] = None
+
+class NfeImportRequest(BaseModel):
+    numero_nf: str
+    chave_acesso: Optional[str] = None
+    fornecedor_padrao: Optional[str] = None
+    itens: List[NfeItemImport]
+
+class NfeImportResponse(BaseModel):
+    sucesso: bool
+    total_itens_importados: int
+    lotes_criados: List[LoteInsumoResponse]
+    mensagem: str

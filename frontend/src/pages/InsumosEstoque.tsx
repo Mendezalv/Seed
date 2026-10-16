@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ModalEntradaInsumo } from '../components/modals/ModalEntradaInsumo';
+import { ModalImportarNfe } from '../components/modals/ModalImportarNfe';
 import { operacionalService } from '../services/operacionalService';
 import { useSync } from '../context/SyncContext';
 
@@ -140,12 +141,37 @@ export const InsumosEstoque: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNfeModalOpen, setIsNfeModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 4000);
+  };
+
+  const handleSuccessImportarNfe = (novos: Array<any>) => {
+    const formatados: LoteItem[] = novos.map((item, idx) => ({
+      id: String(Date.now() + idx),
+      nome: item.nome,
+      principioAtivo: item.principioAtivo,
+      categoria: item.categoria,
+      codigoLote: item.codigoLote,
+      fornecedor: item.fornecedor,
+      localizacao: 'Galpão 01 — Bacia Central',
+      quantidadeAtual: item.quantidade,
+      quantidadeTotal: item.quantidade,
+      unidade: item.unidade,
+      custoUnitario: item.custoUnitario,
+      custoTotal: item.custoTotal,
+      validade: item.validade,
+      validadeStatus: 'good',
+      validadeTexto: 'Vigente (NF-e Oficial)',
+      status: 'REGULAR',
+    }));
+
+    setLotes((prev) => [...formatados, ...prev]);
+    showToast(`Sucesso! ${novos.length} item(ns) da NF-e incorporados ao estoque da fazenda.`);
   };
 
   const handleExportXlsx = async () => {
@@ -303,6 +329,12 @@ export const InsumosEstoque: React.FC = () => {
         onSuccess={handleSuccessNovoLote}
       />
 
+      <ModalImportarNfe
+        isOpen={isNfeModalOpen}
+        onClose={() => setIsNfeModalOpen(false)}
+        onSuccess={handleSuccessImportarNfe}
+      />
+
       {/* Cabeçalho de Página */}
       <div className="page-header stagger-item">
         <div>
@@ -322,6 +354,21 @@ export const InsumosEstoque: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
             {isExporting ? 'Exportando...' : 'Exportar Inventário'}
+          </button>
+
+          <button
+            className="btn btn-outline"
+            onClick={() => setIsNfeModalOpen(true)}
+            style={{
+              borderColor: 'rgba(16, 185, 129, 0.4)',
+              background: 'rgba(16, 185, 129, 0.08)',
+              color: 'var(--accent)',
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            Importar NF-e (XML)
           </button>
 
           <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>

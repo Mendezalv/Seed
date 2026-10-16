@@ -5,10 +5,12 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.epidemiologico.application.copiloto_agro import CopilotoAgroService
 from src.epidemiologico.application.services import VigilanciaService
 from src.epidemiologico.domain.models import OcorrenciaSanitaria
 from src.epidemiologico.domain.schemas import (
     AlertaEpidemiologicoResponse,
+    CopilotoConsultaRequest,
     MapaCalorResponse,
     OcorrenciaSanitariaCreate,
     OcorrenciaSanitariaResponse,
@@ -149,3 +151,21 @@ async def invalidar_cache_clima(
     """Invalida chaves de cache climático (INMET e CPTEC) armazenadas no Redis."""
     chaves_removidas = await clima_service.invalidar_cache_clima()
     return {"status": "ok", "chaves_invalidadas": chaves_removidas}
+
+
+@router.post("/copiloto/consultar")
+async def consultar_copiloto_agronomico(
+    payload: CopilotoConsultaRequest,
+    propriedade_id: UUID = Depends(get_current_propriedade_id),
+):
+    """
+    Assistente de inteligência agronômica integrado ao catálogo oficial do MAPA / Agrofit.
+    Fornece diagnóstico de pragas e doenças, princípios ativos recomendados, dosagens
+    e boas práticas de manejo fitossanitário para evitar resistência.
+    """
+    return CopilotoAgroService.responder_consulta(
+        pergunta=payload.pergunta,
+        cultura=payload.cultura,
+        talhao_nome=payload.talhao_nome,
+        insumos_estoque=payload.insumos_estoque,
+    )
