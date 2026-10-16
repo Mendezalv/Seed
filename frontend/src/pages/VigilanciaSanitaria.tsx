@@ -224,9 +224,9 @@ export const VigilanciaSanitaria: React.FC = () => {
   const [tableStatusFilter, setTableStatusFilter] = useState<string>('ALL');
   
   // Simulador Spore-Cast Microclimático
-  const [simTemp, setSimTemp] = useState<number>(23.4);
-  const [simHumidity, setSimHumidity] = useState<number>(88);
-  const [simWetness, setSimWetness] = useState<number>(14.0);
+  const [simTemp, setSimTemp] = useState<number>(isDemoMode ? 23.4 : 24.0);
+  const [simHumidity, setSimHumidity] = useState<number>(isDemoMode ? 88 : 55);
+  const [simWetness, setSimWetness] = useState<number>(isDemoMode ? 14.0 : 0.0);
   const [windAngle, setWindAngle] = useState<number>(135); // SE
   
   // Modais e feedbacks
@@ -234,9 +234,9 @@ export const VigilanciaSanitaria: React.FC = () => {
   const [modalSprayOpen, setModalSprayOpen] = useState<boolean>(false);
   const [modalPhotoOpen, setModalPhotoOpen] = useState<boolean>(false);
   const [sprayForm, setSprayForm] = useState({
-    talhao: 'Talhão 02',
-    agente: 'Ferrugem Asiática',
-    produto: 'Azoxistrobina + Ciproconazol',
+    talhao: isDemoMode ? 'Talhão 02' : 'Talhão 01',
+    agente: isDemoMode ? 'Ferrugem Asiática' : '',
+    produto: isDemoMode ? 'Azoxistrobina + Ciproconazol' : '',
     maquina: 'PV-01',
     dose: '0,30 L/ha + 0,5% Óleo',
   });
@@ -248,8 +248,16 @@ export const VigilanciaSanitaria: React.FC = () => {
   };
 
   const selectedOccurrence =
-    occurrences.find((o) => o.id === selectedOccurrenceId) || occurrences[0];
+    occurrences.find((o) => o.id === selectedOccurrenceId) || (occurrences.length > 0 ? occurrences[0] : null);
   const criticalOccurrence = occurrences.find((o) => o.severityLevel === 'CRITICA');
+
+  const hasCriticalFerrugem = occurrences.some(
+    (o) => o.severityLevel === 'CRITICA' || o.agent.toLowerCase().includes('ferrugem')
+  );
+  const hasPercevejo = occurrences.some((o) =>
+    o.agent.toLowerCase().includes('percevejo')
+  );
+  const hasAlertDispersao = occurrences.length > 1;
 
   // Cálculo reativo do modelo Spore-Cast
   const calculatedPests = useMemo(() => {
@@ -341,9 +349,9 @@ export const VigilanciaSanitaria: React.FC = () => {
   };
 
   const handleResetSimulator = () => {
-    setSimTemp(23.4);
-    setSimHumidity(88);
-    setSimWetness(14.0);
+    setSimTemp(isDemoMode ? 23.4 : 24.0);
+    setSimHumidity(isDemoMode ? 88 : 55);
+    setSimWetness(isDemoMode ? 14.0 : 0.0);
     showToast('Parâmetros restaurados com telemetria direta da estação INMET da fazenda.');
   };
 
@@ -650,7 +658,9 @@ export const VigilanciaSanitaria: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25c0 0-6.75 7.765-6.75 12a6.75 6.75 0 0 0 13.5 0c0-4.235-6.75-12-6.75-12Z" />
               </svg>
             </div>
-            <span className="wh-status-badge danger">Gatilho Ativo</span>
+            <span className={`wh-status-badge ${occurrences.length > 0 && simWetness >= 10 ? 'danger' : 'ok'}`}>
+              {occurrences.length > 0 && simWetness >= 10 ? 'Gatilho Ativo' : 'Monitoramento Normal'}
+            </span>
           </div>
           <div className="wh-info">
             <span className="wh-title">Molhamento Foliar Contínuo</span>
@@ -659,12 +669,14 @@ export const VigilanciaSanitaria: React.FC = () => {
           <div className="wh-gauge-wrap">
             <div className="wh-gauge-header">
               <span>Janela de Infecção</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{simWetness.toFixed(1)} horas</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {occurrences.length > 0 ? `${simWetness.toFixed(1)} horas` : '0.0 horas'}
+              </span>
             </div>
             <div className="wh-progress-bg">
               <div
                 className="wh-progress-fill blue"
-                style={{ width: `${Math.min(100, Math.round((simWetness / 24) * 100))}%` }}
+                style={{ width: occurrences.length > 0 ? `${Math.min(100, Math.round((simWetness / 24) * 100))}%` : '0%' }}
               />
             </div>
           </div>
@@ -747,7 +759,9 @@ export const VigilanciaSanitaria: React.FC = () => {
           {/* Viewport do Mapa */}
           <div className="map-viewport">
             <div className="grid-overlay"></div>
-            <div className="coords-tl">LAT: -12.5000° S | LON: -55.7000° O • FAZENDA SANTA MARIA</div>
+            <div className="coords-tl">
+              LAT: -12.5000° S | LON: -55.7000° O • {propriedade?.nome ? propriedade.nome.toUpperCase() : 'FAZENDA SANTA MARIA'}
+            </div>
             <div className="coords-br">RESOLUÇÃO: 10m/px • RADAR SPOT-7</div>
 
             {/* Widget Rosa dos Ventos */}
@@ -759,7 +773,14 @@ export const VigilanciaSanitaria: React.FC = () => {
               </div>
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>VENTO SE • 14 km/h</div>
-                <div style={{ fontSize: '10px', color: 'var(--danger-text)' }}>Dispersão ativa p/ Noroeste</div>
+                <div
+                  style={{
+                    fontSize: '10px',
+                    color: occurrences.length > 0 ? 'var(--danger-text)' : 'var(--accent-text)',
+                  }}
+                >
+                  {occurrences.length > 0 ? 'Dispersão ativa p/ Noroeste' : 'Sem dispersão de patógenos'}
+                </div>
               </div>
             </div>
 
@@ -776,20 +797,6 @@ export const VigilanciaSanitaria: React.FC = () => {
 
             {/* SVG do Mapa Georreferenciado */}
             <svg className="map-svg" viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <radialGradient id="heatGlowT02" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.80" />
-                  <stop offset="35%" stopColor="#f59e0b" stopOpacity="0.45" />
-                  <stop offset="70%" stopColor="#f59e0b" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                </radialGradient>
-                <radialGradient id="heatGlowT05" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.65" />
-                  <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-
               {/* Estradas de serviço e carreadores internos */}
               <path
                 d="M 30 218 L 770 218 M 265 90 L 265 218 M 515 90 L 515 218 M 390 218 L 390 350"
@@ -798,14 +805,6 @@ export const VigilanciaSanitaria: React.FC = () => {
                 strokeDasharray="6 4"
                 fill="none"
               />
-
-              {/* Camada de Calor (Heatmap) */}
-              {mapLayerFilter === 'HEATMAP' && (
-                <g style={{ opacity: mapAgentFilter === 'ALL' || mapAgentFilter === 'FERRUGEM' ? 1 : 0.2 }}>
-                  <circle cx="390" cy="148" r="105" fill="url(#heatGlowT02)" className="heatmap-radial" />
-                  <circle cx="575" cy="289" r="95" fill="url(#heatGlowT05)" className="heatmap-radial" />
-                </g>
-              )}
 
               {/* Polígonos Cadastrais dos Talhões */}
               {/* Talhão 01: Soja */}
@@ -818,16 +817,22 @@ export const VigilanciaSanitaria: React.FC = () => {
                 ry="6"
                 className="talhao-poly"
                 fill="#10b981"
-                fillOpacity="0.14"
+                fillOpacity="0.12"
                 stroke="#10b981"
                 strokeWidth="1.5"
-                onClick={() => setSelectedOccurrenceId('EPI-102')}
+                onClick={() => occurrences.length > 0 && setSelectedOccurrenceId('EPI-102')}
               />
-              <text x="150" y="128" textAnchor="middle" fill="#e4e4e7" fontFamily="'JetBrains Mono', monospace" fontSize="13" fontWeight="700">T-01</text>
-              <text x="150" y="146" textAnchor="middle" fill="#a1a1aa" fontSize="11">140 ha • Soja</text>
-              <text x="150" y="166" textAnchor="middle" fill="#10b981" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="600">✓ NORMAL</text>
+              <text x="150" y="128" textAnchor="middle" fill="#e4e4e7" fontFamily="'JetBrains Mono', monospace" fontSize="13" fontWeight="700">
+                {availableTalhoes[0]?.nome || 'T-01'}
+              </text>
+              <text x="150" y="146" textAnchor="middle" fill="#a1a1aa" fontSize="11">
+                {availableTalhoes[0]?.area_hectares ? `${availableTalhoes[0].area_hectares} ha • Soja` : '140 ha • Soja'}
+              </text>
+              <text x="150" y="166" textAnchor="middle" fill="#10b981" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="600">
+                ✓ NORMAL
+              </text>
 
-              {/* Talhão 02: Soja (FOCO CRÍTICO) */}
+              {/* Talhão 02 */}
               <rect
                 x="275"
                 y="92"
@@ -835,17 +840,43 @@ export const VigilanciaSanitaria: React.FC = () => {
                 height="112"
                 rx="6"
                 ry="6"
-                className="talhao-poly infected"
-                fill="#ef4444"
-                fillOpacity="0.25"
-                stroke="#ef4444"
-                strokeWidth={selectedOccurrenceId === 'EPI-104' ? 3 : 2}
-                onClick={() => setSelectedOccurrenceId('EPI-104')}
+                className={`talhao-poly ${hasCriticalFerrugem ? 'infected' : ''}`}
+                fill={hasCriticalFerrugem ? '#ef4444' : '#10b981'}
+                fillOpacity={hasCriticalFerrugem ? 0.25 : 0.12}
+                stroke={hasCriticalFerrugem ? '#ef4444' : '#10b981'}
+                strokeWidth={selectedOccurrenceId === 'EPI-104' && hasCriticalFerrugem ? 3 : 1.8}
+                onClick={() => hasCriticalFerrugem && setSelectedOccurrenceId('EPI-104')}
               />
-              <text x="390" y="122" textAnchor="middle" fill="#fca5a5" fontFamily="'JetBrains Mono', monospace" fontSize="13" fontWeight="700">T-02 [FOCO CRÍTICO]</text>
-              <text x="390" y="140" textAnchor="middle" fill="#ef4444" fontSize="11" fontWeight="600">180 ha • Ferrugem Asiática</text>
+              <text
+                x="390"
+                y="122"
+                textAnchor="middle"
+                fill={hasCriticalFerrugem ? '#fca5a5' : '#e4e4e7'}
+                fontFamily="'JetBrains Mono', monospace"
+                fontSize="13"
+                fontWeight="700"
+              >
+                {hasCriticalFerrugem ? `${availableTalhoes[1]?.nome || 'T-02'} [FOCO CRÍTICO]` : (availableTalhoes[1]?.nome || 'T-02')}
+              </text>
+              <text
+                x="390"
+                y="140"
+                textAnchor="middle"
+                fill={hasCriticalFerrugem ? '#ef4444' : '#a1a1aa'}
+                fontSize="11"
+                fontWeight={hasCriticalFerrugem ? 600 : 400}
+              >
+                {hasCriticalFerrugem
+                  ? '180 ha • Ferrugem Asiática'
+                  : (availableTalhoes[1]?.area_hectares ? `${availableTalhoes[1].area_hectares} ha • Soja` : '180 ha • Soja')}
+              </text>
+              {!hasCriticalFerrugem && (
+                <text x="390" y="166" textAnchor="middle" fill="#10b981" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="600">
+                  ✓ NORMAL / PROTEGIDO
+                </text>
+              )}
 
-              {/* Talhão 03: Soja (Área de Risco de Vento) */}
+              {/* Talhão 03 */}
               <rect
                 x="525"
                 y="92"
@@ -853,18 +884,43 @@ export const VigilanciaSanitaria: React.FC = () => {
                 height="112"
                 rx="6"
                 ry="6"
-                className="talhao-poly at-risk"
-                fill="#f59e0b"
-                fillOpacity="0.16"
-                stroke="#f59e0b"
-                strokeWidth={selectedOccurrenceId === 'EPI-105' ? 3 : 1.8}
-                strokeDasharray="5 3"
-                onClick={() => setSelectedOccurrenceId('EPI-105')}
+                className={`talhao-poly ${hasAlertDispersao ? 'at-risk' : ''}`}
+                fill={hasAlertDispersao ? '#f59e0b' : '#10b981'}
+                fillOpacity={hasAlertDispersao ? 0.16 : 0.12}
+                stroke={hasAlertDispersao ? '#f59e0b' : '#10b981'}
+                strokeWidth={selectedOccurrenceId === 'EPI-105' && hasAlertDispersao ? 3 : 1.8}
+                strokeDasharray={hasAlertDispersao ? '5 3' : undefined}
+                onClick={() => hasAlertDispersao && setSelectedOccurrenceId('EPI-105')}
               />
-              <text x="637" y="122" textAnchor="middle" fill="#fde68a" fontFamily="'JetBrains Mono', monospace" fontSize="13" fontWeight="700">T-03 [ALERTA]</text>
-              <text x="637" y="140" textAnchor="middle" fill="#fbbf24" fontSize="11">120 ha • Risco Dispersão</text>
+              <text
+                x="637"
+                y="122"
+                textAnchor="middle"
+                fill={hasAlertDispersao ? '#fde68a' : '#e4e4e7'}
+                fontFamily="'JetBrains Mono', monospace"
+                fontSize="13"
+                fontWeight="700"
+              >
+                {hasAlertDispersao ? `${availableTalhoes[2]?.nome || 'T-03'} [ALERTA]` : (availableTalhoes[2]?.nome || 'T-03')}
+              </text>
+              <text
+                x="637"
+                y="140"
+                textAnchor="middle"
+                fill={hasAlertDispersao ? '#fbbf24' : '#a1a1aa'}
+                fontSize="11"
+              >
+                {hasAlertDispersao
+                  ? '120 ha • Risco Dispersão'
+                  : (availableTalhoes[2]?.area_hectares ? `${availableTalhoes[2].area_hectares} ha • Soja` : '120 ha • Soja')}
+              </text>
+              {!hasAlertDispersao && (
+                <text x="637" y="166" textAnchor="middle" fill="#10b981" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="600">
+                  ✓ NORMAL / LIMPO
+                </text>
+              )}
 
-              {/* Talhão 04: Milho Híbrido */}
+              {/* Talhão 04 */}
               <rect
                 x="45"
                 y="232"
@@ -877,13 +933,19 @@ export const VigilanciaSanitaria: React.FC = () => {
                 fillOpacity="0.12"
                 stroke="#10b981"
                 strokeWidth="1.5"
-                onClick={() => setSelectedOccurrenceId('EPI-102')}
+                onClick={() => occurrences.length > 0 && setSelectedOccurrenceId('EPI-102')}
               />
-              <text x="215" y="268" textAnchor="middle" fill="#e4e4e7" fontFamily="'JetBrains Mono', monospace" fontSize="13" fontWeight="700">T-04</text>
-              <text x="215" y="286" textAnchor="middle" fill="#a1a1aa" fontSize="11">160 ha • Milho Híbrido</text>
-              <text x="215" y="304" textAnchor="middle" fill="#10b981" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="600">✓ Biológico Controlado</text>
+              <text x="215" y="268" textAnchor="middle" fill="#e4e4e7" fontFamily="'JetBrains Mono', monospace" fontSize="13" fontWeight="700">
+                {availableTalhoes[3]?.nome || 'T-04'}
+              </text>
+              <text x="215" y="286" textAnchor="middle" fill="#a1a1aa" fontSize="11">
+                {availableTalhoes[3]?.area_hectares ? `${availableTalhoes[3].area_hectares} ha • Milho Híbrido` : '160 ha • Milho Híbrido'}
+              </text>
+              <text x="215" y="304" textAnchor="middle" fill="#10b981" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="600">
+                ✓ BIOLÓGICO CONTROLADO
+              </text>
 
-              {/* Talhão 05: Milho (Percevejo-marrom) */}
+              {/* Talhão 05 */}
               <rect
                 x="405"
                 y="232"
@@ -892,49 +954,73 @@ export const VigilanciaSanitaria: React.FC = () => {
                 rx="6"
                 ry="6"
                 className="talhao-poly"
-                fill="#3b82f6"
-                fillOpacity="0.16"
-                stroke="#3b82f6"
-                strokeWidth={selectedOccurrenceId === 'EPI-103' ? 3 : 1.8}
-                onClick={() => setSelectedOccurrenceId('EPI-103')}
+                fill={hasPercevejo ? '#3b82f6' : '#10b981'}
+                fillOpacity={hasPercevejo ? 0.16 : 0.12}
+                stroke={hasPercevejo ? '#3b82f6' : '#10b981'}
+                strokeWidth={selectedOccurrenceId === 'EPI-103' && hasPercevejo ? 3 : 1.8}
+                onClick={() => hasPercevejo && setSelectedOccurrenceId('EPI-103')}
               />
-              <text x="577" y="268" textAnchor="middle" fill="#93c5fd" fontFamily="'JetBrains Mono', monospace" fontSize="13" fontWeight="700">T-05 [PERCEVEJO-MARROM]</text>
-              <text x="577" y="286" textAnchor="middle" fill="#60a5fa" fontSize="11">210 ha • Milho Alto • Monitorado</text>
+              <text
+                x="577"
+                y="268"
+                textAnchor="middle"
+                fill={hasPercevejo ? '#93c5fd' : '#e4e4e7'}
+                fontFamily="'JetBrains Mono', monospace"
+                fontSize="13"
+                fontWeight="700"
+              >
+                {hasPercevejo ? `${availableTalhoes[4]?.nome || 'T-05'} [PERCEVEJO-MARROM]` : (availableTalhoes[4]?.nome || 'T-05')}
+              </text>
+              <text
+                x="577"
+                y="286"
+                textAnchor="middle"
+                fill={hasPercevejo ? '#60a5fa' : '#a1a1aa'}
+                fontSize="11"
+              >
+                {hasPercevejo
+                  ? '210 ha • Milho Alto • Monitorado'
+                  : (availableTalhoes[4]?.area_hectares ? `${availableTalhoes[4].area_hectares} ha • Milho Alto` : '210 ha • Milho Alto')}
+              </text>
+              {!hasPercevejo && (
+                <text x="577" y="304" textAnchor="middle" fill="#10b981" fontFamily="'JetBrains Mono', monospace" fontSize="10" fontWeight="600">
+                  ✓ MONITORADO / SEGURO
+                </text>
+              )}
 
               {/* Pins Georreferenciados */}
-              {mapLayerFilter !== 'PARCELAS' && (
+              {mapLayerFilter !== 'PARCELAS' && occurrences.length > 0 && (
                 <>
                   {/* Pin 1: Foco Crítico T-02 */}
-                  <g className="map-pin" transform="translate(390, 168)" onClick={() => setSelectedOccurrenceId('EPI-104')}>
-                    <title>Foco #EPI-104 • Ferrugem Asiática (98.4%)</title>
-                    <circle cx="0" cy="0" r="20" fill="transparent" className="pin-hitbox" />
-                    <circle cx="0" cy="0" r="14" fill="rgba(239, 68, 68, 0.35)" className="pin-pulse" />
-                    <circle cx="0" cy="0" r="7.5" fill="#ef4444" stroke="#ffffff" strokeWidth="2" className="pin-core" />
-                    <path d="M -4 -4 L 4 4 M -4 4 L 4 -4" stroke="#ffffff" strokeWidth="1.5" style={{ pointerEvents: 'none' }} />
-                  </g>
+                  {hasCriticalFerrugem && (
+                    <g className="map-pin" transform="translate(390, 168)" onClick={() => setSelectedOccurrenceId(criticalOccurrence?.id || 'EPI-104')}>
+                      <title>Foco Crítico • Ferrugem Asiática</title>
+                      <circle cx="0" cy="0" r="20" fill="transparent" className="pin-hitbox" />
+                      <circle cx="0" cy="0" r="14" fill="rgba(239, 68, 68, 0.35)" className="pin-pulse" />
+                      <circle cx="0" cy="0" r="7.5" fill="#ef4444" stroke="#ffffff" strokeWidth="2" className="pin-core" />
+                      <path d="M -4 -4 L 4 4 M -4 4 L 4 -4" stroke="#ffffff" strokeWidth="1.5" style={{ pointerEvents: 'none' }} />
+                    </g>
+                  )}
 
                   {/* Pin 2: Ponto T-03 (Alerta Preventivo) */}
-                  <g className="map-pin" transform="translate(637, 168)" onClick={() => setSelectedOccurrenceId('EPI-105')}>
-                    <title>Foco #EPI-105 • Risco Dispersão</title>
-                    <circle cx="0" cy="0" r="20" fill="transparent" className="pin-hitbox" />
-                    <circle cx="0" cy="0" r="12" fill="rgba(245, 158, 11, 0.3)" className="pin-pulse" />
-                    <circle cx="0" cy="0" r="6.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.8" className="pin-core" />
-                  </g>
+                  {hasAlertDispersao && (
+                    <g className="map-pin" transform="translate(637, 168)" onClick={() => setSelectedOccurrenceId('EPI-105')}>
+                      <title>Foco • Risco Dispersão</title>
+                      <circle cx="0" cy="0" r="20" fill="transparent" className="pin-hitbox" />
+                      <circle cx="0" cy="0" r="12" fill="rgba(245, 158, 11, 0.3)" className="pin-pulse" />
+                      <circle cx="0" cy="0" r="6.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.8" className="pin-core" />
+                    </g>
+                  )}
 
                   {/* Pin 3: Ponto T-05 (Percevejo) */}
-                  <g className="map-pin" transform="translate(577, 318)" onClick={() => setSelectedOccurrenceId('EPI-103')}>
-                    <title>Foco #EPI-103 • Percevejo-marrom</title>
-                    <circle cx="0" cy="0" r="20" fill="transparent" className="pin-hitbox" />
-                    <circle cx="0" cy="0" r="12" fill="rgba(59, 130, 246, 0.3)" className="pin-pulse" />
-                    <circle cx="0" cy="0" r="6.5" fill="#3b82f6" stroke="#ffffff" strokeWidth="1.8" className="pin-core" />
-                  </g>
-
-                  {/* Pin 4: Ponto T-04 (Lagarta Controlada) */}
-                  <g className="map-pin" transform="translate(215, 320)" onClick={() => setSelectedOccurrenceId('EPI-102')}>
-                    <title>Foco #EPI-102 • Lagarta-do-cartucho (Controlado)</title>
-                    <circle cx="0" cy="0" r="20" fill="transparent" className="pin-hitbox" />
-                    <circle cx="0" cy="0" r="6" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" className="pin-core" />
-                  </g>
+                  {hasPercevejo && (
+                    <g className="map-pin" transform="translate(577, 318)" onClick={() => setSelectedOccurrenceId('EPI-103')}>
+                      <title>Foco • Percevejo-marrom</title>
+                      <circle cx="0" cy="0" r="20" fill="transparent" className="pin-hitbox" />
+                      <circle cx="0" cy="0" r="12" fill="rgba(59, 130, 246, 0.3)" className="pin-pulse" />
+                      <circle cx="0" cy="0" r="6.5" fill="#3b82f6" stroke="#ffffff" strokeWidth="1.8" className="pin-core" />
+                    </g>
+                  )}
                 </>
               )}
             </svg>
@@ -1629,7 +1715,7 @@ export const VigilanciaSanitaria: React.FC = () => {
       )}
 
       {/* MODAL 3: VISUALIZAÇÃO AMPLIADA DA FOTO DE LAUDO COM IA */}
-      {modalPhotoOpen && (
+      {modalPhotoOpen && selectedOccurrence && (
         <div className="modal-backdrop open" onClick={() => setModalPhotoOpen(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '780px' }}>
             <div className="modal-header">
