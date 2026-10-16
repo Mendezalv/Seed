@@ -468,7 +468,7 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
         >
           <input
             type="text"
-            className="input-field"
+            className="form-input"
             placeholder="Pergunte sobre pragas, defensivos, carência ou dosagens..."
             value={inputTexto}
             onChange={(e) => setInputTexto(e.target.value)}

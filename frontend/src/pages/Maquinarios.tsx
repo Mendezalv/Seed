@@ -588,14 +588,29 @@ export const Maquinarios: React.FC = () => {
   const [selectedOSDetail, setSelectedOSDetail] = useState<MaintenanceOrder | null>(null);
 
   // Form de Nova OS
-  const [formMachine, setFormMachine] = useState('TR-01 • John Deere 8370R (Trator Pesado)');
-  const [formType, setFormType] = useState('Preventiva Periódica (500h / 1.000h)');
-  const [formHorimeter, setFormHorimeter] = useState<number>(1492);
-  const [formDesc, setFormDesc] = useState(
-    'Revisão preventiva de 1.500 horas de motor e troca do óleo Plus-50 II'
+  const machineSelectOptions = useMemo(() => {
+    if (machines.length === 0) {
+      return ['Nenhuma máquina cadastrada'];
+    }
+    return machines.map((m) => `${m.code} • ${m.name} (${m.typeTag || m.category})`);
+  }, [machines]);
+
+  const [formMachine, setFormMachine] = useState(
+    isDemoMode ? 'TR-01 • John Deere 8370R (Trator Pesado)' : ''
   );
-  const [formMechanic, setFormMechanic] = useState('Tiago Rezende (Oficina Sede)');
-  const [formCost, setFormCost] = useState<number>(3200);
+  const [formType, setFormType] = useState('Preventiva Periódica (500h / 1.000h)');
+  const [formHorimeter, setFormHorimeter] = useState<number>(isDemoMode ? 1492 : 0);
+  const [formDesc, setFormDesc] = useState(
+    isDemoMode ? 'Revisão preventiva de 1.500 horas de motor e troca do óleo Plus-50 II' : ''
+  );
+  const [formMechanic, setFormMechanic] = useState(isDemoMode ? 'Tiago Rezende (Oficina Sede)' : '');
+  const [formCost, setFormCost] = useState<number>(isDemoMode ? 3200 : 0);
+
+  useEffect(() => {
+    if (machineSelectOptions.length > 0 && (!formMachine || !machineSelectOptions.includes(formMachine))) {
+      setFormMachine(machineSelectOptions[0]);
+    }
+  }, [machineSelectOptions, formMachine]);
 
   // Toasts
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -696,6 +711,10 @@ export const Maquinarios: React.FC = () => {
   // Submissão do Form de Nova OS
   const handleCreateOSSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (machines.length === 0 || formMachine === 'Nenhuma máquina cadastrada' || !formMachine) {
+      showToast('Cadastre ao menos uma máquina na frota antes de abrir uma Ordem de Serviço.');
+      return;
+    }
     const newCode = `OS-2026-${Math.floor(100 + Math.random() * 900)}`;
     const machinePart = formMachine.split('•');
     const machineCode = machinePart[0]?.trim() || 'TR-01';
@@ -1344,20 +1363,7 @@ export const Maquinarios: React.FC = () => {
                   <CustomSelect
                     value={formMachine}
                     onChange={(val) => setFormMachine(val)}
-                    options={[
-                      'TR-01 • John Deere 8370R (Trator Pesado)',
-                      'TR-02 • Case IH Magnum 380 (Trator Pesado)',
-                      'TR-03 • John Deere 6190M (Trator Médio)',
-                      'TR-04 • John Deere 7230J (Trator Médio)',
-                      'TR-05 • Case IH Steiger 500 (Articulado)',
-                      'CH-01 • John Deere S790 (Colheitadeira)',
-                      'CH-02 • Case IH Axial-Flow 8250 (Colheitadeira)',
-                      'CH-03 • New Holland CR 8.90 (Colheitadeira)',
-                      'PV-01 • Jacto Uniport 3030 (Pulverizador)',
-                      'PV-02 • John Deere M4040 (Pulverizador)',
-                      'PL-01 • DB ExactEmerge 36L (Plantadeira)',
-                      'PL-02 • Case IH Fast Riser 6100 (Plantadeira)',
-                    ]}
+                    options={machineSelectOptions}
                   />
                 </div>
 

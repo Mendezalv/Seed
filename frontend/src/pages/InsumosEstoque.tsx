@@ -328,6 +328,21 @@ export const InsumosEstoque: React.FC = () => {
   const totalDieselL = dieselLotes.reduce((acc, l) => acc + l.quantidadeAtual, 0);
   const criticalLote = lotes.find((l) => l.status === 'CRITICO' || l.status === 'BAIXO');
 
+  // Ocupação dinâmica dos armazéns
+  const defLots = lotes.filter((l) => l.categoria === 'DEFENSIVO');
+  const totalDefVol = defLots.reduce((acc, l) => acc + l.quantidadeAtual, 0);
+  const defPct = isDemoMode ? 68 : Math.min(100, Math.round((totalDefVol / 25000) * 100));
+
+  const fertLots = lotes.filter((l) => l.categoria === 'FERTILIZANTE');
+  const totalFertKg = fertLots.reduce((acc, l) => acc + l.quantidadeAtual, 0);
+  const fertPct = isDemoMode ? 82 : Math.min(100, Math.round((totalFertKg / 150000) * 100));
+
+  const dieselPct = isDemoMode ? 71.3 : Math.min(100, Number(((totalDieselL / 60000) * 100).toFixed(1)));
+
+  const semLots = lotes.filter((l) => l.categoria === 'SEMENTE');
+  const totalSemSc = semLots.reduce((acc, l) => acc + l.quantidadeAtual, 0);
+  const semPct = isDemoMode ? 91 : Math.min(100, Math.round((totalSemSc / 1000) * 100));
+
   return (
     <>
       {toastMsg && (
@@ -405,20 +420,28 @@ export const InsumosEstoque: React.FC = () => {
             <span className="cents">,00</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag good">+4.2%</span> Giro operacional 2.8x • {lotes.length} SKUs
+            {lotes.length > 0 ? (
+              <><span className="kpi-tag good">+4.2%</span> Giro operacional 2.8x • {lotes.length} SKUs</>
+            ) : (
+              'Nenhum lote estocado • 0 SKUs'
+            )}
           </span>
         </div>
 
         <div className="kpi-cell">
           <span className="kpi-cell-label">Lotes em Quarentena / Alerta</span>
-          <div className="kpi-cell-val" style={{ color: 'var(--warning)' }}>
+          <div className="kpi-cell-val" style={{ color: totalCriticos > 0 ? 'var(--warning)' : 'var(--text-primary)' }}>
             {totalCriticos}
-            <span className="unit-text" style={{ color: 'var(--warning)' }}>
-              lotes críticos
+            <span className="unit-text" style={{ color: totalCriticos > 0 ? 'var(--warning)' : 'var(--text-muted)' }}>
+              {totalCriticos === 1 ? 'lote crítico' : 'lotes críticos'}
             </span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag warn">1 Vencendo em 12d</span> 2 estoque mínimo
+            {totalCriticos > 0 ? (
+              <span className="kpi-tag warn">{totalCriticos} lote(s) sob atenção</span>
+            ) : (
+              'Nenhum lote em quarentena ou vencendo'
+            )}
           </span>
         </div>
 
@@ -438,10 +461,13 @@ export const InsumosEstoque: React.FC = () => {
 
         <div className="kpi-cell">
           <span className="kpi-cell-label">Conformidade Fitossanitária</span>
-          <div className="kpi-cell-val" style={{ color: 'var(--accent-text)' }}>
-            100%<span className="unit-text" style={{ color: 'var(--accent-text)' }}>ART</span>
+          <div className="kpi-cell-val" style={{ color: lotes.length > 0 ? 'var(--accent-text)' : 'var(--text-muted)' }}>
+            {lotes.length > 0 ? '100%' : '—'}
+            {lotes.length > 0 && <span className="unit-text" style={{ color: 'var(--accent-text)' }}>ART</span>}
           </div>
-          <span className="kpi-cell-sub">Receituários vinculados • inpEV em dia</span>
+          <span className="kpi-cell-sub">
+            {lotes.length > 0 ? 'Receituários vinculados • inpEV em dia' : 'Aguardando lançamento de insumos'}
+          </span>
         </div>
       </div>
 
@@ -489,7 +515,9 @@ export const InsumosEstoque: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23.693L5 15.3m14.8 0A2.25 2.25 0 0 1 21 17.25v1.5a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18.75v-1.5a2.25 2.25 0 0 1 1.2-1.95" />
               </svg>
             </div>
-            <span className="wh-status-badge ok">Climatizado 21°C</span>
+            <span className={`wh-status-badge ${defPct > 0 ? 'ok' : ''}`}>
+              {isDemoMode || defPct > 0 ? 'Climatizado 21°C' : 'Estrutura Pronta'}
+            </span>
           </div>
           <div className="wh-info">
             <span className="wh-title">Galpão 01 — Defensivos</span>
@@ -498,10 +526,12 @@ export const InsumosEstoque: React.FC = () => {
           <div className="wh-gauge-wrap">
             <div className="wh-gauge-header">
               <span>Ocupação</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>68% (18.400 L/kg)</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {defPct}% ({isDemoMode ? '18.400 L/kg' : `${totalDefVol.toLocaleString('pt-BR')} L/kg`})
+              </span>
             </div>
             <div className="wh-progress-bg">
-              <div className="wh-progress-fill amber" style={{ width: '68%' }} />
+              <div className="wh-progress-fill amber" style={{ width: `${defPct}%` }} />
             </div>
           </div>
         </div>
@@ -513,7 +543,9 @@ export const InsumosEstoque: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
               </svg>
             </div>
-            <span className="wh-status-badge high">Umidade 48%</span>
+            <span className={`wh-status-badge ${fertPct > 0 ? 'high' : ''}`}>
+              {isDemoMode || fertPct > 0 ? 'Umidade 48%' : 'Estrutura Pronta'}
+            </span>
           </div>
           <div className="wh-info">
             <span className="wh-title">Galpão 02 — Fertilizantes</span>
@@ -522,10 +554,12 @@ export const InsumosEstoque: React.FC = () => {
           <div className="wh-gauge-wrap">
             <div className="wh-gauge-header">
               <span>Ocupação</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>82% (140 ton)</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {fertPct}% ({isDemoMode ? '140 ton' : `${(totalFertKg / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} ton`})
+              </span>
             </div>
             <div className="wh-progress-bg">
-              <div className="wh-progress-fill" style={{ width: '82%' }} />
+              <div className="wh-progress-fill" style={{ width: `${fertPct}%` }} />
             </div>
           </div>
         </div>
@@ -537,7 +571,9 @@ export const InsumosEstoque: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
               </svg>
             </div>
-            <span className="wh-status-badge ok">Telemetria Ativa</span>
+            <span className={`wh-status-badge ${dieselPct > 0 ? 'ok' : ''}`}>
+              {isDemoMode || dieselPct > 0 ? 'Telemetria Ativa' : 'Tanque Vazio'}
+            </span>
           </div>
           <div className="wh-info">
             <span className="wh-title">Tanques Diesel S10</span>
@@ -546,10 +582,12 @@ export const InsumosEstoque: React.FC = () => {
           <div className="wh-gauge-wrap">
             <div className="wh-gauge-header">
               <span>Volume Útil</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>71,3% (42.800 L)</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {dieselPct}% ({isDemoMode ? '42.800 L' : `${totalDieselL.toLocaleString('pt-BR')} L`})
+              </span>
             </div>
             <div className="wh-progress-bg">
-              <div className="wh-progress-fill blue" style={{ width: '71.3%' }} />
+              <div className="wh-progress-fill blue" style={{ width: `${dieselPct}%` }} />
             </div>
           </div>
         </div>
@@ -561,7 +599,9 @@ export const InsumosEstoque: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m9-9H3m14.243-5.243-12.728 12.728m12.728 0L4.515 6.757" />
               </svg>
             </div>
-            <span className="wh-status-badge ok">14°C • Hermético</span>
+            <span className={`wh-status-badge ${semPct > 0 ? 'ok' : ''}`}>
+              {isDemoMode || semPct > 0 ? '14°C • Hermético' : 'Câmara Disponível'}
+            </span>
           </div>
           <div className="wh-info">
             <span className="wh-title">Câmara Fria — Sementes</span>
@@ -570,10 +610,12 @@ export const InsumosEstoque: React.FC = () => {
           <div className="wh-gauge-wrap">
             <div className="wh-gauge-header">
               <span>Capacidade</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>91% (920 sc)</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {semPct}% ({isDemoMode ? '920 sc' : `${totalSemSc.toLocaleString('pt-BR')} sc`})
+              </span>
             </div>
             <div className="wh-progress-bg">
-              <div className="wh-progress-fill cyan" style={{ width: '91%' }} />
+              <div className="wh-progress-fill cyan" style={{ width: `${semPct}%` }} />
             </div>
           </div>
         </div>

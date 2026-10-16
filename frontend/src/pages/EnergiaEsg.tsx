@@ -385,32 +385,42 @@ export const EnergiaEsg: React.FC = () => {
         <div className="ticker-item">
           <div className="status-dot" style={{ marginRight: '4px' }}></div>
           <span className="label">MATRIZ ENERGÉTICA:</span>
-          <span className="val" style={{ color: 'var(--accent-text)' }}>68,4% RENOVÁVEL</span>
-          <span className="delta-up">+12.6 p.p.</span>
+          <span className="val" style={{ color: 'var(--accent-text)' }}>
+            {isDemoMode || reports.length > 0 ? '68,4% RENOVÁVEL' : '0,0% RENOVÁVEL'}
+          </span>
+          <span className={isDemoMode || reports.length > 0 ? 'delta-up' : 'delta-down'}>
+            {isDemoMode || reports.length > 0 ? '+12.6 p.p.' : 'AGUARDANDO'}
+          </span>
         </div>
         <span className="ticker-sep">|</span>
         <div className="ticker-item">
           <span className="label">PLANO ABC+:</span>
-          <span className="val" style={{ color: 'var(--accent-text)' }}>RATING A+ (-1,0% a.a.)</span>
-          <span className="delta-up">ELEGÍVEL</span>
+          <span className="val" style={{ color: 'var(--accent-text)' }}>
+            {isDemoMode || reports.length > 0 ? 'RATING A+ (-1,0% a.a.)' : 'EM AUDITORIA'}
+          </span>
+          <span className={isDemoMode || reports.length > 0 ? 'delta-up' : 'delta-down'}>
+            {isDemoMode || reports.length > 0 ? 'ELEGÍVEL' : 'PENDENTE'}
+          </span>
         </div>
         <span className="ticker-sep">|</span>
         <div className="ticker-item">
           <span className="label">CRÉDITOS CBIOS:</span>
-          <span className="val">39,4 CBIOs</span>
-          <span className="delta-up">B3 VIGENTE</span>
+          <span className="val">{isDemoMode || reports.length > 0 ? '39,4 CBIOs' : '0,0 CBIOs'}</span>
+          <span className="delta-up">{isDemoMode || reports.length > 0 ? 'B3 VIGENTE' : '0 EMITIDOS'}</span>
         </div>
         <span className="ticker-sep">|</span>
         <div className="ticker-item">
           <span className="label">SOLAR FOTOVOLTAICA:</span>
-          <span className="val">82.400 kWh</span>
-          <span className="delta-up">120 kWp</span>
+          <span className="val">{isDemoMode || reports.length > 0 ? '82.400 kWh' : '0 kWh'}</span>
+          <span className="delta-up">{isDemoMode || reports.length > 0 ? '120 kWp' : '0 kWp'}</span>
         </div>
         <span className="ticker-sep">|</span>
         <div className="ticker-item">
           <span className="label">INVENTÁRIO GHG:</span>
-          <span className="val">98.400 tCO₂e</span>
-          <span className="delta-up">-14.2%</span>
+          <span className="val">{isDemoMode || reports.length > 0 ? '98.400 tCO₂e' : '0,0 tCO₂e'}</span>
+          <span className={isDemoMode || reports.length > 0 ? 'delta-up' : 'delta-down'}>
+            {isDemoMode || reports.length > 0 ? '-14.2%' : 'SEM REGISTROS'}
+          </span>
         </div>
       </div>
 
@@ -420,10 +430,21 @@ export const EnergiaEsg: React.FC = () => {
         <div className="kpi-cell">
           <span className="kpi-cell-label">Emissões Totais (Escopos 1 & 2)</span>
           <div className="kpi-cell-val">
-            98.400 <span className="unit-text">tCO₂e</span>
+            {isDemoMode || reports.length > 0 ? '98.400' : '0,0'} <span className="unit-text">tCO₂e</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag good">-14.2%</span> Escopo 1: 72,1 t • Escopo 2: 26,3 t
+            {isDemoMode || reports.length > 0 ? (
+              <>
+                <span className="kpi-tag good">-14.2%</span> Escopo 1: 72,1 t • Escopo 2: 26,3 t
+              </>
+            ) : (
+              <>
+                <span className="kpi-tag" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
+                  LIMPO
+                </span>{' '}
+                Sem emissões computadas no período
+              </>
+            )}
           </span>
         </div>
 
@@ -431,13 +452,34 @@ export const EnergiaEsg: React.FC = () => {
         <div className="kpi-cell">
           <span className="kpi-cell-label">Matriz Energética Renovável</span>
           <div className="kpi-cell-val">
-            68,4% <span className="unit-text" style={{ color: 'var(--accent-text)' }}>• Meta ABC+: 60%</span>
+            {isDemoMode || reports.length > 0 ? '68,4%' : '0,0%'}{' '}
+            <span
+              className="unit-text"
+              style={{ color: isDemoMode || reports.length > 0 ? 'var(--accent-text)' : 'var(--text-muted)' }}
+            >
+              • Meta ABC+: 60%
+            </span>
           </div>
-          <div className="esg-progress-container" style={{ margin: '4px 0 2px' }} title="68.4% alcançado vs 60.0% meta Plano ABC+">
-            <div className="esg-progress-fill" style={{ width: '68.4%' }}></div>
+          <div
+            className="esg-progress-container"
+            style={{ margin: '4px 0 2px' }}
+            title={isDemoMode || reports.length > 0 ? '68.4% alcançado vs 60.0% meta Plano ABC+' : '0%'}
+          >
+            <div className="esg-progress-fill" style={{ width: isDemoMode || reports.length > 0 ? '68.4%' : '0%' }}></div>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag good">+12.6 p.p.</span> Solar 42% + Biodiesel B20 26,4%
+            {isDemoMode || reports.length > 0 ? (
+              <>
+                <span className="kpi-tag good">+12.6 p.p.</span> Solar 42% + Biodiesel B20 26,4%
+              </>
+            ) : (
+              <>
+                <span className="kpi-tag" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
+                  AGUARDANDO
+                </span>{' '}
+                Lance consumos de diesel ou energia
+              </>
+            )}
           </span>
         </div>
 
@@ -445,57 +487,86 @@ export const EnergiaEsg: React.FC = () => {
         <div className="kpi-cell">
           <span className="kpi-cell-label">Intensidade por Hectare</span>
           <div className="kpi-cell-val">
-            0,142 <span className="unit-text">tCO₂e / ha</span>
+            {isDemoMode || reports.length > 0 ? '0,142' : '0,000'} <span className="unit-text">tCO₂e / ha</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag info">-28.3%</span> Benchmark MT: 0,198 t/ha • 690 ha
+            {isDemoMode || reports.length > 0 ? (
+              <>
+                <span className="kpi-tag info">-28.3%</span> Benchmark MT: 0,198 t/ha •{' '}
+                {propriedade?.area_total_hectares ? `${propriedade.area_total_hectares} ha` : '690 ha'}
+              </>
+            ) : (
+              <>
+                <span className="kpi-tag" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
+                  NEUTRO
+                </span>{' '}
+                Sem área de emissão apurada
+              </>
+            )}
           </span>
         </div>
 
         {/* Card 4: Rating ESG & Plano ABC+ */}
         <div className="kpi-cell">
           <span className="kpi-cell-label">Crédito Verde (Plano ABC+)</span>
-          <div className="kpi-cell-val" style={{ color: 'var(--accent-text)' }}>
-            -1,0% <span className="unit-text">a.a. no Custeio</span>
+          <div
+            className="kpi-cell-val"
+            style={{ color: isDemoMode || reports.length > 0 ? 'var(--accent-text)' : 'var(--text-muted)' }}
+          >
+            {isDemoMode || reports.length > 0 ? '-1,0%' : '0,0%'}{' '}
+            <span className="unit-text">a.a. no Custeio</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag good">RATING A+</span> Econ. est.: R$ 120.000/ano • 39.4 CBIOs
+            {isDemoMode || reports.length > 0 ? (
+              <>
+                <span className="kpi-tag good">RATING A+</span> Econ. est.: R$ 120.000/ano • 39.4 CBIOs
+              </>
+            ) : (
+              <>
+                <span className="kpi-tag" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
+                  RATING N/A
+                </span>{' '}
+                Requer histórico de inventário auditado
+              </>
+            )}
           </span>
         </div>
       </div>
 
       {/* Banner Inteligente de Oportunidade de Financiamento */}
-      <div className="market-alert-banner stagger-item" style={{ animationDelay: '80ms', marginBottom: '24px' }}>
-        <div className="market-alert-left">
-          <div className="market-alert-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-            </svg>
+      {(isDemoMode || reports.length > 0) && (
+        <div className="market-alert-banner stagger-item" style={{ animationDelay: '80ms', marginBottom: '24px' }}>
+          <div className="market-alert-left">
+            <div className="market-alert-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+              </svg>
+            </div>
+            <div className="market-alert-text">
+              <span className="market-alert-title">Elegibilidade Confirmada: Bonificação de Juros no Plano ABC+ & Descarbonização</span>
+              <span className="market-alert-desc">
+                Com <strong>68,4% de fontes renováveis</strong>, {propriedade?.nome ? `a ${propriedade.nome}` : 'a Fazenda Santa Maria'} supera o critério mínimo do Plano ABC+ (60%), garantindo <strong>redução de 1,00% a.a. nos juros</strong> do crédito rural e emissão auditada de <strong>39,4 CBIOs</strong> na B3.
+              </span>
+            </div>
           </div>
-          <div className="market-alert-text">
-            <span className="market-alert-title">Elegibilidade Confirmada: Bonificação de Juros no Plano ABC+ & Descarbonização</span>
-            <span className="market-alert-desc">
-              Com <strong>68,4% de fontes renováveis</strong>, a Fazenda Santa Maria supera o critério mínimo do Plano ABC+ (60%), garantindo <strong>redução de 1,00% a.a. nos juros</strong> do crédito rural e emissão auditada de <strong>39,4 CBIOs</strong> na B3.
-            </span>
+          <div className="market-alert-actions">
+            <button
+              className="btn btn-outline"
+              style={{ padding: '6px 12px', fontSize: '11.5px' }}
+              onClick={() => handleOpenLaudo('2026-09')}
+            >
+              Ver Laudo Auditado
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ padding: '6px 14px', fontSize: '11.5px' }}
+              onClick={() => setIsConsumoModalOpen(true)}
+            >
+              Registrar Consumo
+            </button>
           </div>
         </div>
-        <div className="market-alert-actions">
-          <button
-            className="btn btn-outline"
-            style={{ padding: '6px 12px', fontSize: '11.5px' }}
-            onClick={() => handleOpenLaudo('2026-09')}
-          >
-            Ver Laudo Auditado
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ padding: '6px 14px', fontSize: '11.5px' }}
-            onClick={() => setIsConsumoModalOpen(true)}
-          >
-            Registrar Consumo
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Seção Central: Composição da Matriz & Simulador Interativo */}
       <section className="esg-main-grid stagger-item" style={{ animationDelay: '120ms' }}>
@@ -521,164 +592,202 @@ export const EnergiaEsg: React.FC = () => {
           </div>
 
           <div className="section-body">
-            {/* Barra Segmentada Visual */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '11px' }}>
-                <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Distribuição Percentual de Consumo</span>
-                <span style={{ color: 'var(--accent-text)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
-                  68.4% RENOVÁVEL / 31.6% FÓSSIL
-                </span>
+            {!isDemoMode && reports.length === 0 ? (
+              <div className="empty-state" style={{ padding: '48px 16px', textAlign: 'center' }}>
+                <div className="empty-state-icon" style={{ margin: '0 auto 12px' }}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    width="36"
+                    height="36"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                  </svg>
+                </div>
+                <h4 style={{ margin: '0 0 6px', fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Nenhum consumo energético registrado
+                </h4>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)', maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto' }}>
+                  Lance abastecimentos e faturas de energia para calcular a matriz renovável e a pegada de carbono.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ marginTop: '16px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  onClick={() => setIsConsumoModalOpen(true)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" width="14" height="14">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Apontar Consumo
+                </button>
               </div>
-              <div className="matrix-stacked-bar">
-                <div className="matrix-segment seg-solar" style={{ width: '42%' }} title="Solar Fotovoltaica: 42.0% (82.400 kWh)">
-                  Solar: 42.0%
+            ) : (
+              <>
+                {/* Barra Segmentada Visual */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '11px' }}>
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Distribuição Percentual de Consumo</span>
+                    <span style={{ color: 'var(--accent-text)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                      68.4% RENOVÁVEL / 31.6% FÓSSIL
+                    </span>
+                  </div>
+                  <div className="matrix-stacked-bar">
+                    <div className="matrix-segment seg-solar" style={{ width: '42%' }} title="Solar Fotovoltaica: 42.0% (82.400 kWh)">
+                      Solar: 42.0%
+                    </div>
+                    <div className="matrix-segment seg-biodiesel" style={{ width: '26.4%' }} title="Biodiesel B20: 26.4% (31.200 L)">
+                      B20: 26.4%
+                    </div>
+                    <div className="matrix-segment seg-grid" style={{ width: '18.2%' }} title="Rede Elétrica Rural: 18.2% (35.600 kWh)">
+                      Rede: 18.2%
+                    </div>
+                    <div className="matrix-segment seg-fossil" style={{ width: '13.4%' }} title="Diesel S10 Fóssil: 13.4% (26.900 L)">
+                      Diesel: 13.4%
+                    </div>
+                  </div>
                 </div>
-                <div className="matrix-segment seg-biodiesel" style={{ width: '26.4%' }} title="Biodiesel B20: 26.4% (31.200 L)">
-                  B20: 26.4%
-                </div>
-                <div className="matrix-segment seg-grid" style={{ width: '18.2%' }} title="Rede Elétrica Rural: 18.2% (35.600 kWh)">
-                  Rede: 18.2%
-                </div>
-                <div className="matrix-segment seg-fossil" style={{ width: '13.4%' }} title="Diesel S10 Fóssil: 13.4% (26.900 L)">
-                  Diesel: 13.4%
-                </div>
-              </div>
-            </div>
 
-            {/* Mini Legenda da Matriz */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: '14px' }}>
-              <div className="matrix-legend-item">
-                <div className="matrix-legend-header">
-                  <div className="legend-color-dot" style={{ background: '#10b981' }}></div>
-                  <span>Solar Própria</span>
+                {/* Mini Legenda da Matriz */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: '14px' }}>
+                  <div className="matrix-legend-item">
+                    <div className="matrix-legend-header">
+                      <div className="legend-color-dot" style={{ background: '#10b981' }}></div>
+                      <span>Solar Própria</span>
+                    </div>
+                    <span className="matrix-legend-val">82.400 kWh</span>
+                  </div>
+                  <div className="matrix-legend-item">
+                    <div className="matrix-legend-header">
+                      <div className="legend-color-dot" style={{ background: '#06b6d4' }}></div>
+                      <span>Biodiesel B20</span>
+                    </div>
+                    <span className="matrix-legend-val">31.200 L</span>
+                  </div>
+                  <div className="matrix-legend-item">
+                    <div className="matrix-legend-header">
+                      <div className="legend-color-dot" style={{ background: '#3b82f6' }}></div>
+                      <span>Rede Rural</span>
+                    </div>
+                    <span className="matrix-legend-val">35.600 kWh</span>
+                  </div>
+                  <div className="matrix-legend-item">
+                    <div className="matrix-legend-header">
+                      <div className="legend-color-dot" style={{ background: '#f59e0b' }}></div>
+                      <span>Diesel Fóssil</span>
+                    </div>
+                    <span className="matrix-legend-val">26.900 L</span>
+                  </div>
                 </div>
-                <span className="matrix-legend-val">82.400 kWh</span>
-              </div>
-              <div className="matrix-legend-item">
-                <div className="matrix-legend-header">
-                  <div className="legend-color-dot" style={{ background: '#06b6d4' }}></div>
-                  <span>Biodiesel B20</span>
-                </div>
-                <span className="matrix-legend-val">31.200 L</span>
-              </div>
-              <div className="matrix-legend-item">
-                <div className="matrix-legend-header">
-                  <div className="legend-color-dot" style={{ background: '#3b82f6' }}></div>
-                  <span>Rede Rural</span>
-                </div>
-                <span className="matrix-legend-val">35.600 kWh</span>
-              </div>
-              <div className="matrix-legend-item">
-                <div className="matrix-legend-header">
-                  <div className="legend-color-dot" style={{ background: '#f59e0b' }}></div>
-                  <span>Diesel Fóssil</span>
-                </div>
-                <span className="matrix-legend-val">26.900 L</span>
-              </div>
-            </div>
 
-            {/* Lista Detalhada das Fontes de Energia */}
-            <div className="energy-sources-list" style={{ marginTop: '16px' }}>
-              {/* Fonte 1: Solar */}
-              <div className="source-row-card">
-                <div className="source-info">
-                  <div className="source-icon-wrap" style={{ background: 'var(--accent-muted)', color: 'var(--accent-text)' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-                    </svg>
+                {/* Lista Detalhada das Fontes de Energia */}
+                <div className="energy-sources-list" style={{ marginTop: '16px' }}>
+                  {/* Fonte 1: Solar */}
+                  <div className="source-row-card">
+                    <div className="source-info">
+                      <div className="source-icon-wrap" style={{ background: 'var(--accent-muted)', color: 'var(--accent-text)' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                        </svg>
+                      </div>
+                      <div className="source-names">
+                        <span className="source-title">Solar Fotovoltaica (Galpões Sede & Pivô 01)</span>
+                        <span className="source-desc">Renovável • Fator de emissão: 0.00 kgCO₂e/kWh • 120 kWp</span>
+                      </div>
+                    </div>
+                    <div className="source-metrics">
+                      <div className="source-stat">
+                        <span className="source-stat-lbl">Consumo</span>
+                        <span className="source-stat-val">82.400 kWh</span>
+                      </div>
+                      <div className="source-stat">
+                        <span className="source-stat-lbl">Custo Equiv.</span>
+                        <span className="source-stat-val" style={{ color: 'var(--accent-text)' }}>R$ 9.064</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="source-names">
-                    <span className="source-title">Solar Fotovoltaica (Galpões Sede & Pivô 01)</span>
-                    <span className="source-desc">Renovável • Fator de emissão: 0.00 kgCO₂e/kWh • 120 kWp</span>
-                  </div>
-                </div>
-                <div className="source-metrics">
-                  <div className="source-stat">
-                    <span className="source-stat-lbl">Consumo</span>
-                    <span className="source-stat-val">82.400 kWh</span>
-                  </div>
-                  <div className="source-stat">
-                    <span className="source-stat-lbl">Custo Equiv.</span>
-                    <span className="source-stat-val" style={{ color: 'var(--accent-text)' }}>R$ 9.064</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Fonte 2: Biodiesel */}
-              <div className="source-row-card">
-                <div className="source-info">
-                  <div className="source-icon-wrap" style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06b6d4' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
-                    </svg>
+                  {/* Fonte 2: Biodiesel */}
+                  <div className="source-row-card">
+                    <div className="source-info">
+                      <div className="source-icon-wrap" style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06b6d4' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                        </svg>
+                      </div>
+                      <div className="source-names">
+                        <span className="source-title">Biodiesel B20 (Frota de Colheita S790)</span>
+                        <span className="source-desc">Renovável (Biocombustível) • Fator Líquido: 1.84 kgCO₂e/L</span>
+                      </div>
+                    </div>
+                    <div className="source-metrics">
+                      <div className="source-stat">
+                        <span className="source-stat-lbl">Consumo</span>
+                        <span className="source-stat-val">31.200 L</span>
+                      </div>
+                      <div className="source-stat">
+                        <span className="source-stat-lbl">Custo Total</span>
+                        <span className="source-stat-val">R$ 170.040</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="source-names">
-                    <span className="source-title">Biodiesel B20 (Frota de Colheita S790)</span>
-                    <span className="source-desc">Renovável (Biocombustível) • Fator Líquido: 1.84 kgCO₂e/L</span>
-                  </div>
-                </div>
-                <div className="source-metrics">
-                  <div className="source-stat">
-                    <span className="source-stat-lbl">Consumo</span>
-                    <span className="source-stat-val">31.200 L</span>
-                  </div>
-                  <div className="source-stat">
-                    <span className="source-stat-lbl">Custo Total</span>
-                    <span className="source-stat-val">R$ 170.040</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Fonte 3: Rede Elétrica Rural */}
-              <div className="source-row-card">
-                <div className="source-info">
-                  <div className="source-icon-wrap" style={{ background: 'var(--info-muted)', color: 'var(--info-text)' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
-                    </svg>
+                  {/* Fonte 3: Rede Elétrica Rural */}
+                  <div className="source-row-card">
+                    <div className="source-info">
+                      <div className="source-icon-wrap" style={{ background: 'var(--info-muted)', color: 'var(--info-text)' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                        </svg>
+                      </div>
+                      <div className="source-names">
+                        <span className="source-title">Rede Elétrica Rural (Energisa Sinop)</span>
+                        <span className="source-desc">Misto (Escopo 2) • Fator Médio SIN: 0.074 kgCO₂e/kWh</span>
+                      </div>
+                    </div>
+                    <div className="source-metrics">
+                      <div className="source-stat">
+                        <span className="source-stat-lbl">Consumo</span>
+                        <span className="source-stat-val">35.600 kWh</span>
+                      </div>
+                      <div className="source-stat">
+                        <span className="source-stat-lbl">Custo Total</span>
+                        <span className="source-stat-val">R$ 27.768</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="source-names">
-                    <span className="source-title">Rede Elétrica Rural (Energisa Sinop)</span>
-                    <span className="source-desc">Misto (Escopo 2) • Fator Médio SIN: 0.074 kgCO₂e/kWh</span>
-                  </div>
-                </div>
-                <div className="source-metrics">
-                  <div className="source-stat">
-                    <span className="source-stat-lbl">Consumo</span>
-                    <span className="source-stat-val">35.600 kWh</span>
-                  </div>
-                  <div className="source-stat">
-                    <span className="source-stat-lbl">Custo Total</span>
-                    <span className="source-stat-val">R$ 27.768</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Fonte 4: Diesel Fóssil S10 */}
-              <div className="source-row-card">
-                <div className="source-info">
-                  <div className="source-icon-wrap" style={{ background: 'var(--warning-muted)', color: 'var(--warning-text)' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                    </svg>
-                  </div>
-                  <div className="source-names">
-                    <span className="source-title">Diesel Fóssil S10 (Tratores Pesados JD 8R)</span>
-                    <span className="source-desc">Fóssil (Escopo 1) • Fator: 2.68 kgCO₂e/L • Transição prioritária</span>
+                  {/* Fonte 4: Diesel Fóssil S10 */}
+                  <div className="source-row-card">
+                    <div className="source-info">
+                      <div className="source-icon-wrap" style={{ background: 'var(--warning-muted)', color: 'var(--warning-text)' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                        </svg>
+                      </div>
+                      <div className="source-names">
+                        <span className="source-title">Diesel Fóssil S10 (Tratores Pesados JD 8R)</span>
+                        <span className="source-desc">Fóssil (Escopo 1) • Fator: 2.68 kgCO₂e/L • Transição prioritária</span>
+                      </div>
+                    </div>
+                    <div className="source-metrics">
+                      <div className="source-stat">
+                        <span className="source-stat-lbl">Consumo</span>
+                        <span className="source-stat-val">26.900 L</span>
+                      </div>
+                      <div className="source-stat">
+                        <span className="source-stat-lbl">Custo Total</span>
+                        <span className="source-stat-val">R$ 158.710</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="source-metrics">
-                  <div className="source-stat">
-                    <span className="source-stat-lbl">Consumo</span>
-                    <span className="source-stat-val">26.900 L</span>
-                  </div>
-                  <div className="source-stat">
-                    <span className="source-stat-lbl">Custo Total</span>
-                    <span className="source-stat-val">R$ 158.710</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -1198,17 +1307,19 @@ export const EnergiaEsg: React.FC = () => {
                 <div className="laudo-kv-grid">
                   <div className="laudo-kv-card">
                     <span className="laudo-kv-k">Propriedade</span>
-                    <span className="laudo-kv-v">Fazenda Santa Maria</span>
+                    <span className="laudo-kv-v">{propriedade?.nome || 'Fazenda Santa Maria'}</span>
                   </div>
                   <div className="laudo-kv-card">
                     <span className="laudo-kv-k">CAR Homologado</span>
                     <span className="laudo-kv-v" style={{ fontSize: '11.5px' }}>
-                      MT-5107909-B8F2
+                      {propriedade?.car_numero || 'MT-5107909-B8F2'}
                     </span>
                   </div>
                   <div className="laudo-kv-card">
                     <span className="laudo-kv-k">Área Auditada</span>
-                    <span className="laudo-kv-v">690,00 Hectares</span>
+                    <span className="laudo-kv-v">
+                      {propriedade?.area_total_hectares ? `${Number(propriedade.area_total_hectares).toLocaleString('pt-BR')} Hectares` : '690,00 Hectares'}
+                    </span>
                   </div>
                 </div>
 

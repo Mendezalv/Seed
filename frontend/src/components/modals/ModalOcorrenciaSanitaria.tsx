@@ -10,14 +10,17 @@ interface ModalOcorrenciaSanitariaProps {
 }
 
 export const ModalOcorrenciaSanitaria: React.FC<ModalOcorrenciaSanitariaProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { user } = useAuth();
+  const { user, token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
 
-  const [talhao, setTalhao] = useState('Talhão 04 (Pivô Norte)');
+  const [talhao, setTalhao] = useState(isDemoMode ? 'Talhão 04 (Pivô Norte)' : 'Talhão 01');
   const [tipoCultura, setTipoCultura] = useState('Soja');
   const [categoria, setCategoria] = useState('DOENCA');
-  const [agente, setAgente] = useState('Ferrugem asiática');
-  const [severidade, setSeveridade] = useState<'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA'>('ALTA');
-  const [observacoes, setObservacoes] = useState('Pústulas observadas no terço médio e inferior da folhagem');
+  const [agente, setAgente] = useState(isDemoMode ? 'Ferrugem asiática' : '');
+  const [severidade, setSeveridade] = useState<'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA'>(isDemoMode ? 'ALTA' : 'MEDIA');
+  const [observacoes, setObservacoes] = useState(
+    isDemoMode ? 'Pústulas observadas no terço médio e inferior da folhagem' : ''
+  );
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -77,12 +80,20 @@ export const ModalOcorrenciaSanitaria: React.FC<ModalOcorrenciaSanitariaProps> =
                 <CustomSelect
                   value={talhao}
                   onChange={(val) => setTalhao(val)}
-                  options={[
-                    'Talhão 01 (Sede - 140 ha)',
-                    'Talhão 04 (Pivô Norte - 220 ha)',
-                    'Talhão 07 (Baixada - 180 ha)',
-                    'Talhão 12 (Reserva Leste - 95 ha)',
-                  ]}
+                  options={
+                    isDemoMode
+                      ? [
+                          'Talhão 01 (Sede - 140 ha)',
+                          'Talhão 04 (Pivô Norte - 220 ha)',
+                          'Talhão 07 (Baixada - 180 ha)',
+                          'Talhão 12 (Reserva Leste - 95 ha)',
+                        ]
+                      : [
+                          'Talhão 01 (Área Geral)',
+                          'Talhão 02 (Área de Cultivo)',
+                          'Talhão 03 (Sequeiro)',
+                        ]
+                  }
                 />
               </div>
 

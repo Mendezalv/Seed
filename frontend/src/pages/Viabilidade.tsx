@@ -573,13 +573,31 @@ export const Viabilidade: React.FC = () => {
         <div className="kpi-cell">
           <div className="kpi-cell-top">
             <span className="kpi-cell-label">Receita Bruta Projetada</span>
-            <span className="kpi-tag good">+5.8% META</span>
+            {isDemoMode || contracts.length > 0 ? (
+              <span className="kpi-tag good">+5.8% META</span>
+            ) : (
+              <span className="kpi-tag" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
+                SEM SAFRA ATIVA
+              </span>
+            )}
           </div>
           <div className="kpi-cell-val">
-            <span className="curr">R$</span>21.480.000<span className="decimals">,00</span>
+            {isDemoMode || contracts.length > 0 ? (
+              <>
+                <span className="curr">R$</span>21.480.000<span className="decimals">,00</span>
+              </>
+            ) : (
+              <>
+                <span className="curr">R$</span>0<span className="decimals">,00</span>
+              </>
+            )}
           </div>
           <div className="kpi-cell-sub">
-            <span>Safra 2024/25 • 3.200 ha (Soja + Milho)</span>
+            <span>
+              {isDemoMode || contracts.length > 0
+                ? 'Safra 2024/25 • 3.200 ha (Soja + Milho)'
+                : 'Cadastre safras e contratos de venda para projetar receita'}
+            </span>
           </div>
         </div>
 
@@ -587,14 +605,33 @@ export const Viabilidade: React.FC = () => {
         <div className="kpi-cell">
           <div className="kpi-cell-top">
             <span className="kpi-cell-label">Margem EBITDA Agrícola</span>
-            <span className="kpi-tag good">+3.2 p.p.</span>
+            {isDemoMode || contracts.length > 0 ? (
+              <span className="kpi-tag good">+3.2 p.p.</span>
+            ) : (
+              <span className="kpi-tag" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
+                NEUTRO
+              </span>
+            )}
           </div>
           <div className="kpi-cell-val">
-            38,4%
-            <span className="unit">R$ 8.248.320,00</span>
+            {isDemoMode || contracts.length > 0 ? (
+              <>
+                38,4%
+                <span className="unit">R$ 8.248.320,00</span>
+              </>
+            ) : (
+              <>
+                0,0%
+                <span className="unit">R$ 0,00</span>
+              </>
+            )}
           </div>
           <div className="kpi-cell-sub">
-            <span>Margem líquida após COT e fixos</span>
+            <span>
+              {isDemoMode || contracts.length > 0
+                ? 'Margem líquida após COT e fixos'
+                : 'Aguardando apontamentos de custos e colheita'}
+            </span>
           </div>
         </div>
 
@@ -602,14 +639,33 @@ export const Viabilidade: React.FC = () => {
         <div className="kpi-cell">
           <div className="kpi-cell-top">
             <span className="kpi-cell-label">Custo Operacional Total (COT)</span>
-            <span className="kpi-tag info">PLANEJADO</span>
+            {isDemoMode || contracts.length > 0 ? (
+              <span className="kpi-tag info">PLANEJADO</span>
+            ) : (
+              <span className="kpi-tag" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
+                SEM CUSTOS
+              </span>
+            )}
           </div>
           <div className="kpi-cell-val">
-            <span className="curr">R$</span>4.135<span className="decimals">,00</span>
-            <span className="unit">/ ha</span>
+            {isDemoMode || contracts.length > 0 ? (
+              <>
+                <span className="curr">R$</span>4.135<span className="decimals">,00</span>
+                <span className="unit">/ ha</span>
+              </>
+            ) : (
+              <>
+                <span className="curr">R$</span>0<span className="decimals">,00</span>
+                <span className="unit">/ ha</span>
+              </>
+            )}
           </div>
           <div className="kpi-cell-sub">
-            <span>Insumos 54% • Frotas 21% • Fixos 25%</span>
+            <span>
+              {isDemoMode || contracts.length > 0
+                ? 'Insumos 54% • Frotas 21% • Fixos 25%'
+                : 'Sem lançamentos de insumos ou frotas'}
+            </span>
           </div>
         </div>
 
@@ -617,7 +673,12 @@ export const Viabilidade: React.FC = () => {
         <div className="kpi-cell">
           <div className="kpi-cell-top">
             <span className="kpi-cell-label">Comercialização Travada (Hedge)</span>
-            <span className="kpi-tag good">{hedgeStats.lockedPct.toFixed(1).replace('.', ',')}% FIXADO</span>
+            <span
+              className={`kpi-tag ${hedgeStats.lockedPct > 0 ? 'good' : ''}`}
+              style={hedgeStats.lockedPct === 0 ? { background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' } : undefined}
+            >
+              {hedgeStats.lockedPct.toFixed(1).replace('.', ',')}% FIXADO
+            </span>
           </div>
           <div className="kpi-cell-val">
             {hedgeStats.lockedVolume.toLocaleString('pt-BR')}
@@ -625,7 +686,13 @@ export const Viabilidade: React.FC = () => {
           </div>
           <div className="kpi-cell-sub">
             <span>
-              Preço Médio Ponderado: <strong>R$ {hedgeStats.avgPrice.toFixed(2).replace('.', ',')} / sc</strong>
+              {hedgeStats.lockedVolume > 0 ? (
+                <>
+                  Preço Médio Ponderado: <strong>R$ {hedgeStats.avgPrice.toFixed(2).replace('.', ',')} / sc</strong>
+                </>
+              ) : (
+                'Nenhum contrato a termo cadastrado'
+              )}
             </span>
           </div>
         </div>
@@ -1124,101 +1191,127 @@ export const Viabilidade: React.FC = () => {
               Composição do COT (Custo / ha)
             </div>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
-              Base: 3.200 ha
+              {isDemoMode || contracts.length > 0 ? 'Base: 3.200 ha' : 'Sem área vinculada'}
             </span>
           </div>
 
-          <div className="cost-breakdown-body">
-            {/* Insumo: Fertilizantes */}
-            <div className="cost-item">
-              <div className="cost-item-top">
-                <span className="cost-item-name">Fertilizantes & Corretivos de Solo</span>
-                <span className="cost-item-val">
-                  R$ 1.340,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(32,4%)</span>
-                </span>
+          {!isDemoMode && contracts.length === 0 ? (
+            <div className="empty-state" style={{ padding: '36px 16px', textAlign: 'center' }}>
+              <div className="empty-state-icon" style={{ margin: '0 auto 12px' }}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  width="36"
+                  height="36"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                </svg>
               </div>
-              <div className="cost-bar-bg">
-                <div className="cost-bar-fill" style={{ width: '32.4%', background: '#10b981' }}></div>
-              </div>
+              <h4 style={{ margin: '0 0 6px', fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Nenhum custo operacional registrado
+              </h4>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)', maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto' }}>
+                Lance ordens de serviço, safras e insumos para decompor e apurar o custo operacional por hectare.
+              </p>
             </div>
+          ) : (
+            <div className="cost-breakdown-body">
+              {/* Insumo: Fertilizantes */}
+              <div className="cost-item">
+                <div className="cost-item-top">
+                  <span className="cost-item-name">Fertilizantes & Corretivos de Solo</span>
+                  <span className="cost-item-val">
+                    R$ 1.340,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(32,4%)</span>
+                  </span>
+                </div>
+                <div className="cost-bar-bg">
+                  <div className="cost-bar-fill" style={{ width: '32.4%', background: '#10b981' }}></div>
+                </div>
+              </div>
 
-            {/* Insumo: Defensivos */}
-            <div className="cost-item">
-              <div className="cost-item-top">
-                <span className="cost-item-name">Defensivos (Fungicidas & Herbicidas)</span>
-                <span className="cost-item-val">
-                  R$ 980,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(23,7%)</span>
-                </span>
+              {/* Insumo: Defensivos */}
+              <div className="cost-item">
+                <div className="cost-item-top">
+                  <span className="cost-item-name">Defensivos (Fungicidas & Herbicidas)</span>
+                  <span className="cost-item-val">
+                    R$ 980,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(23,7%)</span>
+                  </span>
+                </div>
+                <div className="cost-bar-bg">
+                  <div className="cost-bar-fill" style={{ width: '23.7%', background: '#3b82f6' }}></div>
+                </div>
               </div>
-              <div className="cost-bar-bg">
-                <div className="cost-bar-fill" style={{ width: '23.7%', background: '#3b82f6' }}></div>
-              </div>
-            </div>
 
-            {/* Frotas: Combustível */}
-            <div className="cost-item">
-              <div className="cost-item-top">
-                <span className="cost-item-name">Diesel S10 & Lubrificantes (Frotas)</span>
-                <span className="cost-item-val">
-                  R$ 480,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(11,6%)</span>
-                </span>
+              {/* Frotas: Combustível */}
+              <div className="cost-item">
+                <div className="cost-item-top">
+                  <span className="cost-item-name">Diesel S10 & Lubrificantes (Frotas)</span>
+                  <span className="cost-item-val">
+                    R$ 480,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(11,6%)</span>
+                  </span>
+                </div>
+                <div className="cost-bar-bg">
+                  <div className="cost-bar-fill" style={{ width: '11.6%', background: '#f59e0b' }}></div>
+                </div>
               </div>
-              <div className="cost-bar-bg">
-                <div className="cost-bar-fill" style={{ width: '11.6%', background: '#f59e0b' }}></div>
-              </div>
-            </div>
 
-            {/* Insumo: Sementes */}
-            <div className="cost-item">
-              <div className="cost-item-top">
-                <span className="cost-item-name">Sementes Certificadas (Tratamento Industrial)</span>
-                <span className="cost-item-val">
-                  R$ 420,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(10,2%)</span>
-                </span>
+              {/* Insumo: Sementes */}
+              <div className="cost-item">
+                <div className="cost-item-top">
+                  <span className="cost-item-name">Sementes Certificadas (Tratamento Industrial)</span>
+                  <span className="cost-item-val">
+                    R$ 420,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(10,2%)</span>
+                  </span>
+                </div>
+                <div className="cost-bar-bg">
+                  <div className="cost-bar-fill" style={{ width: '10.2%', background: '#a855f7' }}></div>
+                </div>
               </div>
-              <div className="cost-bar-bg">
-                <div className="cost-bar-fill" style={{ width: '10.2%', background: '#a855f7' }}></div>
-              </div>
-            </div>
 
-            {/* Máquinas: Manutenção */}
-            <div className="cost-item">
-              <div className="cost-item-top">
-                <span className="cost-item-name">Manutenção Mecânica & Peças (OS)</span>
-                <span className="cost-item-val">
-                  R$ 390,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(9,4%)</span>
-                </span>
+              {/* Máquinas: Manutenção */}
+              <div className="cost-item">
+                <div className="cost-item-top">
+                  <span className="cost-item-name">Manutenção Mecânica & Peças (OS)</span>
+                  <span className="cost-item-val">
+                    R$ 390,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(9,4%)</span>
+                  </span>
+                </div>
+                <div className="cost-bar-bg">
+                  <div className="cost-bar-fill" style={{ width: '9.4%', background: '#06b6d4' }}></div>
+                </div>
               </div>
-              <div className="cost-bar-bg">
-                <div className="cost-bar-fill" style={{ width: '9.4%', background: '#06b6d4' }}></div>
-              </div>
-            </div>
 
-            {/* Fixos: Mão de Obra */}
-            <div className="cost-item">
-              <div className="cost-item-top">
-                <span className="cost-item-name">Mão de Obra, Energia & Encargos</span>
-                <span className="cost-item-val">
-                  R$ 525,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(12,7%)</span>
-                </span>
+              {/* Fixos: Mão de Obra */}
+              <div className="cost-item">
+                <div className="cost-item-top">
+                  <span className="cost-item-name">Mão de Obra, Energia & Encargos</span>
+                  <span className="cost-item-val">
+                    R$ 525,00 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>(12,7%)</span>
+                  </span>
+                </div>
+                <div className="cost-bar-bg">
+                  <div className="cost-bar-fill" style={{ width: '12.7%', background: '#71717a' }}></div>
+                </div>
               </div>
-              <div className="cost-bar-bg">
-                <div className="cost-bar-fill" style={{ width: '12.7%', background: '#71717a' }}></div>
-              </div>
-            </div>
 
-            {/* Resumo Totalizador */}
-            <div className="cost-total-summary">
-              <div>
-                <div className="cost-total-label">Custo Operacional Total (COT)</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Investimento consolidado por hectare</div>
-              </div>
-              <div className="cost-total-val" style={{ color: 'var(--accent-text)' }}>
-                R$ {costVal.toLocaleString('pt-BR')},00{' '}
-                <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)' }}>/ ha</span>
+              {/* Resumo Totalizador */}
+              <div className="cost-total-summary">
+                <div>
+                  <div className="cost-total-label">Custo Operacional Total (COT)</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Investimento consolidado por hectare</div>
+                </div>
+                <div className="cost-total-val" style={{ color: 'var(--accent-text)' }}>
+                  R$ {costVal.toLocaleString('pt-BR')},00{' '}
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)' }}>/ ha</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
       </>

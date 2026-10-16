@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 import { CustomSelect } from '../ui/CustomSelect';
 
 interface ModalSimuladorViabilidadeProps {
@@ -13,13 +14,18 @@ export const ModalSimuladorViabilidade: React.FC<ModalSimuladorViabilidadeProps>
   onClose,
   onSuccess,
 }) => {
-  const [safra, setSafra] = useState('Safra 2026/27 - Soja Verão (1.240 ha)');
-  const [precoSaca, setPrecoSaca] = useState('138.50');
-  const [produtividadeSacas, setProdutividadeSacas] = useState('68');
-  const [custoInsumos, setCustoInsumos] = useState('2850'); // por ha
-  const [custoMaoObra, setCustoMaoObra] = useState('420'); // por ha
-  const [custoFrete, setCustoFrete] = useState('310'); // por ha
-  const [custoImpostos, setCustoImpostos] = useState('180'); // por ha
+  const { token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+
+  const [safra, setSafra] = useState(
+    isDemoMode ? 'Safra 2026/27 - Soja Verão (1.240 ha)' : 'Safra Atual - Planejamento'
+  );
+  const [precoSaca, setPrecoSaca] = useState(isDemoMode ? '138.50' : '135.00');
+  const [produtividadeSacas, setProdutividadeSacas] = useState(isDemoMode ? '68' : '65');
+  const [custoInsumos, setCustoInsumos] = useState(isDemoMode ? '2850' : '2500'); // por ha
+  const [custoMaoObra, setCustoMaoObra] = useState(isDemoMode ? '420' : '400'); // por ha
+  const [custoFrete, setCustoFrete] = useState(isDemoMode ? '310' : '300'); // por ha
+  const [custoImpostos, setCustoImpostos] = useState(isDemoMode ? '180' : '150'); // por ha
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -97,10 +103,17 @@ export const ModalSimuladorViabilidade: React.FC<ModalSimuladorViabilidadeProps>
               <CustomSelect
                 value={safra}
                 onChange={(val) => setSafra(val)}
-                options={[
-                  'Safra 2026/27 - Soja Verão (1.240 ha)',
-                  'Safrinha 2027 - Milho (680 ha)',
-                ]}
+                options={
+                  isDemoMode
+                    ? [
+                        'Safra 2026/27 - Soja Verão (1.240 ha)',
+                        'Safrinha 2027 - Milho (680 ha)',
+                      ]
+                    : [
+                        'Safra Atual - Planejamento',
+                        'Simulação Preliminar',
+                      ]
+                }
               />
             </div>
 
