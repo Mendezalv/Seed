@@ -191,7 +191,7 @@ async def seed_admin_padrao(session: AsyncSession) -> None:
         session.add(admin_user)
         await session.commit()
 
-        await seed_fontes_padrao(session, prop.id)
+        await seed_fontes_energia(session, prop.id)
         await seed_insumos_padrao(session)
         await seed_notificacoes_padrao(session, prop.id)
 
