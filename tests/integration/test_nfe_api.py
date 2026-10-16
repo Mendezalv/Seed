@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from src.main import app
-from tests.test_nfe_parser import XML_NFE_EXEMPLO
+from tests.unit.test_nfe_parser import XML_NFE_EXEMPLO
+
 
 @pytest.mark.asyncio
 async def test_api_parse_nfe_json():
@@ -12,6 +15,7 @@ async def test_api_parse_nfe_json():
         assert data["numero_nf"] == "4582"
         assert data["emitente"]["razao_social"] == "Bayer S.A. Protecao de Cultivos"
         assert len(data["itens"]) == 2
+
 
 @pytest.mark.asyncio
 async def test_api_parse_nfe_file_upload():

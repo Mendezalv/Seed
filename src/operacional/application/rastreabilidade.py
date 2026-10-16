@@ -1,10 +1,14 @@
-from uuid import UUID
-from decimal import Decimal
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from __future__ import annotations
 
-from src.operacional.domain.models import LoteInsumo, AlocacaoInsumo
-from src.operacional.domain.schemas import LoteInsumoCreate, AlocacaoInsumoCreate
+from decimal import Decimal
+from typing import Any
+from uuid import UUID
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.operacional.domain.models import AlocacaoInsumo, LoteInsumo
+from src.operacional.domain.schemas import AlocacaoInsumoCreate, LoteInsumoCreate
 
 class RastreabilidadeService:
     @staticmethod

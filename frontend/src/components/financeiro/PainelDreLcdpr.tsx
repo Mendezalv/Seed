@@ -264,18 +264,24 @@ export const PainelDreLcdpr: React.FC<PainelDreLcdprProps> = ({ onShowToast }) =
           <button
             type="button"
             className={`btn ${subAba === 'DRE' ? 'btn-primary' : 'btn-outline'}`}
-            style={{ fontSize: '12px', padding: '6px 14px' }}
+            style={{ fontSize: '12px', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             onClick={() => setSubAba('DRE')}
           >
-            📑 DRE de Safra por Talhão
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" width="14" height="14">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+            </svg>
+            <span>DRE de Safra por Talhão</span>
           </button>
           <button
             type="button"
             className={`btn ${subAba === 'LCDPR' ? 'btn-primary' : 'btn-outline'}`}
-            style={{ fontSize: '12px', padding: '6px 14px' }}
+            style={{ fontSize: '12px', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             onClick={() => setSubAba('LCDPR')}
           >
-            🏛️ Livro Caixa Digital (LCDPR / Receita Federal)
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" width="14" height="14">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.333A12.018 12.018 0 0 0 12 9c-2.485 0-4.78.756-6.68 2.05L4.5 12v9h15Z" />
+            </svg>
+            <span>Livro Caixa Digital (LCDPR / Receita Federal)</span>
           </button>
         </div>
 
@@ -380,11 +386,18 @@ export const PainelDreLcdpr: React.FC<PainelDreLcdprProps> = ({ onShowToast }) =
                               : 'var(--text-muted)',
                         }}
                       >
-                        {t.classificacao === 'CAMPEAO_RENTABILIDADE'
-                          ? '🏆 CAMPEÃO'
-                          : t.classificacao === 'ALTO_DESEMPENHO'
-                          ? 'ALTO DESEMPENHO'
-                          : 'REGULAR'}
+                        {t.classificacao === 'CAMPEAO_RENTABILIDADE' ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" width="12" height="12">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3-3h1.5a1.5 1.5 0 0 0 1.5-1.5v-1.135a6.002 6.002 0 0 0-4.66-5.867 9.006 9.006 0 0 0-4.68 0A6.002 6.002 0 0 0 3 13.115V14.25A1.5 1.5 0 0 0 4.5 15.75H6a3 3 0 0 1 3 3m7.5 0v1.5a1.5 1.5 0 0 1-1.5 1.5h-4.5a1.5 1.5 0 0 1-1.5-1.5v-1.5m7.5 0h-7.5" />
+                            </svg>
+                            CAMPEÃO
+                          </span>
+                        ) : t.classificacao === 'ALTO_DESEMPENHO' ? (
+                          'ALTO DESEMPENHO'
+                        ) : (
+                          'REGULAR'
+                        )}
                       </span>
                     </td>
                   </tr>
@@ -407,8 +420,11 @@ export const PainelDreLcdpr: React.FC<PainelDreLcdprProps> = ({ onShowToast }) =
               alignItems: 'center',
             }}
           >
-            <span>
-              💡 <strong>Insight Estratégico:</strong> O Talhão 02 (Pivô Central) gerou a maior margem líquida da fazenda (<strong>R$ 7.311,00/ha</strong>), beneficiado pela irrigação e menor custo de produção por saca (R$ 45,77/sc).
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" width="16" height="16" style={{ color: 'var(--accent)', flexShrink: 0 }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.439a8.966 8.966 0 0 0 4.5-3.826m-4.5 3.826A8.969 8.969 0 0 1 9.75 20.25m0 0H8.25m3.75 0h1.5M12 3a9 9 0 0 0-9 9c0 3.018 1.492 5.688 3.784 7.324" />
+              </svg>
+              <span><strong>Insight Estratégico:</strong> O Talhão 02 (Pivô Central) gerou a maior margem líquida da fazenda (<strong>R$ 7.311,00/ha</strong>), beneficiado pela irrigação e menor custo de produção por saca (R$ 45,77/sc).</span>
             </span>
           </div>
         </div>

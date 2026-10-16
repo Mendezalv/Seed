@@ -245,7 +245,7 @@ export const ModalImportarNfe: React.FC<ModalImportarNfeProps> = ({
           ],
         });
         setEtapa('preview');
-      } catch (err) {
+      } catch {
         setErro('Não foi possível ler o arquivo XML. Certifique-se de que é uma NF-e modelo 55 válida da SEFAZ.');
       }
     } finally {

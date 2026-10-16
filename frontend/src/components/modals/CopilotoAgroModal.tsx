@@ -29,6 +29,92 @@ const SUGESTOES_PERGUNTAS = [
   'Quais as condições ideais para evitar deriva na pulverização?',
 ];
 
+function parseInline(content: string): React.ReactNode[] {
+  const regex = /(\*\*.*?\*\*|\*.*?\*|`.*?`)/g;
+  const parts = content.split(regex);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={index} style={{ color: 'var(--text-bright)', fontWeight: 700 }}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return (
+        <em key={index} style={{ fontStyle: 'italic', opacity: 0.95 }}>
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return (
+        <code
+          key={index}
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            padding: '1px 5px',
+            borderRadius: '4px',
+            fontSize: '11.5px',
+            fontFamily: 'var(--font-mono)',
+          }}
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+}
+
+function renderMarkdown(content: string): React.ReactNode {
+  const blocks = content.split('\n\n');
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {blocks.map((block, idx) => {
+        const trimmed = block.trim();
+        if (trimmed.startsWith('### ')) {
+          return (
+            <h4
+              key={idx}
+              style={{
+                fontSize: '13.5px',
+                fontWeight: 700,
+                color: 'var(--accent)',
+                margin: '2px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              {parseInline(trimmed.replace(/^###\s+/, ''))}
+            </h4>
+          );
+        }
+
+        const lines = trimmed.split('\n');
+        if (lines.length > 1) {
+          return (
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              {lines.map((line, lIdx) => (
+                <div key={lIdx} style={{ lineHeight: '1.45' }}>
+                  {parseInline(line)}
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} style={{ margin: 0, lineHeight: '1.5' }}>
+            {parseInline(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, onClose }) => {
   const [mensagens, setMensagens] = useState<Mensagem[]>([
     {
@@ -101,7 +187,7 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
 
       setMensagens((prev) => [...prev, respostaIA]);
     } catch {
-      // Fallback offline caso API esteja em transição
+      // Fallback inteligente offline
       let respostaFallback =
         'Com base no catálogo oficial do MAPA / Agrofit, para alvos fitossanitários em lavouras de soja e milho, ' +
         'recomenda-se a utilização de produtos com registro ativo e rotação estrita de mecanismos de ação (FRAC / IRAC / HRAC). ' +
@@ -114,7 +200,7 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
           '**Dosagem de Bula:** 0,4 a 0,5 L/ha + 1,5 kg/ha de Mancozebe (Multissítio protetor obrigatório)\n' +
           '**Período de Carência:** 30 dias antes da colheita\n' +
           '**Manejo:** Aplicação preventiva no estádio V6/R1 antes do fechamento total da entrelinha.\n\n' +
-          '📦 **Disponível no Almoxarifado:** Lote Fox Xpro (LT-BAY-2024-04).';
+          '**Disponível no Almoxarifado:** Lote Fox Xpro (LT-BAY-2024-04).';
       } else if (texto.toLowerCase().includes('percevejo')) {
         respostaFallback =
           '### Diagnóstico: Percevejo-Marrom da Soja (*Euschistus heros*)\n\n' +
@@ -144,19 +230,22 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
   };
 
   return (
-    <div className="modal-backdrop open" onClick={onClose} style={{ zIndex: 10000 }}>
+    <div className="modal-backdrop open" onClick={onClose} style={{ zIndex: 10000, backdropFilter: 'blur(4px)' }}>
       <div
         className="modal-box"
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: '720px',
           width: '95%',
-          height: '620px',
+          height: 'min(640px, 86vh)',
+          maxHeight: '86vh',
           display: 'flex',
           flexDirection: 'column',
           background: '#09090b',
           border: '1px solid rgba(16, 185, 129, 0.3)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 20px rgba(16, 185, 129, 0.1)',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(16, 185, 129, 0.12)',
         }}
       >
         {/* Cabeçalho do Copiloto */}
@@ -165,7 +254,10 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
           style={{
             borderBottom: '1px solid var(--border)',
             padding: '14px 20px',
-            background: 'rgba(24, 24, 27, 0.7)',
+            background: 'rgba(24, 24, 27, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -179,6 +271,7 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
                 display: 'grid',
                 placeItems: 'center',
                 color: 'var(--accent)',
+                flexShrink: 0,
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor" width="22" height="22">
@@ -187,26 +280,47 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h2 className="modal-title" style={{ fontSize: '16px', margin: 0 }}>Copiloto Agronômico IA</h2>
+                <h2 className="modal-title" style={{ fontSize: '15px', margin: 0, fontWeight: 700 }}>Copiloto Agronômico IA</h2>
                 <span
                   style={{
-                    padding: '2px 6px',
+                    padding: '2px 8px',
                     borderRadius: '4px',
                     background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
                     color: 'var(--accent)',
                     fontSize: '10px',
                     fontWeight: 700,
+                    letterSpacing: '0.02em',
                   }}
                 >
                   Agrofit / MAPA Conectado
                 </span>
               </div>
-              <p className="modal-sub" style={{ margin: 0, fontSize: '11px' }}>
+              <p className="modal-sub" style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>
                 Diagnóstico fitopatológico, dosagens de bula, carência e rotação de princípios ativos
               </p>
             </div>
           </div>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onClose}
+            aria-label="Fechar"
+            style={{
+              width: '32px',
+              height: '32px',
+              display: 'grid',
+              placeItems: 'center',
+              borderRadius: '6px',
+              background: 'transparent',
+              border: '1px solid transparent',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontSize: '18px',
+            }}
+          >
+            ×
+          </button>
         </div>
 
         {/* Corpo de Mensagens */}
@@ -238,33 +352,35 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
                   background:
                     msg.remetente === 'user'
                       ? 'var(--accent)'
-                      : 'rgba(24, 24, 27, 0.9)',
-                  color: msg.remetente === 'user' ? '#09090b' : 'var(--text-bright)',
+                      : 'rgba(24, 24, 27, 0.95)',
+                  color: msg.remetente === 'user' ? '#052e16' : 'var(--text-primary)',
                   fontWeight: msg.remetente === 'user' ? 600 : 400,
                   fontSize: '13px',
                   lineHeight: '1.5',
-                  border: msg.remetente === 'user' ? 'none' : '1px solid var(--border)',
-                  whiteSpace: 'pre-wrap',
+                  border: msg.remetente === 'user' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: msg.remetente === 'user' ? '0 2px 8px rgba(16, 185, 129, 0.25)' : 'none',
                 }}
               >
-                {msg.texto}
+                {renderMarkdown(msg.texto)}
               </div>
 
               {msg.detalhes?.carencia_dias && (
                 <div
                   style={{
-                    fontSize: '11px',
-                    padding: '4px 10px',
+                    fontSize: '11.5px',
+                    padding: '6px 12px',
                     borderRadius: '6px',
-                    background: 'rgba(245, 158, 11, 0.12)',
+                    background: 'rgba(245, 158, 11, 0.1)',
                     border: '1px solid rgba(245, 158, 11, 0.3)',
                     color: '#fbbf24',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
+                    gap: '8px',
                   }}
                 >
-                  <span>⚠️</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" width="16" height="16" style={{ flexShrink: 0 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
                   <span>{msg.detalhes.alerta_seguranca}</span>
                 </div>
               )}
@@ -294,13 +410,16 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
 
         {/* Chips de Perguntas Rápidas Sugeridas */}
         <div
+          className="no-scrollbar"
           style={{
-            padding: '8px 20px',
+            padding: '10px 20px',
             borderTop: '1px solid rgba(255, 255, 255, 0.05)',
             display: 'flex',
             gap: '8px',
             overflowX: 'auto',
             whiteSpace: 'nowrap',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
           }}
         >
           {SUGESTOES_PERGUNTAS.map((sug, i) => (
@@ -308,14 +427,26 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
               key={i}
               type="button"
               style={{
-                padding: '4px 10px',
-                borderRadius: '16px',
+                padding: '6px 14px',
+                borderRadius: '100px',
                 background: 'rgba(255, 255, 255, 0.04)',
                 border: '1px solid var(--border)',
-                color: 'var(--text-muted)',
+                color: 'var(--text-secondary)',
                 fontSize: '11px',
+                fontWeight: 500,
                 cursor: 'pointer',
+                flexShrink: 0,
                 transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+                e.currentTarget.style.background = 'rgba(16, 185, 129, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
               }}
               onClick={() => enviarPergunta(sug)}
             >
@@ -329,7 +460,7 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
           style={{
             padding: '12px 20px',
             borderTop: '1px solid var(--border)',
-            background: 'rgba(24, 24, 27, 0.5)',
+            background: 'rgba(24, 24, 27, 0.7)',
             display: 'flex',
             gap: '10px',
             alignItems: 'center',
@@ -342,19 +473,35 @@ export const CopilotoAgroModal: React.FC<CopilotoAgroModalProps> = ({ isOpen, on
             value={inputTexto}
             onChange={(e) => setInputTexto(e.target.value)}
             onKeyDown={handleKeyDown}
-            style={{ flex: 1, fontSize: '13px', background: '#18181b', border: '1px solid var(--border)' }}
+            style={{
+              flex: 1,
+              fontSize: '13px',
+              background: '#18181b',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              color: '#f4f4f5',
+            }}
           />
           <button
             type="button"
             className="btn btn-primary"
             onClick={() => enviarPergunta(inputTexto)}
             disabled={!inputTexto.trim() || carregando}
-            style={{ padding: '8px 16px' }}
+            style={{
+              padding: '10px 18px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '8px',
+              fontWeight: 600,
+              fontSize: '12.5px',
+            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" width="16" height="16">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
             </svg>
-            Enviar
+            <span>Enviar</span>
           </button>
         </div>
       </div>

@@ -113,7 +113,7 @@ class CopilotoAgroService:
 
         mensagem_estoque = ""
         if insumos_disponiveis:
-            mensagem_estoque = f"\n\n📦 **Disponível no seu estoque:** {', '.join(insumos_disponiveis)} pronto para uso imediato."
+            mensagem_estoque = f"\n\n**Disponível no seu estoque:** {', '.join(insumos_disponiveis)} pronto para uso imediato."
 
         resposta_formatada = (
             f"### Diagnóstico Fitossanitário: {alvo_encontrado['alvo'].title()} (*{alvo_encontrado['nome_cientifico']}*)\n\n"
@@ -123,8 +123,8 @@ class CopilotoAgroService:
             f"**Dosagem Recomendada em Bula:** {alvo_encontrado['dosagem_recomendada']}\n"
             f"**Período de Carência:** {alvo_encontrado['carencia_dias']} dias antes da colheita\n"
             f"**Mecanismo de Ação (Resistência):** {alvo_encontrado['grupo_quimico']}\n\n"
-            f"💡 **Recomendação de Manejo:** {alvo_encontrado['recomendacao_manejo']}\n"
-            f"🌦️ **Condições Climáticas Ideais:** {alvo_encontrado['condicoes_climaticas']}"
+            f"**Recomendação de Manejo:** {alvo_encontrado['recomendacao_manejo']}\n"
+            f"**Condições Climáticas Ideais:** {alvo_encontrado['condicoes_climaticas']}"
             f"{mensagem_estoque}"
         )
 

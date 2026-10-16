@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from src.operacional.application.nfe_parser import NfeParser
 
@@ -61,6 +63,7 @@ XML_NFE_EXEMPLO = """<?xml version="1.0" encoding="UTF-8"?>
   </NFe>
 </nfeProc>"""
 
+
 def test_parse_nfe_com_sucesso():
     dados = NfeParser.parse_xml_content(XML_NFE_EXEMPLO)
     assert dados["chave_acesso"] == "35241012345678000199550010000045821098765432"
@@ -86,3 +89,8 @@ def test_parse_nfe_com_sucesso():
     assert item2["quantidade"] == 10000.0
     assert item2["custo_unitario"] == 3.20
     assert "LT-BAYER" in item2["codigo_lote"]
+
+
+def test_parse_xml_invalido():
+    with pytest.raises(ValueError):
+        NfeParser.parse_xml_content("<invalid>xml</invalid>")
