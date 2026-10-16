@@ -54,7 +54,8 @@ interface DashboardData {
 }
 
 export const Dashboard: React.FC = () => {
-  const { propriedade } = useAuth();
+  const { token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -127,63 +128,107 @@ export const Dashboard: React.FC = () => {
       try {
         const res = await api.get<DashboardData>('/propriedades/minha/dashboard/consolidado');
         setData(res);
-      } catch (err) {
-        console.info('Usando dados de demonstração do dashboard:', err);
-        // Fallback enriquecido e fidedigno ao protótipo da Tela 01
-        setData({
-          propriedade: {
-            nome: propriedade?.nome || 'Fazenda Santa Clara',
-            municipio: propriedade?.municipio || 'Ribeirão Preto',
-            estado: propriedade?.estado || 'SP',
-            area_total_hectares: Number(propriedade?.area_total_hectares) || 1240,
-            talhoes_ativos: 18,
-            safras_ativas: 4,
-            culturas: ['Soja', 'Milho', 'Cana'],
-          },
-          clima: {
-            temperatura: 28.4,
-            umidade: 62.8,
-            precipitacao: 12.3,
-            ultima_leitura: 'Hoje, 06:15',
-          },
-          financeiro: {
-            custo_insumos: 247800,
-            lotes_estoque: 23,
-            lotes_baixo_estoque: 3,
-            manutencao_acumulada: 38400,
-            ordens_concluidas: 5,
-          },
-          frota: {
-            ativas: 9,
-            total: 12,
-            em_manutencao: 3,
-            ordens_pendentes: 2,
-          },
-          epidemiologico: {
-            score_risco: 0.52,
-            nivel_risco: 'ALTO',
-            alertas_ativos: 2,
-            ocorrencias_30dias: 7,
-            agentes: [
-              { nome: 'Ferrugem asiática', ocorrencias: 3, severidade: 'ALTA' },
-              { nome: 'Percevejo marrom', ocorrencias: 2, severidade: 'MEDIA' },
-              { nome: 'Lagarta-do-cartucho', ocorrencias: 2, severidade: 'CRITICA' },
-            ],
-          },
-          sustentabilidade: {
-            emissoes_totais: 14.7,
-            emissao_por_hectare: 0.012,
-            energia_renovavel_pct: 68.3,
-            ultimo_relatorio: '2026-09',
-          },
-        });
+      } catch {
+        if (isDemoMode) {
+          setData({
+            propriedade: {
+              nome: propriedade?.nome || 'Fazenda Santa Clara',
+              municipio: propriedade?.municipio || 'Ribeirão Preto',
+              estado: propriedade?.estado || 'SP',
+              area_total_hectares: Number(propriedade?.area_total_hectares) || 1240,
+              talhoes_ativos: 18,
+              safras_ativas: 4,
+              culturas: ['Soja', 'Milho', 'Cana'],
+            },
+            clima: {
+              temperatura: 28.4,
+              umidade: 62.8,
+              precipitacao: 12.3,
+              ultima_leitura: 'Hoje, 06:15',
+            },
+            financeiro: {
+              custo_insumos: 247800,
+              lotes_estoque: 23,
+              lotes_baixo_estoque: 3,
+              manutencao_acumulada: 38400,
+              ordens_concluidas: 5,
+            },
+            frota: {
+              ativas: 9,
+              total: 12,
+              em_manutencao: 3,
+              ordens_pendentes: 2,
+            },
+            epidemiologico: {
+              score_risco: 0.52,
+              nivel_risco: 'ALTO',
+              alertas_ativos: 2,
+              ocorrencias_30dias: 7,
+              agentes: [
+                { nome: 'Ferrugem asiática', ocorrencias: 3, severidade: 'ALTA' },
+                { nome: 'Percevejo marrom', ocorrencias: 2, severidade: 'MEDIA' },
+                { nome: 'Lagarta-do-cartucho', ocorrencias: 2, severidade: 'CRITICA' },
+              ],
+            },
+            sustentabilidade: {
+              emissoes_totais: 14.7,
+              emissao_por_hectare: 0.012,
+              energia_renovavel_pct: 68.3,
+              ultimo_relatorio: '2026-09',
+            },
+          });
+        } else {
+          setData({
+            propriedade: {
+              nome: propriedade?.nome || 'Minha Fazenda',
+              municipio: propriedade?.municipio || '',
+              estado: propriedade?.estado || '',
+              area_total_hectares: Number(propriedade?.area_total_hectares) || 0,
+              talhoes_ativos: 0,
+              safras_ativas: 0,
+              culturas: [],
+            },
+            clima: {
+              temperatura: 26.5,
+              umidade: 60.0,
+              precipitacao: 0,
+              ultima_leitura: 'Estação Local',
+            },
+            financeiro: {
+              custo_insumos: 0,
+              lotes_estoque: 0,
+              lotes_baixo_estoque: 0,
+              manutencao_acumulada: 0,
+              ordens_concluidas: 0,
+            },
+            frota: {
+              ativas: 0,
+              total: 0,
+              em_manutencao: 0,
+              ordens_pendentes: 0,
+            },
+            epidemiologico: {
+              score_risco: 0.05,
+              nivel_risco: 'BAIXO',
+              alertas_ativos: 0,
+              ocorrencias_30dias: 0,
+              agentes: [],
+            },
+            sustentabilidade: {
+              emissoes_totais: 0,
+              emissao_por_hectare: 0,
+              energia_renovavel_pct: 0,
+              ultimo_relatorio: 'Pendente',
+            },
+          });
+        }
       } finally {
         setLoading(false);
       }
     }
 
     carregarDashboard();
-  }, [propriedade]);
+  }, [propriedade, isDemoMode]);
 
   // Callbacks de sucesso dos modais
   const handleSuccessInsumo = (novo: { nome: string; quantidade: number; custo: number }) => {

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { CustomDatePicker } from '../components/ui/CustomDatePicker';
 import { energeticoService } from '../services/energeticoService';
+import { useAuth } from '../context/AuthContext';
 
 interface ReportItem {
   id: string;
@@ -105,6 +106,9 @@ const EQUIP_OPTIONS = [
 ];
 
 export const EnergiaEsg: React.FC = () => {
+  const { token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+
   // Filtro de Safra/Período
   const [selectedPeriod, setSelectedPeriod] = useState<string>('2024/25');
 
@@ -114,7 +118,7 @@ export const EnergiaEsg: React.FC = () => {
   const [sliderCusteio, setSliderCusteio] = useState<number>(12000000);
 
   // Lista de Relatórios
-  const [reports, setReports] = useState<ReportItem[]>(INITIAL_REPORTS);
+  const [reports, setReports] = useState<ReportItem[]>(isDemoMode ? INITIAL_REPORTS : []);
 
   useEffect(() => {
     energeticoService.getRelatorios()
@@ -133,16 +137,25 @@ export const EnergiaEsg: React.FC = () => {
             updatedAt: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : 'Hoje',
           }));
           setReports((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            const fresh = mapped.filter((m) => !existingIds.has(m.id));
-            return [...fresh, ...prev];
+            if (isDemoMode) {
+              const existingIds = new Set(prev.map((p) => p.id));
+              const fresh = mapped.filter((m) => !existingIds.has(m.id));
+              return [...fresh, ...prev];
+            }
+            return mapped;
           });
+        } else if (!isDemoMode) {
+          setReports([]);
         }
       })
       .catch((err) => {
-        console.info('Modo demonstração ativo em Energia & ESG:', err);
+        if (isDemoMode) {
+          console.info('Modo demonstração ativo em Energia & ESG:', err);
+        } else {
+          setReports([]);
+        }
       });
-  }, []);
+  }, [isDemoMode]);
 
   // Modais
   const [isConsumoModalOpen, setIsConsumoModalOpen] = useState<boolean>(false);
@@ -896,8 +909,24 @@ export const EnergiaEsg: React.FC = () => {
             <tbody>
               {filteredReports.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
-                    Nenhum relatório encontrado para os critérios de busca.
+                  <td colSpan={8}>
+                    <div className="empty-state" style={{ padding: '36px 12px' }}>
+                      <div className="empty-state-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                        </svg>
+                      </div>
+                      <h3 className="empty-state-title">Nenhum balanço de emissões ou laudo registrado</h3>
+                      <p className="empty-state-desc">
+                        Lance os consumos de combustíveis e energia da frota para gerar o balanço de carbono e rating ABC+.
+                      </p>
+                      <button className="btn btn-primary" onClick={() => setIsConsumoModalOpen(true)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Lançar Consumo de Energia
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { CustomDatePicker } from '../components/ui/CustomDatePicker';
-import { operacionalService } from '../services/operacionalService';
+import { operacionalService, type TalhaoApi } from '../services/operacionalService';
+import { useAuth } from '../context/AuthContext';
 
 export interface SafraTalhao {
   id: number;
@@ -170,7 +171,10 @@ const INITIAL_SAFRAS_DATA: SafraTalhao[] = [
 ];
 
 export const SafrasPlanejamento: React.FC = () => {
-  const [safrasData, setSafrasData] = useState<SafraTalhao[]>(INITIAL_SAFRAS_DATA);
+  const { token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+
+  const [safrasData, setSafrasData] = useState<SafraTalhao[]>(() => isDemoMode ? INITIAL_SAFRAS_DATA : []);
   const [selectedSeason, setSelectedSeason] = useState<string>('Safra Principal 2024/25');
   const [seasonMenuOpen, setSeasonMenuOpen] = useState<boolean>(false);
   const [culturaFilter, setCulturaFilter] = useState<'all' | 'soja' | 'milho' | 'pousio'>('all');
@@ -195,13 +199,15 @@ export const SafrasPlanejamento: React.FC = () => {
   const [modalDetailOpen, setModalDetailOpen] = useState<boolean>(false);
   const [selectedSafra, setSelectedSafra] = useState<SafraTalhao | null>(null);
   
+  const [availableTalhoes, setAvailableTalhoes] = useState<TalhaoApi[]>([]);
+  
   // Form Nova Safra
   const [formData, setFormData] = useState({
-    talhao: 'Talhão 01 — Sede (110 ha)',
+    talhao: '',
     cultura: 'Soja',
-    variedade: 'BRS 511',
-    dataPlantio: '2025-02-05',
-    dataColheita: '2025-06-15',
+    variedade: '',
+    dataPlantio: new Date().toISOString().split('T')[0],
+    dataColheita: '',
     metaProd: 66.0,
     custoHa: 4250,
   });
@@ -214,39 +220,84 @@ export const SafrasPlanejamento: React.FC = () => {
       try {
         const safrasApi = await operacionalService.getSafras();
         if (safrasApi && safrasApi.length > 0) {
+          const apiMapped: SafraTalhao[] = safrasApi.map((s, idx) => ({
+            id: 200 + idx,
+            talhaoNome: `Talhão ${idx + 1}`,
+            talhaoDesc: `Safra ${s.cultura} • ${s.status}`,
+            area: '120,0 ha',
+            areaNum: 120,
+            cultura: s.cultura.toLowerCase().includes('milho') ? 'milho' : 'soja',
+            culturaNome: s.cultura,
+            variedade: s.variedade || 'Variedade Certificada',
+            dataPlantio: s.data_plantio.split('-').reverse().join('/'),
+            dae: '35 DAE',
+            estagio: 'V4 Vegetativo',
+            estagioPct: 35,
+            produtividade: `${s.produtividade_estimada || 68} sc/ha`,
+            volume: `${Math.round(120 * (Number(s.produtividade_estimada) || 68)).toLocaleString('pt-BR')} sc`,
+            custoHa: 'R$ 4.150',
+            status: s.status === 'COLHIDA' ? 'PRÉ-COLHEITA' : 'EM ANDAMENTO',
+          }));
           setSafrasData((prev) => {
-            const apiMapped: SafraTalhao[] = safrasApi.map((s, idx) => ({
-              id: 200 + idx,
-              talhaoNome: `Talhão ${idx + 1}`,
-              talhaoDesc: `Safra ${s.cultura} • ${s.status}`,
-              area: '120,0 ha',
-              areaNum: 120,
-              cultura: s.cultura.toLowerCase().includes('milho') ? 'milho' : 'soja',
-              culturaNome: s.cultura,
-              variedade: s.variedade || 'Variedade Certificada',
-              dataPlantio: s.data_plantio.split('-').reverse().join('/'),
-              dae: '35 DAE',
-              estagio: 'V4 Vegetativo',
-              estagioPct: 35,
-              produtividade: `${s.produtividade_estimada || 68} sc/ha`,
-              volume: `${Math.round(120 * (Number(s.produtividade_estimada) || 68)).toLocaleString('pt-BR')} sc`,
-              custoHa: 'R$ 4.150',
-              status: s.status === 'COLHIDA' ? 'PRÉ-COLHEITA' : 'EM ANDAMENTO',
-            }));
-            return [...apiMapped, ...prev.filter(p => !apiMapped.some(a => a.talhaoNome === p.talhaoNome))];
+            if (isDemoMode) {
+              return [...apiMapped, ...prev.filter(p => !apiMapped.some(a => a.talhaoNome === p.talhaoNome))];
+            }
+            return apiMapped;
           });
+        } else if (!isDemoMode) {
+          setSafrasData([]);
         }
       } catch (err) {
-        console.info('Modo demonstração ativo para Planejamento de Safras:', err);
+        if (isDemoMode) {
+          console.info('Modo demonstração ativo para Planejamento de Safras:', err);
+        } else {
+          setSafrasData([]);
+        }
       }
     }
     carregarSafras();
+  }, [isDemoMode]);
+
+  // Carregar Talhões para seleção no modal
+  useEffect(() => {
+    async function carregarTalhoesSelect() {
+      try {
+        const talhoes = await operacionalService.getTalhoes();
+        if (talhoes && talhoes.length > 0) {
+          setAvailableTalhoes(talhoes);
+          setFormData((prev) => ({
+            ...prev,
+            talhao: prev.talhao || `${talhoes[0].nome} (${talhoes[0].area_hectares} ha)`,
+          }));
+        }
+      } catch (err) {
+        console.info('Erro ao carregar talhões para formulário:', err);
+      }
+    }
+    carregarTalhoesSelect();
   }, []);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 4000);
   };
+
+  // KPIs Dinâmicos
+  const totalAreaCultivo = safrasData.reduce((acc, s) => acc + (s.areaNum || 0), 0);
+  const totalTalhoesSafras = safrasData.length;
+  const totalVolumeNum = safrasData.reduce((acc, s) => {
+    const rawVal = parseFloat(s.volume.replace(/\./g, '').replace(' sc', '')) || 0;
+    return acc + rawVal;
+  }, 0);
+  const mediaProd = totalAreaCultivo > 0 ? (totalVolumeNum / totalAreaCultivo).toFixed(1) : '0,0';
+  const custoMedioHa = safrasData.length > 0
+    ? Math.round(
+        safrasData.reduce((acc, s) => {
+          const val = parseFloat(s.custoHa.replace('R$ ', '').replace(/\./g, '')) || 0;
+          return acc + val;
+        }, 0) / safrasData.length
+      )
+    : 0;
 
   // Filtragem dos talhões
   const filteredSafras = safrasData.filter((item) => {
@@ -295,13 +346,18 @@ export const SafrasPlanejamento: React.FC = () => {
   const handleCreateSafraSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const talhaoNomeOnly = formData.talhao.split(' (')[0];
-    const areaMatch = formData.talhao.match(/\((\d+)\s*ha\)/);
-    const areaNum = areaMatch ? parseFloat(areaMatch[1]) : 100;
+    const areaMatch = formData.talhao.match(/\((\d+([,.]\d+)?)\s*ha\)/);
+    const areaNum = areaMatch ? parseFloat(areaMatch[1].replace(',', '.')) : 100;
     const volumeTotal = Math.round(areaNum * formData.metaProd);
+
+    const matchedTalhao = availableTalhoes.find(
+      (t) => t.nome === talhaoNomeOnly || formData.talhao.startsWith(t.nome)
+    );
+    const talhaoId = matchedTalhao ? matchedTalhao.id : '00000000-0000-0000-0000-000000000001';
 
     // Sincronizar com API Backend
     operacionalService.createSafra({
-      talhao_id: '00000000-0000-0000-0000-000000000001',
+      talhao_id: talhaoId,
       cultura: formData.cultura,
       variedade: formData.variedade,
       data_plantio: formData.dataPlantio,
@@ -408,28 +464,48 @@ export const SafrasPlanejamento: React.FC = () => {
       <div className="kpi-strip stagger-item">
         <div className="kpi-cell">
           <span className="kpi-cell-label">Área Sob Cultivo Ativo</span>
-          <div className="kpi-cell-val">1.420,0 <span className="unit">ha</span></div>
-          <span className="kpi-cell-sub">76,7% da fazenda • 14 talhões vinculados</span>
+          <div className="kpi-cell-val">
+            {totalAreaCultivo.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}{' '}
+            <span className="unit">ha</span>
+          </div>
+          <span className="kpi-cell-sub">
+            {totalTalhoesSafras > 0
+              ? `${totalTalhoesSafras} talhões vinculados`
+              : 'Nenhum talhão em safra'}
+          </span>
         </div>
         <div className="kpi-cell">
           <span className="kpi-cell-label">Estimativa de Produção</span>
-          <div className="kpi-cell-val">91.590 <span className="unit">sc</span></div>
-          <span className="kpi-cell-sub" style={{ color: 'var(--accent-text)' }}>Média ponderada: 64,5 sc/ha</span>
+          <div className="kpi-cell-val">
+            {totalVolumeNum.toLocaleString('pt-BR')} <span className="unit">sc</span>
+          </div>
+          <span className="kpi-cell-sub" style={{ color: 'var(--accent-text)' }}>
+            Média ponderada: {mediaProd} sc/ha
+          </span>
         </div>
         <div className="kpi-cell">
           <span className="kpi-cell-label">Janela Crítica de Colheita</span>
-          <div className="kpi-cell-val">22 Jan <span className="unit">— 25 Fev</span></div>
-          <span className="kpi-cell-sub">Fase R3 Enchimento • 38 dias restantes</span>
+          <div className="kpi-cell-val">
+            {totalTalhoesSafras > 0 ? '22 Jan — 25 Fev' : 'Sem ciclo ativo'}
+          </div>
+          <span className="kpi-cell-sub">
+            {totalTalhoesSafras > 0 ? 'Planejamento e monitoramento ativo' : 'Aguardando plantio'}
+          </span>
         </div>
         <div className="kpi-cell">
           <span className="kpi-cell-label">Balanço de Custo & Break-even</span>
-          <div className="kpi-cell-val">R$ 4.280 <span className="unit">/ha</span></div>
-          <span className="kpi-cell-sub">Ponto de equilíbrio: 41,2 sc/ha</span>
+          <div className="kpi-cell-val">
+            R$ {custoMedioHa.toLocaleString('pt-BR')} <span className="unit">/ha</span>
+          </div>
+          <span className="kpi-cell-sub">
+            {totalTalhoesSafras > 0 ? 'Ponto de equilíbrio monitorado' : 'Sem custos alocados'}
+          </span>
         </div>
       </div>
 
       {/* LINHA DO TEMPO AGRONÔMICA & GANTT FENOLÓGICO */}
-      <div className="timeline-card stagger-item">
+      {(safrasData.length > 0 || isDemoMode) && (
+        <div className="timeline-card stagger-item">
         <div className="timeline-card-header">
           <div className="timeline-heading">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" style={{ width: '18px', height: '18px', color: 'var(--accent)' }}>
@@ -515,6 +591,7 @@ export const SafrasPlanejamento: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* FAIXA DE AGROMETEOROLOGIA & RISCO CLIMÁTICO (INMET / CPTEC) */}
       <div className="climate-row stagger-item">
@@ -600,7 +677,26 @@ export const SafrasPlanejamento: React.FC = () => {
         </div>
 
         <div className="table-wrap">
-          <table className="data-table">
+          {filteredSafras.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </div>
+              <h3 className="empty-state-title">Nenhum ciclo de safra planejado</h3>
+              <p className="empty-state-desc">
+                Defina as janelas agronômicas, variedades e metas de produtividade para os talhões da sua fazenda.
+              </p>
+              <button className="btn btn-primary" onClick={() => setModalNewOpen(true)}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Planejar Primeiro Ciclo
+              </button>
+            </div>
+          ) : (
+            <table className="data-table">
             <thead>
               <tr>
                 <th>Talhão & Área</th>
@@ -710,6 +806,7 @@ export const SafrasPlanejamento: React.FC = () => {
               ))}
             </tbody>
           </table>
+          )}
         </div>
       </div>
 
@@ -733,13 +830,19 @@ export const SafrasPlanejamento: React.FC = () => {
                   <CustomSelect
                     value={formData.talhao}
                     onChange={(val) => setFormData({ ...formData, talhao: val })}
-                    options={[
-                      'Talhão 01 — Sede (110 ha)',
-                      'Talhão 02 — Pivô Central (140 ha)',
-                      'Talhão 03 — Platô Alto (95 ha)',
-                      'Talhão 05 — Cerca Velha (180 ha)',
-                      'Talhão 07 — Divisa Leste (210 ha)',
-                    ]}
+                    options={
+                      availableTalhoes.length > 0
+                        ? availableTalhoes.map((t) => `${t.nome} (${t.area_hectares} ha)`)
+                        : isDemoMode
+                        ? [
+                            'Talhão 01 — Sede (110 ha)',
+                            'Talhão 02 — Pivô Central (140 ha)',
+                            'Talhão 03 — Platô Alto (95 ha)',
+                            'Talhão 05 — Cerca Velha (180 ha)',
+                            'Talhão 07 — Divisa Leste (210 ha)',
+                          ]
+                        : ['Nenhum talhão cadastrado']
+                    }
                   />
                 </div>
 

@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { PainelTelemetriaAoVivo } from '../components/maquinarios/PainelTelemetriaAoVivo';
-import { operacionalService } from '../services/operacionalService';
+import { operacionalService, type MaquinarioApi } from '../services/operacionalService';
 import { useSync } from '../context/SyncContext';
+import { useAuth } from '../context/AuthContext';
+import { ModalCadastroMaquinario } from '../components/modals/ModalCadastroMaquinario';
 
 interface Machine {
   id: string;
@@ -446,8 +448,12 @@ const INITIAL_ORDERS: MaintenanceOrder[] = [
 
 export const Maquinarios: React.FC = () => {
   const { queueOperation } = useSync();
-  const [machines, setMachines] = useState<Machine[]>(INITIAL_MACHINES);
-  const [orders, setOrders] = useState<MaintenanceOrder[]>(INITIAL_ORDERS);
+  const { token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+
+  const [machines, setMachines] = useState<Machine[]>(() => isDemoMode ? INITIAL_MACHINES : []);
+  const [orders, setOrders] = useState<MaintenanceOrder[]>(() => isDemoMode ? INITIAL_ORDERS : []);
+  const [isModalCadastroMaquinarioOpen, setIsModalCadastroMaquinarioOpen] = useState(false);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
@@ -487,11 +493,17 @@ export const Maquinarios: React.FC = () => {
             operatorInitials: 'OP',
             talhao: 'Sede / Campo',
           }));
+
           setMachines((prev) => {
-            const existingCodes = new Set(prev.map((p) => p.code));
-            const fresh = mappedMaq.filter((fm) => !existingCodes.has(fm.code));
-            return [...fresh, ...prev];
+            if (isDemoMode) {
+              const existingCodes = new Set(prev.map((p) => p.code));
+              const fresh = mappedMaq.filter((fm) => !existingCodes.has(fm.code));
+              return [...fresh, ...prev];
+            }
+            return mappedMaq;
           });
+        } else if (!isDemoMode) {
+          setMachines([]);
         }
 
         if (resOrd.status === 'fulfilled' && resOrd.value && resOrd.value.items && resOrd.value.items.length > 0) {
@@ -513,17 +525,60 @@ export const Maquinarios: React.FC = () => {
             statusClass: o.status === 'CONCLUIDA' ? 'operating' : 'maintenance',
             date: new Date().toLocaleDateString('pt-BR'),
           }));
+
           setOrders((prev) => {
-            const existingIds = new Set(prev.map((p) => p.id));
-            const fresh = mappedOrd.filter((fo) => !existingIds.has(fo.id));
-            return [...fresh, ...prev];
+            if (isDemoMode) {
+              const existingIds = new Set(prev.map((p) => p.id));
+              const fresh = mappedOrd.filter((fo) => !existingIds.has(fo.id));
+              return [...fresh, ...prev];
+            }
+            return mappedOrd;
           });
+        } else if (!isDemoMode) {
+          setOrders([]);
         }
       })
       .catch((err) => {
-        console.info('Modo demonstração ativo em Maquinários:', err);
+        if (isDemoMode) {
+          console.info('Modo demonstração ativo em Maquinários:', err);
+        } else {
+          setMachines([]);
+          setOrders([]);
+        }
       });
-  }, []);
+  }, [isDemoMode]);
+
+  const handleMaquinaCriada = (nova: MaquinarioApi) => {
+    const idx = machines.length;
+    const mapped: Machine = {
+      id: nova.id || `maq-user-${Date.now()}`,
+      code: nova.modelo ? nova.modelo.split(' ')[0] : `MQ-${idx + 1}`,
+      name: nova.nome,
+      category: (nova.tipo === 'COLHEITADEIRA' || nova.tipo === 'PULVERIZADOR' || nova.tipo === 'PLANTADEIRA') ? (nova.tipo as any) : 'TRATOR',
+      typeTag: `${nova.tipo} • ${nova.modelo || 'Agrícola'}`,
+      status: 'PATIO',
+      statusLabel: 'Pátio / Pronta',
+      iconType: nova.tipo === 'COLHEITADEIRA' ? 'harvester' : nova.tipo === 'PULVERIZADOR' ? 'sprayer' : 'tractor',
+      horimeter: Number(nova.horimetro_atual || 0),
+      horimeterTarget: Number(nova.intervalo_preventiva || 250),
+      horimeterCyclePct: 0,
+      horimeterSub1: 'Máquina nova cadastrada',
+      horimeterSub2: `Próximo serviço em ${nova.proximo_servico_em || 250}h`,
+      telemetry1Label: 'Consumo Instantâneo',
+      telemetry1Val: '0.0 L/h (Off)',
+      telemetry2Label: 'Nível Diesel',
+      telemetry2Val: '100%',
+      telemetry2IsFuel: true,
+      fuelPct: 100,
+      telemetry3Label: 'Sinal Telemetria',
+      telemetry3Val: 'Standby',
+      operator: 'Equipe da Fazenda',
+      operatorInitials: 'EF',
+      talhao: 'Pátio Central',
+    };
+    setMachines((prev) => [mapped, ...prev]);
+    showToast(`Máquina "${nova.nome}" cadastrada com sucesso na frota!`);
+  };
 
   // Modais
   const [modalNewOSOpen, setModalNewOSOpen] = useState(false);
@@ -706,6 +761,13 @@ export const Maquinarios: React.FC = () => {
     setModalOSDetailOpen(true);
   };
 
+  const totalMaquinas = machines.length;
+  const maquinasAtivas = machines.filter((m) => m.status === 'OPERANDO' || m.status === 'PATIO').length;
+  const dispPct = totalMaquinas > 0 ? ((maquinasAtivas / totalMaquinas) * 100).toFixed(1) : '100';
+  const osAbertas = orders.filter((o) => o.status !== 'CONCLUIDA');
+  const custoTotalOS = orders.reduce((acc, o) => acc + (o.cost || 0), 0);
+  const machineAlerta = machines.find((m) => m.status === 'REVISAO' || m.status === 'MANUTENCAO');
+
   return (
     <>
       {/* Toast Notification Container */}
@@ -736,21 +798,27 @@ export const Maquinarios: React.FC = () => {
           </p>
         </div>
         <div className="header-actions">
+          <button className="btn btn-primary" onClick={() => setIsModalCadastroMaquinarioOpen(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Nova Máquina
+          </button>
+          <button className="btn btn-outline" onClick={() => setModalNewOSOpen(true)} disabled={machines.length === 0}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Abrir OS
+          </button>
           <button
             className="btn btn-outline"
             onClick={handleExportMaquinariosXlsx}
-            disabled={isExporting}
+            disabled={isExporting || orders.length === 0}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
             {isExporting ? 'Exportando...' : 'Exportar Relatório OS'}
-          </button>
-          <button className="btn btn-primary" onClick={() => setModalNewOSOpen(true)}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Abrir Ordem de Serviço
           </button>
         </div>
       </div>
@@ -760,77 +828,83 @@ export const Maquinarios: React.FC = () => {
         <div className="kpi-cell">
           <span className="kpi-cell-label">Disponibilidade da Frota</span>
           <div className="kpi-cell-val">
-            85,7%<span className="unit-text" style={{ color: 'var(--accent-text)' }}>operacional</span>
+            {dispPct}%<span className="unit-text" style={{ color: 'var(--accent-text)' }}>operacional</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag good">+2.4%</span> 12 ativas • 2 em oficina
+            {totalMaquinas > 0 ? (
+              <>{maquinasAtivas} ativas • {totalMaquinas - maquinasAtivas} oficina/revisão</>
+            ) : (
+              'Nenhuma máquina cadastrada'
+            )}
           </span>
         </div>
 
         <div className="kpi-cell">
           <span className="kpi-cell-label">Consumo Médio Telemetria</span>
           <div className="kpi-cell-val">
-            14,2<span className="unit-text">L/h</span>
+            {totalMaquinas > 0 ? '14,2' : '0,0'}<span className="unit-text">L/h</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag good">-4.1% ECO</span> 1.420 L diesel hoje
+            {totalMaquinas > 0 ? 'Telemetria CAN Bus ativa' : 'Sem telemetria ativa'}
           </span>
         </div>
 
         <div className="kpi-cell">
           <span className="kpi-cell-label">Ordens de Serviço (OS) Abertas</span>
-          <div className="kpi-cell-val" style={{ color: 'var(--warning)' }}>
-            {orders.filter((o) => o.status !== 'CONCLUIDA').length}
-            <span className="unit-text" style={{ color: 'var(--warning)' }}>ativas</span>
+          <div className="kpi-cell-val" style={{ color: osAbertas.length > 0 ? 'var(--warning)' : 'var(--text-primary)' }}>
+            {osAbertas.length}
+            <span className="unit-text" style={{ color: osAbertas.length > 0 ? 'var(--warning)' : 'var(--text-muted)' }}>ativas</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag warn">1 Corretiva urgente</span> 2 Preventivas
+            {osAbertas.length > 0 ? `${osAbertas.length} preventivas/corretivas` : 'Nenhuma OS pendente'}
           </span>
         </div>
 
         <div className="kpi-cell">
           <span className="kpi-cell-label">Custo Acumulado Manutenção</span>
           <div className="kpi-cell-val">
-            R$ 48.650<span className="cents">,00</span>
+            R$ {custoTotalOS.toLocaleString('pt-BR')}<span className="cents">,00</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag info">82% do orçado</span> Teto R$ 59.000
+            {orders.length > 0 ? `${orders.length} ordens registradas` : 'Sem lançamentos'}
           </span>
         </div>
       </div>
 
       {/* Banner de Alerta Preditivo Inteligente (Horímetro Próximo à Revisão) */}
-      <div className="alert-banner stagger-item" style={{ animationDelay: '80ms' }}>
-        <div className="alert-banner-left">
-          <div className="alert-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning)' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-            </svg>
-          </div>
-          <div className="alert-text-group">
-            <div className="alert-headline">Alerta de Revisão Preditiva: TR-01 (John Deere 8370R)</div>
-            <div className="alert-subline">
-              Horímetro atingiu <strong>1.492 h</strong> (faltam apenas <strong>8 horas</strong> para a revisão obrigatória de 1.500 h). Recomendado agendar parada preventiva ao término do plantio no <strong>Talhão 02</strong>.
+      {machineAlerta && (
+        <div className="alert-banner stagger-item" style={{ animationDelay: '80ms' }}>
+          <div className="alert-banner-left">
+            <div className="alert-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--warning)' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+            </div>
+            <div className="alert-text-group">
+              <div className="alert-headline">Alerta de Revisão Preditiva: {machineAlerta.code} ({machineAlerta.name})</div>
+              <div className="alert-subline">
+                Horímetro atingiu <strong>{machineAlerta.horimeter} h</strong> ({machineAlerta.horimeterSub2}). Recomendado agendar parada preventiva de inspeção e troca de filtros.
+              </div>
             </div>
           </div>
+          <div className="alert-actions">
+            <button
+              className="btn btn-outline"
+              style={{ fontSize: '11.5px', padding: '6px 12px' }}
+              onClick={() => handleOpenTelemetry(machineAlerta)}
+            >
+              Ver Telemetria CAN
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ fontSize: '11.5px', padding: '6px 12px' }}
+              onClick={() => handleOpenNewOSWithMachine(`${machineAlerta.code} • ${machineAlerta.name}`)}
+            >
+              Abrir OS Preventiva
+            </button>
+          </div>
         </div>
-        <div className="alert-actions">
-          <button
-            className="btn btn-outline"
-            style={{ fontSize: '11.5px', padding: '6px 12px' }}
-            onClick={() => handleOpenTelemetry(machines[0])}
-          >
-            Ver Telemetria CAN
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ fontSize: '11.5px', padding: '6px 12px' }}
-            onClick={() => handleOpenNewOSWithMachine('TR-01 • John Deere 8370R', 'PREVENTIVA_1500')}
-          >
-            Agendar Revisão 1.500h
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Card Principal: Abas de Categoria, Filtros & Toggle de Visualização */}
       <div className="fleet-controls-card stagger-item" style={{ animationDelay: '120ms' }}>
@@ -960,10 +1034,31 @@ export const Maquinarios: React.FC = () => {
         {/* ── VISÃO 1: GRID DE MÁQUINAS (Cards com Telemetria) ── */}
         {viewMode === 'GRID' && (
           <div className="fleet-grid">
-            {filteredMachines.map((m) => {
-              const isRevision = m.status === 'REVISAO';
-              const isMaintenance = m.status === 'MANUTENCAO';
-              const isOperating = m.status === 'OPERANDO';
+            {filteredMachines.length === 0 ? (
+              <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
+                <div className="empty-state-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.948c0-.621-.504-1.125-1.125-1.125H4.125C3.504 5.5 3 6.004 3 6.625v7.625m13.5-6.75h-3.75m0 0V4.5m3.75 2.25v2.25" />
+                  </svg>
+                </div>
+                <h3 className="empty-state-title">Nenhum maquinário cadastrado na frota</h3>
+                <p className="empty-state-desc">
+                  Cadastre seus tratores, colheitadeiras, pulverizadores e plantadeiras para monitorar horímetros, telemetria de campo e gerenciar ordens de manutenção preventiva.
+                </p>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px' }}>
+                  <button className="btn btn-primary" onClick={() => setIsModalCadastroMaquinarioOpen(true)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" style={{ width: '16px', height: '16px' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Cadastrar Primeira Máquina
+                  </button>
+                </div>
+              </div>
+            ) : (
+              filteredMachines.map((m) => {
+                const isRevision = m.status === 'REVISAO';
+                const isMaintenance = m.status === 'MANUTENCAO';
+                const isOperating = m.status === 'OPERANDO';
 
               return (
                 <div key={m.id} className="machine-card">
@@ -1090,7 +1185,8 @@ export const Maquinarios: React.FC = () => {
                   </div>
                 </div>
               );
-            })}
+            })
+          )}
           </div>
         )}
 
@@ -1113,15 +1209,22 @@ export const Maquinarios: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((os) => (
-                    <tr key={os.id}>
-                      <td>
-                        <span className="os-code-pill">{os.code}</span>
+                  {orders.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
+                        Nenhuma ordem de serviço cadastrada para os equipamentos desta fazenda.
                       </td>
-                      <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {os.machineCode} • {os.machineName}
-                        </div>
+                    </tr>
+                  ) : (
+                    orders.map((os) => (
+                      <tr key={os.id}>
+                        <td>
+                          <span className="os-code-pill">{os.code}</span>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {os.machineCode} • {os.machineName}
+                          </div>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{os.machineSub}</div>
                       </td>
                       <td>
@@ -1166,7 +1269,7 @@ export const Maquinarios: React.FC = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             </div>
@@ -1636,6 +1739,13 @@ export const Maquinarios: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL 4: CADASTRO DE NOVO MAQUINÁRIO */}
+      <ModalCadastroMaquinario
+        isOpen={isModalCadastroMaquinarioOpen}
+        onClose={() => setIsModalCadastroMaquinarioOpen(false)}
+        onSuccess={handleMaquinaCriada}
+      />
     </>
   );
 };

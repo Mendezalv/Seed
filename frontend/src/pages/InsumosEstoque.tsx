@@ -3,6 +3,7 @@ import { ModalEntradaInsumo } from '../components/modals/ModalEntradaInsumo';
 import { ModalImportarNfe } from '../components/modals/ModalImportarNfe';
 import { operacionalService } from '../services/operacionalService';
 import { useSync } from '../context/SyncContext';
+import { useAuth } from '../context/AuthContext';
 
 interface LoteItem {
   id: string;
@@ -136,7 +137,10 @@ const INITIAL_LOTES: LoteItem[] = [
 
 export const InsumosEstoque: React.FC = () => {
   const { queueOperation } = useSync();
-  const [lotes, setLotes] = useState<LoteItem[]>(INITIAL_LOTES);
+  const { token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+
+  const [lotes, setLotes] = useState<LoteItem[]>(() => isDemoMode ? INITIAL_LOTES : []);
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [selectedStatus, setSelectedStatus] = useState<string>('TODOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -212,16 +216,25 @@ export const InsumosEstoque: React.FC = () => {
             status: Number(l.quantidade_atual) < 100 ? 'BAIXO' : 'REGULAR',
           }));
           setLotes((prev) => {
-            const existingCodes = new Set(prev.map((p) => p.codigoLote));
-            const fresh = mapped.filter((m) => !existingCodes.has(m.codigoLote));
-            return [...fresh, ...prev];
+            if (isDemoMode) {
+              const existingCodes = new Set(prev.map((p) => p.codigoLote));
+              const fresh = mapped.filter((m) => !existingCodes.has(m.codigoLote));
+              return [...fresh, ...prev];
+            }
+            return mapped;
           });
+        } else if (!isDemoMode) {
+          setLotes([]);
         }
       })
       .catch((err) => {
-        console.info('Modo demonstração ativo em Insumos (API offline):', err);
+        if (isDemoMode) {
+          console.info('Modo demonstração ativo em Insumos (API offline):', err);
+        } else {
+          setLotes([]);
+        }
       });
-  }, []);
+  }, [isDemoMode]);
 
   const handleSuccessNovoLote = (novo: { nome: string; quantidade: number; custo: number }) => {
     const novoItem: LoteItem = {
@@ -311,6 +324,9 @@ export const InsumosEstoque: React.FC = () => {
 
   const totalValor = lotes.reduce((acc, l) => acc + l.custoTotal, 0);
   const totalCriticos = lotes.filter((l) => l.status === 'CRITICO' || l.status === 'BAIXO').length;
+  const dieselLotes = lotes.filter((l) => l.categoria === 'COMBUSTIVEL');
+  const totalDieselL = dieselLotes.reduce((acc, l) => acc + l.quantidadeAtual, 0);
+  const criticalLote = lotes.find((l) => l.status === 'CRITICO' || l.status === 'BAIXO');
 
   return (
     <>
@@ -409,10 +425,14 @@ export const InsumosEstoque: React.FC = () => {
         <div className="kpi-cell">
           <span className="kpi-cell-label">Estoque Estratégico Diesel S10</span>
           <div className="kpi-cell-val">
-            42.800<span className="unit-text">L</span>
+            {totalDieselL.toLocaleString('pt-BR')}<span className="unit-text">L</span>
           </div>
           <span className="kpi-cell-sub">
-            <span className="kpi-tag good">71,3%</span> Autonomia: 18 dias de colheita
+            {totalDieselL > 0 ? (
+              <><span className="kpi-tag good">Disponível</span> Estoque telemetrado</>
+            ) : (
+              'Sem registro de combustíveis'
+            )}
           </span>
         </div>
 
@@ -426,32 +446,32 @@ export const InsumosEstoque: React.FC = () => {
       </div>
 
       {/* Banner de Alerta Crítico */}
-      <div className="alert-banner stagger-item" style={{ animationDelay: '80ms' }}>
-        <div className="alert-banner-left">
-          <div className="alert-icon-wrap">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-            </svg>
-          </div>
-          <div className="alert-text-group">
-            <div className="alert-headline">Atenção Fitossanitária: Lote próximo à data de validade</div>
-            <div className="alert-subline">
-              O lote <strong>LT-BAY-2024-04 (Azoxistrobina + Ciproconazol)</strong> possui 180 L restantes e vence em{' '}
-              <strong>12 dias</strong> no Galpão 01. Sugestão agronômica: aplicar na pulverização preventiva do{' '}
-              <strong>Talhão 02 (Pivô Central)</strong>.
+      {criticalLote && (
+        <div className="alert-banner stagger-item" style={{ animationDelay: '80ms' }}>
+          <div className="alert-banner-left">
+            <div className="alert-icon-wrap">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+            </div>
+            <div className="alert-text-group">
+              <div className="alert-headline">Atenção Fitossanitária: Lote em atenção ({criticalLote.codigoLote})</div>
+              <div className="alert-subline">
+                O lote <strong>{criticalLote.codigoLote} ({criticalLote.nome})</strong> possui {criticalLote.quantidadeAtual.toLocaleString('pt-BR')} {criticalLote.unidade} ({criticalLote.validadeTexto}). Localização: <strong>{criticalLote.localizacao}</strong>.
+              </div>
             </div>
           </div>
+          <div className="alert-actions">
+            <button
+              className="btn btn-primary"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+              onClick={() => handleAlocacaoRapida(criticalLote.codigoLote, 'Lavoura')}
+            >
+              Baixar do Estoque
+            </button>
+          </div>
         </div>
-        <div className="alert-actions">
-          <button
-            className="btn btn-primary"
-            style={{ fontSize: '12px', padding: '6px 12px' }}
-            onClick={() => handleAlocacaoRapida('LT-BAY-2024-04', 'Talhão 02')}
-          >
-            Alocar no Talhão 02
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Ocupação Física dos Galpões */}
       <div className="warehouses-section-title stagger-item" style={{ animationDelay: '120ms' }}>
@@ -619,7 +639,34 @@ export const InsumosEstoque: React.FC = () => {
 
         {/* Tabela Data-Grid */}
         <div className="table-wrap">
-          <table className="data-table">
+          {lotes.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                </svg>
+              </div>
+              <h3 className="empty-state-title">Nenhum lote ou insumo registrado no almoxarifado</h3>
+              <p className="empty-state-desc">
+                Cadastre os lotes de defensivos, fertilizantes, sementes e combustíveis da sua fazenda para rastreabilidade de aplicação, controle de validade e baixa por talhão.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px', flexWrap: 'wrap' }}>
+                <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" style={{ width: '16px', height: '16px' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Registrar Entrada de Lote
+                </button>
+                <button className="btn btn-outline" onClick={() => setIsNfeModalOpen(true)}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor" style={{ width: '16px', height: '16px' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                  </svg>
+                  Importar NF-e (XML)
+                </button>
+              </div>
+            </div>
+          ) : (
+            <table className="data-table">
             <thead>
               <tr>
                 <th style={{ minWidth: '250px' }}>Insumo / Princípio Ativo</th>
@@ -743,6 +790,7 @@ export const InsumosEstoque: React.FC = () => {
               )}
             </tbody>
           </table>
+        )}
         </div>
 
         {/* Rodapé da Tabela de Insumos */}

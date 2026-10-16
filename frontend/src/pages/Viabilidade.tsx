@@ -3,6 +3,7 @@ import { CustomSelect } from '../components/ui/CustomSelect';
 import { CustomDatePicker } from '../components/ui/CustomDatePicker';
 import { PainelDreLcdpr } from '../components/financeiro/PainelDreLcdpr';
 import { operacionalService } from '../services/operacionalService';
+import { useAuth } from '../context/AuthContext';
 
 interface HedgeContract {
   id: string;
@@ -151,6 +152,9 @@ const MATRIX_PRICES = [120, 128, 135, 142, 150, 160];
 const MATRIX_YIELDS = [58, 62, 66, 70, 74, 78];
 
 export const Viabilidade: React.FC = () => {
+  const { token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+
   // Parâmetros da Simulação de Sensibilidade
   const [yieldVal, setYieldVal] = useState<number>(68);
   const [priceVal, setPriceVal] = useState<number>(138);
@@ -158,7 +162,8 @@ export const Viabilidade: React.FC = () => {
   const [usdVal, setUsdVal] = useState<number>(5.75);
 
   // Lista de Contratos
-  const [contracts, setContracts] = useState<HedgeContract[]>(INITIAL_CONTRACTS);
+  const [contracts, setContracts] = useState<HedgeContract[]>(isDemoMode ? INITIAL_CONTRACTS : []);
+  const [talhoesBreakeven, _setTalhoesBreakeven] = useState<TalhaoBreakevenItem[]>(isDemoMode ? TALHOES_BREAKEVEN : []);
 
   useEffect(() => {
     operacionalService.calcularViabilidade({
@@ -627,38 +632,40 @@ export const Viabilidade: React.FC = () => {
       </div>
 
       {/* Banner Inteligente de Oportunidade de Mercado */}
-      <div className="market-alert-banner">
-        <div className="market-alert-left">
-          <div className="market-alert-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-            </svg>
+      {(isDemoMode || contracts.length > 0) && (
+        <div className="market-alert-banner">
+          <div className="market-alert-left">
+            <div className="market-alert-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+              </svg>
+            </div>
+            <div className="market-alert-text">
+              <span className="market-alert-title">Oportunidade de Arbitragem & Fixação de Margem</span>
+              <span className="market-alert-desc">
+                A alta na CBOT (+0.8%) e dólar em R$ 5,74 elevaram a paridade de exportação em Paranaguá para{' '}
+                <strong>R$ 141,80 / saca</strong> (+R$ 3,30 acima do preço médio contratado). Recomendado fixar mais 15.000 sacas para atingir 70% de cobertura pré-colheita.
+              </span>
+            </div>
           </div>
-          <div className="market-alert-text">
-            <span className="market-alert-title">Oportunidade de Arbitragem & Fixação de Margem</span>
-            <span className="market-alert-desc">
-              A alta na CBOT (+0.8%) e dólar em R$ 5,74 elevaram a paridade de exportação em Paranaguá para{' '}
-              <strong>R$ 141,80 / saca</strong> (+R$ 3,30 acima do preço médio contratado). Recomendado fixar mais 15.000 sacas para atingir 70% de cobertura pré-colheita.
-            </span>
+          <div className="market-alert-actions">
+            <button
+              className="btn btn-outline"
+              style={{ padding: '6px 12px', fontSize: '11.5px' }}
+              onClick={() => showToast('Abrindo monitor de paridade cambial Paranaguá...')}
+            >
+              Ver Paridade
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ padding: '6px 14px', fontSize: '11.5px' }}
+              onClick={handleOpenArbitrage}
+            >
+              Fixar Lote Agora
+            </button>
           </div>
         </div>
-        <div className="market-alert-actions">
-          <button
-            className="btn btn-outline"
-            style={{ padding: '6px 12px', fontSize: '11.5px' }}
-            onClick={() => showToast('Abrindo monitor de paridade cambial Paranaguá...')}
-          >
-            Ver Paridade
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ padding: '6px 14px', fontSize: '11.5px' }}
-            onClick={handleOpenArbitrage}
-          >
-            Fixar Lote Agora
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* ============================================================ */}
       {/* SEÇÃO 1: SIMULADOR PROFUNDO DE SENSIBILIDADE FINANCEIRA      */}
@@ -1032,7 +1039,30 @@ export const Viabilidade: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {contracts.map((ctr) => {
+                {contracts.length === 0 ? (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className="empty-state" style={{ padding: '36px 12px' }}>
+                        <div className="empty-state-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                          </svg>
+                        </div>
+                        <h3 className="empty-state-title">Nenhum contrato de hedge ou venda</h3>
+                        <p className="empty-state-desc">
+                          Cadastre operações de venda a termo, barter ou travas na bolsa para monitorar o preço médio travado.
+                        </p>
+                        <button className="btn btn-primary" onClick={() => setIsHedgeModalOpen(true)}>
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                          Novo Contrato
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  contracts.map((ctr) => {
                   let badgeClass = 'status-badge open';
                   if (ctr.status === 'EXECUTED') badgeClass = 'status-badge executed';
                   else if (ctr.status === 'ACTIVE') badgeClass = 'status-badge active';
@@ -1069,7 +1099,8 @@ export const Viabilidade: React.FC = () => {
                       </td>
                     </tr>
                   );
-                })}
+                })
+                )}
               </tbody>
             </table>
           </div>
@@ -1400,34 +1431,52 @@ export const Viabilidade: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {TALHOES_BREAKEVEN.map((t) => (
-                      <tr key={t.id}>
-                        <td style={{ whiteSpace: 'nowrap' }}>
-                          <span className="contract-code-tag">{t.name}</span>
-                        </td>
-                        <td style={{ whiteSpace: 'nowrap' }}>{t.area}</td>
-                        <td style={{ whiteSpace: 'nowrap' }}>
-                          <span style={{ fontFamily: 'var(--font-mono)' }}>
-                            R$ {t.cotPerHa.toLocaleString('pt-BR')},00
-                          </span>
-                        </td>
-                        <td style={{ whiteSpace: 'nowrap' }}>
-                          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--warning)', fontWeight: 700 }}>
-                            {t.breakevenYield.toFixed(1).replace('.', ',')} sc/ha
-                          </span>
-                        </td>
-                        <td style={{ whiteSpace: 'nowrap' }}>
-                          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-text)', fontWeight: 700 }}>
-                            {t.estYield} sc/ha
-                          </span>
-                        </td>
-                        <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
-                          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-text)', fontWeight: 700 }}>
-                            +R$ {t.netPerHa.toLocaleString('pt-BR')},00
-                          </span>
+                    {talhoesBreakeven.length === 0 ? (
+                      <tr>
+                        <td colSpan={6}>
+                          <div className="empty-state" style={{ padding: '30px 10px' }}>
+                            <div className="empty-state-icon">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+                              </svg>
+                            </div>
+                            <h3 className="empty-state-title">Nenhum talhão para análise</h3>
+                            <p className="empty-state-desc">
+                              Cadastre talhões e planeje safras para apurar o ponto de equilíbrio de cada parcela.
+                            </p>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      talhoesBreakeven.map((t) => (
+                        <tr key={t.id}>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <span className="contract-code-tag">{t.name}</span>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap' }}>{t.area}</td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)' }}>
+                              R$ {t.cotPerHa.toLocaleString('pt-BR')},00
+                            </span>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--warning)', fontWeight: 700 }}>
+                              {t.breakevenYield.toFixed(1).replace('.', ',')} sc/ha
+                            </span>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-text)', fontWeight: 700 }}>
+                              {t.estYield} sc/ha
+                            </span>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-text)', fontWeight: 700 }}>
+                              +R$ {t.netPerHa.toLocaleString('pt-BR')},00
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

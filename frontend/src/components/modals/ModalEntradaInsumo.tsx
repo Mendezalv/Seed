@@ -10,14 +10,14 @@ interface ModalEntradaInsumoProps {
 }
 
 export const ModalEntradaInsumo: React.FC<ModalEntradaInsumoProps> = ({ isOpen, onClose, onSuccess }) => {
-  const [nomeInsumo, setNomeInsumo] = useState('Glifosato 480 SL');
+  const [nomeInsumo, setNomeInsumo] = useState('');
   const [tipoInsumo, setTipoInsumo] = useState('DEFENSIVO');
-  const [codigoLote, setCodigoLote] = useState(`LT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
-  const [fornecedor, setFornecedor] = useState('Bayer CropScience');
-  const [quantidade, setQuantidade] = useState('500');
+  const [codigoLote, setCodigoLote] = useState('');
+  const [fornecedor, setFornecedor] = useState('');
+  const [quantidade, setQuantidade] = useState('');
   const [unidade, setUnidade] = useState('litros');
-  const [valorTotal, setValorTotal] = useState('14500');
-  const [dataValidade, setDataValidade] = useState('2027-12-31');
+  const [valorTotal, setValorTotal] = useState('');
+  const [dataValidade, setDataValidade] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,17 +26,32 @@ export const ModalEntradaInsumo: React.FC<ModalEntradaInsumoProps> = ({ isOpen, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!nomeInsumo.trim()) {
+      setError('Informe o nome comercial ou princípio ativo do insumo.');
+      return;
+    }
+    if (!codigoLote.trim()) {
+      setError('Informe o código identificador do lote.');
+      return;
+    }
+    const qtdNum = parseFloat(quantidade.replace(',', '.'));
+    if (isNaN(qtdNum) || qtdNum <= 0) {
+      setError('Informe uma quantidade válida maior que zero.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       // Tenta enviar para a API FastAPI
       await api.post('/operacional/insumos/lotes', {
-        insumo_id: '00000000-0000-0000-0000-000000000001', // ID padrão ou fallback
-        codigo_lote: codigoLote,
-        quantidade_inicial: parseFloat(quantidade),
-        quantidade_atual: parseFloat(quantidade),
+        insumo_id: '00000000-0000-0000-0000-000000000001',
+        codigo_lote: codigoLote.trim().toUpperCase(),
+        quantidade_inicial: qtdNum,
+        quantidade_atual: qtdNum,
         data_validade: dataValidade || null,
-        fornecedor: fornecedor,
+        fornecedor: fornecedor.trim() || 'Fornecedor Cadastrado',
         entrada_em: new Date().toISOString(),
       });
     } catch (err) {
@@ -44,9 +59,9 @@ export const ModalEntradaInsumo: React.FC<ModalEntradaInsumoProps> = ({ isOpen, 
     } finally {
       setLoading(false);
       onSuccess({
-        nome: nomeInsumo,
-        quantidade: parseFloat(quantidade),
-        custo: parseFloat(valorTotal) || 0,
+        nome: nomeInsumo.trim(),
+        quantidade: qtdNum,
+        custo: parseFloat(valorTotal.replace(',', '.')) || 0,
       });
       onClose();
     }

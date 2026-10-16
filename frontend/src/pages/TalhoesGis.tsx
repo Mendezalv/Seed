@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
-import { operacionalService } from '../services/operacionalService';
+import { operacionalService, type TalhaoApi } from '../services/operacionalService';
 import { epidemiologicoService } from '../services/epidemiologicoService';
+import { useAuth } from '../context/AuthContext';
+import { ModalCadastroTalhao } from '../components/modals/ModalCadastroTalhao';
 
 export interface AplicacaoHist {
   data: string;
@@ -349,8 +351,11 @@ const TALHOES_DATA: Talhao[] = [
 ];
 
 export const TalhoesGis: React.FC = () => {
-  const [talhoes, setTalhoes] = useState<Talhao[]>(TALHOES_DATA);
-  const [selectedId, setSelectedId] = useState<number>(4);
+  const { token, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+
+  const [talhoes, setTalhoes] = useState<Talhao[]>(() => isDemoMode ? TALHOES_DATA : []);
+  const [selectedId, setSelectedId] = useState<number | null>(() => isDemoMode ? 4 : null);
   const [culturaFilter, setCulturaFilter] = useState<'all' | 'soja' | 'milho' | 'pousio'>('all');
   const [viewMode, setViewMode] = useState<'map' | 'table'>('map');
   const [activeTool, setActiveTool] = useState<'select' | 'ndvi' | 'measure' | 'center'>('select');
@@ -359,6 +364,7 @@ export const TalhoesGis: React.FC = () => {
   // Modais específicos do talhão e feedback
   const [modalPrescricaoOpen, setModalPrescricaoOpen] = useState(false);
   const [modalApontamentoOpen, setModalApontamentoOpen] = useState(false);
+  const [modalNovoTalhaoOpen, setModalNovoTalhaoOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Carregar Talhões reais do Backend
@@ -367,39 +373,86 @@ export const TalhoesGis: React.FC = () => {
       try {
         const talhoesApi = await operacionalService.getTalhoes();
         if (talhoesApi && talhoesApi.length > 0) {
+          const apiMapped: Talhao[] = talhoesApi.map((t, idx) => ({
+            id: 100 + idx,
+            code: `T-0${idx + 1}`,
+            nome: t.nome,
+            area: `${Number(t.area_hectares).toFixed(1).replace('.', ',')} ha`,
+            areaNum: Number(t.area_hectares),
+            cultura: (t.cultura_atual?.toLowerCase().includes('milho') ? 'milho' : 'soja') as 'soja' | 'milho' | 'pousio',
+            culturaDisplay: t.cultura_atual || 'Soja',
+            variedade: 'BRS 511',
+            estagio: 'V6 Vegetativo',
+            produtividade: '66,0 sc/ha',
+            status: 'NORMAL',
+            plantio: '20/10/2024',
+            colheita: '15/02/2025',
+            geoId: `#TLH-0${idx + 1}`,
+            x: 50 + ((idx * 200) % 550),
+            y: 95 + Math.floor(idx / 3) * 150,
+            width: 185,
+            height: 140,
+            color: '#10b981',
+            ndvi: 0.78,
+            aplicacoes: [],
+          }));
+
           setTalhoes((prev) => {
-            const apiMapped: Talhao[] = talhoesApi.map((t, idx) => ({
-              id: 100 + idx,
-              code: `T-0${idx + 1}`,
-              nome: t.nome,
-              area: `${Number(t.area_hectares).toFixed(1).replace('.', ',')} ha`,
-              areaNum: Number(t.area_hectares),
-              cultura: (t.cultura_atual?.toLowerCase().includes('milho') ? 'milho' : 'soja') as 'soja' | 'milho' | 'pousio',
-              culturaDisplay: t.cultura_atual || 'Soja',
-              variedade: 'BRS 511',
-              estagio: 'V6 Vegetativo',
-              produtividade: '66,0 sc/ha',
-              status: 'NORMAL',
-              plantio: '20/10/2024',
-              colheita: '15/02/2025',
-              geoId: `#TLH-0${idx + 1}`,
-              x: 50 + ((idx * 200) % 550),
-              y: 95 + Math.floor(idx / 3) * 150,
-              width: 185,
-              height: 140,
-              color: '#10b981',
-              ndvi: 0.78,
-              aplicacoes: [],
-            }));
-            return [...apiMapped, ...prev.filter(p => !apiMapped.some(a => a.nome === p.nome))];
+            if (isDemoMode) {
+              return [...apiMapped, ...prev.filter(p => !apiMapped.some(a => a.nome === p.nome))];
+            }
+            return apiMapped;
           });
+
+          setSelectedId((curr) => {
+            if (curr && apiMapped.some(t => t.id === curr)) return curr;
+            return apiMapped[0]?.id ?? null;
+          });
+        } else if (!isDemoMode) {
+          setTalhoes([]);
+          setSelectedId(null);
         }
       } catch (err) {
-        console.info('Modo demonstração ativo para GIS/Talhões:', err);
+        if (isDemoMode) {
+          console.info('Modo demonstração ativo para GIS/Talhões:', err);
+        } else {
+          setTalhoes([]);
+          setSelectedId(null);
+        }
       }
     }
     carregarTalhoes();
-  }, []);
+  }, [isDemoMode]);
+
+  const handleTalhaoCriado = (novo: TalhaoApi) => {
+    const idx = talhoes.length;
+    const mapped: Talhao = {
+      id: 100 + idx,
+      code: `T-0${idx + 1}`,
+      nome: novo.nome,
+      area: `${Number(novo.area_hectares).toFixed(1).replace('.', ',')} ha`,
+      areaNum: Number(novo.area_hectares),
+      cultura: (novo.cultura_atual?.toLowerCase().includes('milho') ? 'milho' : 'soja') as 'soja' | 'milho' | 'pousio',
+      culturaDisplay: novo.cultura_atual || 'Soja',
+      variedade: 'Variedade Certificada',
+      estagio: 'V1 Emergência',
+      produtividade: '—',
+      status: 'NORMAL',
+      plantio: new Date().toLocaleDateString('pt-BR'),
+      colheita: '—',
+      geoId: `#TLH-0${idx + 1}`,
+      x: 50 + ((idx * 200) % 550),
+      y: 95 + Math.floor(idx / 3) * 150,
+      width: 185,
+      height: 140,
+      color: '#10b981',
+      ndvi: 0.76,
+      aplicacoes: [],
+    };
+    setTalhoes((prev) => [mapped, ...prev]);
+    setSelectedId(mapped.id);
+    showToast(`Talhão "${novo.nome}" cadastrado com sucesso!`);
+  };
 
   // Form states de Prescrição Agronômica
   const [prescricaoInsumo, setPrescricaoInsumo] = useState('Fungicida Fox Xpro');
@@ -420,7 +473,7 @@ export const TalhoesGis: React.FC = () => {
     setTimeout(() => setToastMsg(null), 4000);
   };
 
-  const selectedTalhao = talhoes.find((t) => t.id === selectedId) || talhoes[0];
+  const selectedTalhao = (selectedId ? talhoes.find((t) => t.id === selectedId) : null) || talhoes[0] || null;
 
   // Filtro de lista
   const filteredTalhoes = talhoes.filter((t) => {
@@ -524,6 +577,7 @@ export const TalhoesGis: React.FC = () => {
   // Lançar Prescrição no Talhão
   const handleSalvarPrescricao = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedTalhao) return;
     const volumeTotal = Number((selectedTalhao.areaNum * prescricaoDose).toFixed(1));
 
     setTalhoes((prev) =>
@@ -563,6 +617,7 @@ export const TalhoesGis: React.FC = () => {
   // Salvar Apontamento de Campo
   const handleSalvarApontamento = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedTalhao) return;
     const isAlerta = apontamentoSeveridade === 'ALERTA_FERRUGEM';
 
     if (isAlerta) {
@@ -604,6 +659,13 @@ export const TalhoesGis: React.FC = () => {
     setModalApontamentoOpen(false);
   };
 
+  const totalAreaNum = talhoes.reduce((acc, t) => acc + (t.areaNum || 0), 0);
+  const areaSoja = talhoes.filter(t => t.cultura === 'soja').reduce((acc, t) => acc + (t.areaNum || 0), 0);
+  const areaMilho = talhoes.filter(t => t.cultura === 'milho').reduce((acc, t) => acc + (t.areaNum || 0), 0);
+  const areaPousio = talhoes.filter(t => t.cultura === 'pousio').reduce((acc, t) => acc + (t.areaNum || 0), 0);
+  const talhoesAlerta = talhoes.filter(t => t.status === 'ALERTA_FERRUGEM');
+  const pctCultivada = totalAreaNum > 0 ? (((areaSoja + areaMilho) / totalAreaNum) * 100).toFixed(1) : '0.0';
+
   return (
     <>
       {/* Toast flutuante de notificação */}
@@ -632,17 +694,23 @@ export const TalhoesGis: React.FC = () => {
           <p className="page-subheading">Mapeamento vetorial com telemetria fenológica, safras e alocação de insumos</p>
         </div>
         <div className="header-actions">
-          <button className="btn btn-outline" onClick={handleExportGeoJSON} title="Baixar arquivo GeoJSON SIRGAS 2000">
+          <button className="btn btn-primary" onClick={() => setModalNovoTalhaoOpen(true)} title="Cadastrar nova parcela de talhão">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Novo Talhão
+          </button>
+          <button className="btn btn-outline" onClick={handleExportGeoJSON} title="Baixar arquivo GeoJSON SIRGAS 2000" disabled={talhoes.length === 0}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
             Exportar GeoJSON
           </button>
-          <button className="btn btn-primary" onClick={handleImportKmlClick} title="Importar arquivo vetorial KML ou GeoJSON">
+          <button className="btn btn-outline" onClick={handleImportKmlClick} title="Importar arquivo vetorial KML ou GeoJSON">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Importar KML / Talhão
+            Importar KML
           </button>
         </div>
       </div>
@@ -651,25 +719,39 @@ export const TalhoesGis: React.FC = () => {
       <div className="gis-strip stagger-item">
         <div className="gis-cell">
           <span className="gis-cell-label">Área Mapeada Total</span>
-          <div className="gis-cell-val">1.850,0<span className="unit">ha</span></div>
-          <span className="gis-cell-sub">14 talhões cadastrados</span>
+          <div className="gis-cell-val">
+            {totalAreaNum.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+            <span className="unit">ha</span>
+          </div>
+          <span className="gis-cell-sub">{talhoes.length} talhões cadastrados</span>
         </div>
         <div className="gis-cell">
-          <span className="gis-cell-label">Área Cultivada (Safra 24/25)</span>
-          <div className="gis-cell-val">1.420,0<span className="unit">ha</span></div>
-          <span className="gis-cell-sub" style={{ color: 'var(--accent-text)' }}>76.7% sob plantio ativo</span>
+          <span className="gis-cell-label">Área Cultivada (Safra Atual)</span>
+          <div className="gis-cell-val">
+            {(areaSoja + areaMilho).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+            <span className="unit">ha</span>
+          </div>
+          <span className="gis-cell-sub" style={{ color: 'var(--accent-text)' }}>{pctCultivada}% sob plantio ativo</span>
         </div>
         <div className="gis-cell">
           <span className="gis-cell-label">Produtividade Estimada</span>
-          <div className="gis-cell-val">64,5<span className="unit">sc/ha</span></div>
-          <span className="gis-cell-sub">Break-even: 41,2 sc/ha</span>
+          <div className="gis-cell-val">
+            {talhoes.length > 0 ? '64,5' : '—'}
+            <span className="unit">{talhoes.length > 0 ? 'sc/ha' : ''}</span>
+          </div>
+          <span className="gis-cell-sub">{talhoes.length > 0 ? 'Break-even: 41,2 sc/ha' : 'Sem histórico registrado'}</span>
         </div>
         <div className="gis-cell">
           <span className="gis-cell-label">Talhões com Alerta</span>
-          <div className="gis-cell-val" style={{ color: 'var(--danger)' }}>
-            1 <span className="unit" style={{ color: 'var(--danger)' }}>crítico</span>
+          <div className="gis-cell-val" style={{ color: talhoesAlerta.length > 0 ? 'var(--danger)' : 'var(--accent-text)' }}>
+            {talhoesAlerta.length}{' '}
+            <span className="unit" style={{ color: talhoesAlerta.length > 0 ? 'var(--danger)' : 'var(--accent-text)' }}>
+              {talhoesAlerta.length > 0 ? 'crítico' : 'regular'}
+            </span>
           </div>
-          <span className="gis-cell-sub">Talhão 04 (Ferrugem)</span>
+          <span className="gis-cell-sub">
+            {talhoesAlerta.length > 0 ? `${talhoesAlerta[0].nome}` : 'Nenhum foco ativo'}
+          </span>
         </div>
       </div>
 
@@ -690,21 +772,21 @@ export const TalhoesGis: React.FC = () => {
             onClick={() => setCulturaFilter('soja')}
           >
             <span className="chip-dot" style={{ background: 'var(--accent)' }}></span>
-            <span>Soja (760 ha)</span>
+            <span>Soja ({areaSoja.toFixed(0)} ha)</span>
           </div>
           <div
             className={`filter-chip ${culturaFilter === 'milho' ? 'active' : ''}`}
             onClick={() => setCulturaFilter('milho')}
           >
             <span className="chip-dot" style={{ background: 'var(--warning)' }}></span>
-            <span>Milho (340 ha)</span>
+            <span>Milho ({areaMilho.toFixed(0)} ha)</span>
           </div>
           <div
             className={`filter-chip ${culturaFilter === 'pousio' ? 'active' : ''}`}
             onClick={() => setCulturaFilter('pousio')}
           >
             <span className="chip-dot" style={{ background: 'var(--text-muted)' }}></span>
-            <span>Pastagem/Pousio (320 ha)</span>
+            <span>Pastagem/Pousio ({areaPousio.toFixed(0)} ha)</span>
           </div>
         </div>
 
@@ -730,9 +812,37 @@ export const TalhoesGis: React.FC = () => {
         </div>
       </div>
 
-      {/* VIEW 1: MAPA GIS INTERATIVO COM GAVETA */}
-      {viewMode === 'map' && (
-        <div className="gis-workspace stagger-item">
+      {talhoes.length === 0 ? (
+        <div className="empty-state stagger-item">
+          <div className="empty-state-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+            </svg>
+          </div>
+          <h3 className="empty-state-title">Nenhum talhão cadastrado nesta fazenda</h3>
+          <p className="empty-state-desc">
+            Cadastre os talhões da sua propriedade com área em hectares, cultura atual e tipo de solo para habilitar o GIS territorial, a análise fenológica de satélite (NDVI) e o lançamento de prescrições agronômicas.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '16px', flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={() => setModalNovoTalhaoOpen(true)}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" style={{ width: '16px', height: '16px' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Cadastrar Primeiro Talhão
+            </button>
+            <button className="btn btn-outline" onClick={handleImportKmlClick}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" style={{ width: '16px', height: '16px' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Importar KML / GeoJSON
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* VIEW 1: MAPA GIS INTERATIVO COM GAVETA */}
+          {viewMode === 'map' && (
+            <div className="gis-workspace stagger-item">
           {/* Card do Mapa Interativo */}
           <div className="map-container">
             {/* Controles de Ferramentas do Mapa */}
@@ -1284,6 +1394,8 @@ export const TalhoesGis: React.FC = () => {
           </div>
         </div>
       )}
+        </>
+      )}
 
       {/* MODAL 1: PRESCRIÇÃO E ALOCAÇÃO AGRONÔMICA ESPECÍFICA DO TALHÃO */}
       {modalPrescricaoOpen && (
@@ -1293,7 +1405,7 @@ export const TalhoesGis: React.FC = () => {
               <div>
                 <h3 className="modal-title">Prescrever Aplicação no Talhão</h3>
                 <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  Alvo: {selectedTalhao.nome} • {selectedTalhao.culturaDisplay} ({selectedTalhao.area})
+                  Alvo: {selectedTalhao?.nome || 'Talhão Selecionado'} • {selectedTalhao?.culturaDisplay || 'Cultura'} ({selectedTalhao?.area || ''})
                 </span>
               </div>
               <button className="modal-close" onClick={() => setModalPrescricaoOpen(false)}>
@@ -1423,9 +1535,9 @@ export const TalhoesGis: React.FC = () => {
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px' }}>
             <div className="modal-header">
               <div>
-                <h3 className="modal-title">Apontamento de Campo — {selectedTalhao.nome}</h3>
+                <h3 className="modal-title">Apontamento de Campo — {selectedTalhao?.nome || 'Talhão Selecionado'}</h3>
                 <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  PostGIS GeoJSON ID: {selectedTalhao.geoId} • Centro: 12°32'44"S 55°42'18"W
+                  PostGIS GeoJSON ID: {selectedTalhao?.geoId || '—'} • Centro: 12°32'44"S 55°42'18"W
                 </span>
               </div>
               <button className="modal-close" onClick={() => setModalApontamentoOpen(false)}>
@@ -1503,6 +1615,13 @@ export const TalhoesGis: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL 3: CADASTRO DE NOVO TALHÃO */}
+      <ModalCadastroTalhao
+        isOpen={modalNovoTalhaoOpen}
+        onClose={() => setModalNovoTalhaoOpen(false)}
+        onSuccess={handleTalhaoCriado}
+      />
     </>
   );
 };
