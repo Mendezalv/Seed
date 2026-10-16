@@ -109,9 +109,14 @@ function playNotificationChime(isCritical: boolean) {
 }
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, isAuthenticated } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>(DEFAULT_DEMO_NOTIFICATIONS);
-  const [unreadCount, setUnreadCount] = useState<number>(3);
+  const { token, isAuthenticated, propriedade } = useAuth();
+  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const [notifications, setNotifications] = useState<Notification[]>(() =>
+    isDemoMode ? DEFAULT_DEMO_NOTIFICATIONS : []
+  );
+  const [unreadCount, setUnreadCount] = useState<number>(() =>
+    isDemoMode ? DEFAULT_DEMO_NOTIFICATIONS.filter((n) => !n.lida).length : 0
+  );
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [activeToast, setActiveToast] = useState<Notification | null>(null);
 
@@ -142,17 +147,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const refresh = useCallback(async () => {
-    if (!token || token === 'demo-token') {
+    if (!token || token === 'demo-token' || isDemoMode) {
       return;
     }
     try {
       const data = await notificationService.getNotifications(false, 50);
-      setNotifications(data.items);
-      setUnreadCount(data.total_nao_lidas);
+      setNotifications(data.items || []);
+      setUnreadCount(data.total_nao_lidas ?? 0);
     } catch {
-      // Mantém lista atual se houver falha de rede temporária
+      // Falha temporária: mantém lista limpa
     }
-  }, [token]);
+  }, [token, isDemoMode]);
 
   // Marca notificação específica como lida
   const markAsRead = useCallback(async (id: string) => {
@@ -240,7 +245,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Conexão WebSocket em Tempo Real
   useEffect(() => {
     if (!isAuthenticated || !token || token === 'demo-token') {
-      setIsConnected(false);
       return;
     }
 
