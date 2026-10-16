@@ -1,5 +1,5 @@
 import logging
-import re
+import urllib.parse
 from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from src.shared.config import get_settings
@@ -7,16 +7,48 @@ from src.shared.config import get_settings
 logger = logging.getLogger("seed.database")
 settings = get_settings()
 
-db_url = settings.DATABASE_URL or "sqlite+aiosqlite:///./seed.db"
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
-elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
-    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+def clean_asyncpg_url(url: str | None) -> str:
+    """
+    Normaliza URLs de PostgreSQL em nuvem (Neon, Supabase, Render) para asyncpg,
+    removendo parâmetros exclusivos do libpq como channel_binding.
+    """
+    if not url:
+        return "sqlite+aiosqlite:///./seed.db"
 
-# Se houver sslmode=... na URL, normaliza para ssl=require para asyncpg
-if "sslmode=" in db_url:
-    db_url = re.sub(r"sslmode=[^&]+", "ssl=require", db_url)
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
+    if url.startswith("sqlite"):
+        return url
+
+    parsed = urllib.parse.urlsplit(url)
+    if not parsed.query:
+        return url
+
+    query_params = urllib.parse.parse_qsl(parsed.query)
+    cleaned_params: list[tuple[str, str]] = []
+    has_ssl = False
+
+    for k, v in query_params:
+        # Descarta parâmetros libpq incompatíveis com kwargs do asyncpg.connect()
+        if k in ("channel_binding", "gssencmode", "target_session_attrs"):
+            continue
+        if k == "sslmode":
+            if not has_ssl:
+                cleaned_params.append(("ssl", "require"))
+                has_ssl = True
+        elif k == "ssl":
+            cleaned_params.append((k, v))
+            has_ssl = True
+        else:
+            cleaned_params.append((k, v))
+
+    new_query = urllib.parse.urlencode(cleaned_params)
+    return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path, new_query, parsed.fragment))
+
+db_url = clean_asyncpg_url(settings.DATABASE_URL)
 is_sqlite = db_url.startswith("sqlite")
 engine = create_async_engine(
     db_url,
