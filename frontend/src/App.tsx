@@ -18,6 +18,7 @@ import { Maquinarios } from './pages/Maquinarios';
 import { Viabilidade } from './pages/Viabilidade';
 import { VigilanciaSanitaria } from './pages/VigilanciaSanitaria';
 import { EnergiaEsg } from './pages/EnergiaEsg';
+import { Configuracoes } from './pages/Configuracoes';
 
 const RootRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -119,6 +120,7 @@ export const App: React.FC = () => {
                   <Route path="/viabilidade" element={<Viabilidade />} />
                   <Route path="/vigilancia" element={<VigilanciaSanitaria />} />
                   <Route path="/energia-esg" element={<EnergiaEsg />} />
+                  <Route path="/configuracoes" element={<Configuracoes />} />
                 </Route>
 
                 {/* Fallback */}

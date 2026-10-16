@@ -64,6 +64,9 @@ export const Dashboard: React.FC = () => {
   const [showModalViabilidade, setShowModalViabilidade] = useState(false);
   const [showModalFazenda, setShowModalFazenda] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [hideOnboarding, setHideOnboarding] = useState(
+    () => localStorage.getItem('seed_hide_onboarding') === 'true'
+  );
 
   // Estados de exportação de relatórios
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -258,6 +261,13 @@ export const Dashboard: React.FC = () => {
     );
     showToast(`Fazenda "${nova.nome}" cadastrada e ativada com sucesso!`);
   };
+
+  const hasTalhao = (data?.propriedade?.talhoes_ativos || 0) > 0;
+  const hasSafra = (data?.propriedade?.safras_ativas || 0) > 0;
+  const hasFrota = (data?.frota?.total || 0) > 0;
+  const hasInsumo = (data?.financeiro?.lotes_estoque || 0) > 0;
+  const completedStepsCount = [hasTalhao, hasSafra, hasFrota, hasInsumo].filter(Boolean).length;
+  const showOnboarding = !hideOnboarding && completedStepsCount < 4;
 
   return (
     <>
@@ -505,6 +515,213 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Onboarding Guiado para Fazenda Nova */}
+      {showOnboarding && (
+        <div
+          className="stagger-item"
+          style={{
+            marginBottom: '20px',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(24, 24, 27, 0.95) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: 'var(--radius-md)',
+            padding: '20px 24px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <span
+                  style={{
+                    background: 'var(--accent)',
+                    color: '#09090b',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  Onboarding da Fazenda
+                </span>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                  {completedStepsCount} de 4 etapas concluídas ({Math.round((completedStepsCount / 4) * 100)}%)
+                </span>
+              </div>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Guia de Ativação da Fazenda: 4 Passos Essenciais
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                Complete os módulos abaixo para ativar os laudos executivos, sensoriamento microclimático e auditoria ESG.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '120px', height: '6px', background: 'var(--bg-elevated)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    width: `${(completedStepsCount / 4) * 100}%`,
+                    height: '100%',
+                    background: 'var(--accent)',
+                    transition: 'width 300ms ease',
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setHideOnboarding(true);
+                  localStorage.setItem('seed_hide_onboarding', 'true');
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                Dispensar
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '12px',
+            }}
+          >
+            {/* Passo 1: Talhões */}
+            <Link
+              to="/talhoes"
+              style={{
+                textDecoration: 'none',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: hasTalhao ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '10px',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  1. Mapear Talhões no GIS
+                </span>
+                {hasTalhao ? (
+                  <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>✓ Concluído</span>
+                ) : (
+                  <span style={{ color: 'var(--accent-text)', fontSize: '11px', fontWeight: 500 }}>Iniciar →</span>
+                )}
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                Delimite os perímetros e áreas agricultáveis no mapa georreferenciado.
+              </p>
+            </Link>
+
+            {/* Passo 2: Safras */}
+            <Link
+              to="/safras"
+              style={{
+                textDecoration: 'none',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: hasSafra ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '10px',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  2. Abrir Safra Vigente
+                </span>
+                {hasSafra ? (
+                  <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>✓ Concluído</span>
+                ) : (
+                  <span style={{ color: 'var(--accent-text)', fontSize: '11px', fontWeight: 500 }}>Cadastrar →</span>
+                )}
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                Registre o ciclo produtivo atual, cultura principal e estimativa de colheita.
+              </p>
+            </Link>
+
+            {/* Passo 3: Maquinários */}
+            <Link
+              to="/maquinarios"
+              style={{
+                textDecoration: 'none',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: hasFrota ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '10px',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  3. Cadastrar Frota & Máquinas
+                </span>
+                {hasFrota ? (
+                  <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>✓ Concluído</span>
+                ) : (
+                  <span style={{ color: 'var(--accent-text)', fontSize: '11px', fontWeight: 500 }}>Adicionar →</span>
+                )}
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                Lance tratores, colheitadeiras e implementos com telemetria horímetro.
+              </p>
+            </Link>
+
+            {/* Passo 4: Insumos */}
+            <Link
+              to="/insumos"
+              style={{
+                textDecoration: 'none',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: hasInsumo ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: '10px',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  4. Lançar Estoque de Insumos
+                </span>
+                {hasInsumo ? (
+                  <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>✓ Concluído</span>
+                ) : (
+                  <span style={{ color: 'var(--accent-text)', fontSize: '11px', fontWeight: 500 }}>Lançar →</span>
+                )}
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                Cadastre sementes, fertilizantes e defensivos para calcular o custo/ha.
+              </p>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Climate Strip */}
       <div className="climate-strip stagger-item" style={{ animationDelay: '80ms' }}>

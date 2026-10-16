@@ -19,6 +19,7 @@ const ROUTE_NAMES: Record<string, string> = {
   '/viabilidade': 'Viabilidade Econômica',
   '/vigilancia': 'Vigilância Sanitária',
   '/energia-esg': 'Energia & ESG',
+  '/configuracoes': 'Configurações & Equipe',
 };
 
 export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
