@@ -19,7 +19,8 @@ class UsuarioCreate(BaseModel):
     nome_completo: str
     senha: str = Field(min_length=8)
     propriedade_id: UUID | None = None
-    role: str = "OPERADOR"
+    role: str = "ADMIN"
+    nome_propriedade: str | None = None
 
 class MembroCreate(BaseModel):
     email: EmailStr

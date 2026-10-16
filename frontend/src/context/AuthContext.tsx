@@ -31,13 +31,31 @@ interface AuthResponse {
 interface AuthContextType {
   user: Usuario | null;
   propriedade: Propriedade | null;
+  listaPropriedades: Propriedade[];
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, senha: string) => Promise<void>;
+  registrar: (dados: {
+    nome_completo: string;
+    email: string;
+    senha: string;
+    nome_propriedade?: string;
+  }) => Promise<void>;
   loginDemo: (customUser?: Usuario, customPropriedade?: Propriedade) => void;
   logout: () => void;
   carregarPropriedade: () => Promise<void>;
+  carregarListaPropriedades: () => Promise<void>;
+  cadastrarPropriedade: (dados: {
+    nome: string;
+    municipio?: string;
+    estado?: string;
+    area_total_hectares?: number;
+    cnpj_cpf?: string;
+    inscricao_estadual?: string;
+    car_numero?: string;
+  }) => Promise<Propriedade>;
+  selecionarPropriedade: (prop: Propriedade) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +71,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [listaPropriedades, setListaPropriedades] = useState<Propriedade[]>(() => {
+    const saved = localStorage.getItem('seed_lista_propriedades');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('seed_token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -63,6 +86,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('seed_propriedade', JSON.stringify(data));
     } catch (err) {
       console.warn('Não foi possível carregar propriedade:', err);
+    }
+  };
+
+  const carregarListaPropriedades = async () => {
+    if (token === 'demo-token') {
+      const savedList = localStorage.getItem('seed_lista_propriedades');
+      if (savedList) {
+        setListaPropriedades(JSON.parse(savedList));
+      } else if (propriedade) {
+        setListaPropriedades([propriedade]);
+      }
+      return;
+    }
+    try {
+      const data = await api.get<Propriedade[]>('/propriedades');
+      setListaPropriedades(data);
+      localStorage.setItem('seed_lista_propriedades', JSON.stringify(data));
+    } catch (err) {
+      console.warn('Não foi possível listar propriedades:', err);
+    }
+  };
+
+  const cadastrarPropriedade = async (dados: {
+    nome: string;
+    municipio?: string;
+    estado?: string;
+    area_total_hectares?: number;
+    cnpj_cpf?: string;
+    inscricao_estadual?: string;
+    car_numero?: string;
+  }): Promise<Propriedade> => {
+    if (token === 'demo-token') {
+      const nova: Propriedade = {
+        id: `demo-prop-${Date.now()}`,
+        nome: dados.nome,
+        municipio: dados.municipio || 'Sorriso',
+        estado: dados.estado || 'MT',
+        area_total_hectares: dados.area_total_hectares || 1000,
+        cnpj_cpf: dados.cnpj_cpf || null,
+        inscricao_estadual: dados.inscricao_estadual || null,
+        car_numero: dados.car_numero || null,
+      };
+      setPropriedade(nova);
+      localStorage.setItem('seed_propriedade', JSON.stringify(nova));
+      setListaPropriedades((prev) => {
+        const updated = [...prev.filter((p) => p.id !== nova.id), nova];
+        localStorage.setItem('seed_lista_propriedades', JSON.stringify(updated));
+        return updated;
+      });
+      return nova;
+    }
+
+    const nova = await api.post<Propriedade>('/propriedades', dados);
+    setPropriedade(nova);
+    localStorage.setItem('seed_propriedade', JSON.stringify(nova));
+    await carregarListaPropriedades();
+    return nova;
+  };
+
+  const selecionarPropriedade = async (prop: Propriedade) => {
+    if (token === 'demo-token') {
+      setPropriedade(prop);
+      localStorage.setItem('seed_propriedade', JSON.stringify(prop));
+      return;
+    }
+    try {
+      await api.post(`/propriedades/${prop.id}/selecionar`);
+      setPropriedade(prop);
+      localStorage.setItem('seed_propriedade', JSON.stringify(prop));
+    } catch (err) {
+      console.error('Erro ao selecionar propriedade:', err);
+      setPropriedade(prop);
+      localStorage.setItem('seed_propriedade', JSON.stringify(prop));
     }
   };
 
@@ -131,6 +227,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await carregarPropriedade();
   };
 
+  const registrar = async (dados: {
+    nome_completo: string;
+    email: string;
+    senha: string;
+    nome_propriedade?: string;
+  }) => {
+    try {
+      await api.post('/auth/registro', dados);
+      await login(dados.email, dados.senha);
+    } catch (err) {
+      console.error('Falha no cadastro de usuário:', err);
+      throw err;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('seed_token');
     localStorage.removeItem('seed_user');
@@ -145,13 +256,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         propriedade,
+        listaPropriedades,
         token,
         isAuthenticated: !!token && !!user,
         isLoading,
         login,
+        registrar,
         loginDemo,
         logout,
         carregarPropriedade,
+        carregarListaPropriedades,
+        cadastrarPropriedade,
+        selecionarPropriedade,
       }}
     >
       {children}

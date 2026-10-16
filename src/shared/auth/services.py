@@ -40,7 +40,12 @@ class AuthService:
 
         prop_id = usuario_in.propriedade_id
         if not prop_id:
-            nova_propriedade = Propriedade(nome=usuario_in.nome_completo)
+            nome_fazenda = (
+                usuario_in.nome_propriedade.strip()
+                if usuario_in.nome_propriedade and usuario_in.nome_propriedade.strip()
+                else f"Fazenda {usuario_in.nome_completo}"
+            )
+            nova_propriedade = Propriedade(nome=nome_fazenda)
             session.add(nova_propriedade)
             await session.flush()
             prop_id = nova_propriedade.id

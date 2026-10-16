@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { ModalEntradaInsumo } from '../components/modals/ModalEntradaInsumo';
 import { ModalOcorrenciaSanitaria } from '../components/modals/ModalOcorrenciaSanitaria';
 import { ModalSimuladorViabilidade } from '../components/modals/ModalSimuladorViabilidade';
+import { ModalCadastroFazenda } from '../components/modals/ModalCadastroFazenda';
+import type { Propriedade } from '../context/AuthContext';
 
 interface DashboardData {
   propriedade?: {
@@ -60,6 +62,7 @@ export const Dashboard: React.FC = () => {
   const [showModalInsumo, setShowModalInsumo] = useState(false);
   const [showModalSanitaria, setShowModalSanitaria] = useState(false);
   const [showModalViabilidade, setShowModalViabilidade] = useState(false);
+  const [showModalFazenda, setShowModalFazenda] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Estados de exportação de relatórios
@@ -236,6 +239,26 @@ export const Dashboard: React.FC = () => {
     showToast(`Simulação concluída: Margem líquida estimada em ${resultado.margem}% (Break-even: ${resultado.breakEven} sc/ha).`);
   };
 
+  const handleSuccessFazenda = (nova: Propriedade) => {
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            propriedade: {
+              nome: nova.nome,
+              municipio: nova.municipio || 'Sorriso',
+              estado: nova.estado || 'MT',
+              area_total_hectares: Number(nova.area_total_hectares) || 1000,
+              talhoes_ativos: 0,
+              safras_ativas: 0,
+              culturas: [],
+            },
+          }
+        : prev
+    );
+    showToast(`Fazenda "${nova.nome}" cadastrada e ativada com sucesso!`);
+  };
+
   return (
     <>
       {/* Toast flutuante de notificação */}
@@ -265,6 +288,12 @@ export const Dashboard: React.FC = () => {
         isOpen={showModalViabilidade}
         onClose={() => setShowModalViabilidade(false)}
         onSuccess={handleSuccessViabilidade}
+      />
+
+      <ModalCadastroFazenda
+        isOpen={showModalFazenda}
+        onClose={() => setShowModalFazenda(false)}
+        onSuccess={handleSuccessFazenda}
       />
 
       {/* Header */}
@@ -374,6 +403,20 @@ export const Dashboard: React.FC = () => {
                 </div>
             )}
           </div>
+
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => setShowModalFazenda(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            title="Cadastrar uma nova fazenda rural no sistema"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Nova Fazenda
+          </button>
+
           <button className="btn btn-primary" onClick={() => setShowModalViabilidade(true)}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
@@ -393,8 +436,28 @@ export const Dashboard: React.FC = () => {
             </svg>
           </div>
           <div>
-            <div className="context-label">Propriedade</div>
-            <div className="context-value">{data?.propriedade?.nome || 'Carregando...'}</div>
+            <div className="context-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>Propriedade</span>
+              <button
+                type="button"
+                onClick={() => setShowModalFazenda(true)}
+                style={{
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  color: 'var(--accent-text)',
+                  fontSize: '10px',
+                  padding: '1px 6px',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  transition: 'all 150ms ease',
+                }}
+                title="Cadastrar outra fazenda"
+              >
+                + Nova
+              </button>
+            </div>
+            <div className="context-value">{data?.propriedade?.nome || propriedade?.nome || 'Carregando...'}</div>
           </div>
         </div>
         <div className="context-divider" />

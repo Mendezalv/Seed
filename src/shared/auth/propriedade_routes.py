@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
 
 from src.shared.database.session import get_session
-from src.shared.database.models import Propriedade
+from src.shared.database.models import Propriedade, Usuario
 from src.shared.auth.schemas import (
     PropriedadeCreate, PropriedadeResponse, PropriedadeUpdate,
     UsuarioResponse, UsuarioCreate, MembroCreate, MembroUpdate
@@ -23,22 +23,55 @@ from src.shared.dashboard.service import DashboardService
 
 router = APIRouter(prefix="/propriedades", tags=["Propriedades"])
 
+@router.get("", response_model=list[PropriedadeResponse])
+async def listar_propriedades(
+    current_user = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """Lista todas as propriedades cadastradas no sistema."""
+    result = await session.execute(select(Propriedade).order_by(Propriedade.nome))
+    return [PropriedadeResponse.model_validate(p) for p in result.scalars().all()]
+
 @router.post("", response_model=PropriedadeResponse, status_code=status.HTTP_201_CREATED)
 async def criar_propriedade(
     prop_in: PropriedadeCreate,
     current_user = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
-    """Cria uma nova propriedade."""
+    """Cria uma nova propriedade rural e associa ao usuário ativo."""
     nova_propriedade = Propriedade(**prop_in.model_dump())
     session.add(nova_propriedade)
     await session.commit()
     await session.refresh(nova_propriedade)
     
+    # Associa o usuário que criou à nova propriedade para operação imediata
+    user_id = current_user.sub if isinstance(current_user.sub, UUID) else UUID(str(current_user.sub))
+    usuario = await session.get(Usuario, user_id)
+    if usuario:
+        usuario.propriedade_id = nova_propriedade.id
+        await session.commit()
+    
     from src.shared.database.seed_data import seed_fontes_energia
     await seed_fontes_energia(session, nova_propriedade.id)
     
     return PropriedadeResponse.model_validate(nova_propriedade)
+
+@router.post("/{propriedade_id}/selecionar", response_model=PropriedadeResponse)
+async def selecionar_propriedade(
+    propriedade_id: UUID,
+    current_user = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """Alterna a propriedade ativa do usuário logado."""
+    propriedade = await session.get(Propriedade, propriedade_id)
+    if not propriedade:
+        raise HTTPException(status_code=404, detail="Propriedade não encontrada")
+    user_id = current_user.sub if isinstance(current_user.sub, UUID) else UUID(str(current_user.sub))
+    usuario = await session.get(Usuario, user_id)
+    if usuario:
+        usuario.propriedade_id = propriedade.id
+        await session.commit()
+    return PropriedadeResponse.model_validate(propriedade)
 
 @router.get("/minha", response_model=PropriedadeResponse)
 async def obter_minha_propriedade(
