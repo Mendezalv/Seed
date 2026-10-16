@@ -75,16 +75,27 @@ async def init_db() -> None:
     from src.shared.database.base import Base
     from src.shared.database.seed_data import seed_admin_padrao
 
+    from sqlalchemy import text
+
+    if not is_sqlite:
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+            logger.info("Extensão PostGIS habilitada com sucesso.")
+        except Exception as exc:
+            logger.warning("Aviso ao tentar habilitar PostGIS: %s", exc)
+
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Esquema de banco de dados verificado/criado com sucesso.")
     except Exception as exc:
-        logger.warning("Aviso durante verificação de schema: %s", exc)
+        logger.error("Erro durante verificação/criação de schema: %s", exc)
 
     try:
         async with async_session_maker() as session:
             await seed_admin_padrao(session)
+        logger.info("Seed de usuário administrador verificado com sucesso.")
     except Exception as exc:
         logger.warning("Aviso durante seed inicial: %s", exc)
 

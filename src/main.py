@@ -88,6 +88,16 @@ app.include_router(notificacoes_router, prefix="/api/v1")
 app.include_router(cotacoes_router, prefix="/api/v1")
 
 
+@app.get("/api/v1/system/init-db", tags=["System"])
+@app.post("/api/v1/system/init-db", tags=["System"])
+async def trigger_init_db():
+    """
+    Inicializa tabelas do schema e popula o usuário administrador padrão caso ainda não existam.
+    """
+    await init_db()
+    return {"status": "ok", "message": "Schema verificado e tabelas inicializadas com sucesso."}
+
+
 @app.get("/health", tags=["Health"])
 @app.get("/api/v1/health", tags=["Health"])
 async def health_check(session: AsyncSession = Depends(get_session)):
