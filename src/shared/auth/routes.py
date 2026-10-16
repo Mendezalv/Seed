@@ -3,7 +3,15 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shared.database.session import get_session
-from src.shared.auth.schemas import UsuarioCreate, UsuarioResponse, LoginRequest, LoginResponse
+from src.shared.auth.schemas import (
+    UsuarioCreate,
+    UsuarioResponse,
+    LoginRequest,
+    LoginResponse,
+    EsqueciSenhaRequest,
+    RedefinirSenhaRequest,
+    MensagemResponse,
+)
 from src.shared.auth.services import AuthService
 from src.shared.auth.dependencies import get_current_user
 from src.shared.auth.rbac import require_permission
@@ -51,3 +59,22 @@ async def desativar_usuario(
 ):
     """Desativa um usuário na propriedade."""
     return await AuthService.desativar_usuario(user_id, propriedade_id, session)
+
+
+@router.post("/recuperar-senha", response_model=MensagemResponse)
+async def recuperar_senha(
+    dados: EsqueciSenhaRequest,
+    session: AsyncSession = Depends(get_session)
+):
+    """Solicita envio de link/token para redefinição de senha."""
+    return await AuthService.solicitar_recuperacao_senha(dados.email, session)
+
+
+@router.post("/redefinir-senha", response_model=MensagemResponse)
+async def redefinir_senha(
+    dados: RedefinirSenhaRequest,
+    session: AsyncSession = Depends(get_session)
+):
+    """Redefine a senha do usuário utilizando o token recebido."""
+    return await AuthService.redefinir_senha(dados.token, dados.nova_senha, session)
+

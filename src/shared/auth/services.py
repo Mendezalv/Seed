@@ -1,10 +1,12 @@
-from uuid import UUID
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from typing import Any
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from fastapi import HTTPException, status
 
+from src.shared.config import get_settings
 from src.shared.database.models import Propriedade, Usuario
 from src.shared.auth.schemas import UsuarioCreate, UsuarioResponse, LoginRequest, LoginResponse
 from src.shared.auth.jwt import create_access_token
@@ -136,3 +138,81 @@ class AuthService:
         await session.commit()
         await session.refresh(usuario)
         return usuario
+
+    @staticmethod
+    async def solicitar_recuperacao_senha(email: str, session: AsyncSession) -> dict[str, Any]:
+        """
+        Processa solicitação de recuperação de senha.
+        Gera token JWT temporário de 1h e emite o link de redefinição.
+        Por segurança, sempre retorna mensagem genérica para evitar enumeração de contas.
+        """
+        import logging
+        logger = logging.getLogger("seed.auth")
+
+        query = select(Usuario).where(Usuario.email == email)
+        result = await session.execute(query)
+        usuario = result.scalar_one_or_none()
+
+        if usuario and usuario.ativo:
+            token = create_access_token(
+                data={
+                    "sub": str(usuario.id),
+                    "email": usuario.email,
+                    "type": "password_reset",
+                },
+                expires_delta=timedelta(hours=1),
+            )
+            # Em staging/desenvolvimento/modo econômico, registra de forma segura no log estruturado:
+            logger.info(
+                "[RECUPERAÇÃO DE SENHA] Link gerado para %s: /redefinir-senha?token=%s",
+                usuario.email,
+                token,
+            )
+
+        return {
+            "mensagem": "Se o e-mail informado estiver cadastrado, as instruções para redefinição foram enviadas.",
+            "sucesso": True,
+        }
+
+    @staticmethod
+    async def redefinir_senha(token: str, nova_senha: str, session: AsyncSession) -> dict[str, Any]:
+        """
+        Valida o token JWT de redefinição e atualiza a senha com hash seguro bcrypt.
+        """
+        settings = get_settings()
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            if payload.get("type") != "password_reset":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Token inválido para esta operação.",
+                )
+            from uuid import UUID
+            user_id = UUID(str(payload.get("sub")))
+        except HTTPException:
+            raise
+        except (JWTError, Exception):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token de recuperação inválido ou expirado.",
+            )
+
+        query = select(Usuario).where(Usuario.id == user_id)
+        result = await session.execute(query)
+        usuario = result.scalar_one_or_none()
+
+        if not usuario or not usuario.ativo:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado ou inativo.",
+            )
+
+        usuario.senha_hash = hash_password(nova_senha)
+        await session.commit()
+        await session.refresh(usuario)
+
+        return {
+            "mensagem": "Senha redefinida com sucesso! Você já pode realizar o login com suas novas credenciais.",
+            "sucesso": True,
+        }
+

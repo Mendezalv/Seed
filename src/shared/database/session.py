@@ -1,11 +1,23 @@
+import logging
 from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from src.shared.config import get_settings
 
+logger = logging.getLogger("seed.database")
 settings = get_settings()
 
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# Se houver sslmode=require na URL sem ssl=..., ajusta para asyncpg
+if "sslmode=require" in db_url and "ssl=" not in db_url:
+    db_url = db_url.replace("sslmode=require", "ssl=require")
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=(settings.LOG_LEVEL == "DEBUG"),
     pool_pre_ping=True
 )
@@ -19,9 +31,28 @@ async_session_maker = async_sessionmaker(
 
 async def init_db() -> None:
     """
-    Inicializa conexões ou realiza procedimentos necessários no banco de dados.
+    Inicializa conexões e realiza a criação automática de tabelas e seed inicial se necessário.
     """
-    pass
+    import src.shared.database.models  # noqa: F401
+    import src.operacional.domain.models  # noqa: F401
+    import src.epidemiologico.domain.models  # noqa: F401
+    import src.energetico.domain.models  # noqa: F401
+    import src.sync_engine.models  # noqa: F401
+    from src.shared.database.base import Base
+    from src.shared.database.seed_data import seed_admin_padrao
+
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Esquema de banco de dados verificado/criado com sucesso.")
+    except Exception as exc:
+        logger.warning("Aviso durante verificação de schema: %s", exc)
+
+    try:
+        async with async_session_maker() as session:
+            await seed_admin_padrao(session)
+    except Exception as exc:
+        logger.warning("Aviso durante seed inicial: %s", exc)
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -29,3 +60,4 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """
     async with async_session_maker() as session:
         yield session
+

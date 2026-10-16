@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export const Login: React.FC = () => {
@@ -249,16 +249,12 @@ export const Login: React.FC = () => {
                 >
                   Senha de Acesso
                 </label>
-                <a
-                  href="#recuperar"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert('Recuperação de senha: entre em contato com o suporte ou seu gestor de tenant.');
-                  }}
+                <Link
+                  to="/recuperar-senha"
                   style={{ color: 'var(--accent-text)', fontSize: '11.5px', textDecoration: 'none' }}
                 >
                   Esqueceu a senha?
-                </a>
+                </Link>
               </div>
               <input
                 type="password"

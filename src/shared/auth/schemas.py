@@ -76,3 +76,15 @@ class PropriedadeUpdate(BaseModel):
     estado: str | None = Field(default=None, max_length=2, min_length=2)
     area_total_hectares: Decimal | None = None
     car_numero: str | None = None
+
+class EsqueciSenhaRequest(BaseModel):
+    email: EmailStr
+
+class RedefinirSenhaRequest(BaseModel):
+    token: str
+    nova_senha: str = Field(min_length=8)
+
+class MensagemResponse(BaseModel):
+    mensagem: str
+    sucesso: bool = True
+

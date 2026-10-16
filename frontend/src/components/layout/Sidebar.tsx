@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
@@ -9,6 +9,12 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, propriedade, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const getInitials = (name?: string) => {
     if (!name) return 'RC';
@@ -157,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="user-role">{propriedade?.nome || 'Fazenda Santa Maria'}</div>
           </div>
           <button
-            onClick={logout}
+            onClick={handleLogout}
             title="Sair"
             style={{
               background: 'transparent',

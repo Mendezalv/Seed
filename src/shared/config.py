@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     BRAPI_BASE_URL: str
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "DEBUG"
+    CORS_ORIGINS: str = "*"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

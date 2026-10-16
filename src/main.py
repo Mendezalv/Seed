@@ -53,15 +53,27 @@ app = FastAPI(
 # Middleware de isolamento por tenant
 app.add_middleware(TenantMiddleware)
 
-# CORS — permite todas as origens em desenvolvimento
+# CORS — suporte dinâmico para Vercel, localhost e domínios configurados
 settings = get_settings()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"] if settings.ENVIRONMENT == "development" else [],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+raw_cors = settings.CORS_ORIGINS.strip()
+if raw_cors == "*" or settings.ENVIRONMENT == "development":
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    origins = [orig.strip() for orig in raw_cors.split(",") if orig.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_origin_regex=r"^https://.*\.vercel\.app$",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Roteadores dos módulos de domínio
 app.include_router(operacional_router, prefix="/api/v1")

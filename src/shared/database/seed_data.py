@@ -157,3 +157,41 @@ async def seed_notificacoes_padrao(session: AsyncSession, propriedade_id: UUID) 
             inseridos += 1
         await session.commit()
     return inseridos
+
+
+async def seed_admin_padrao(session: AsyncSession) -> None:
+    """
+    Inicializa propriedade e usuário administrador padrão na primeira execução do sistema.
+    """
+    from src.shared.auth.services import hash_password
+    from src.shared.database.models import Propriedade, Usuario
+
+    stmt = select(Usuario).where(Usuario.email == "admin@seed.com")
+    res = await session.execute(stmt)
+    if not res.scalar_one_or_none():
+        prop = Propriedade(
+            nome="Fazenda Santa Clara",
+            municipio="Ribeirão Preto",
+            estado="SP",
+            area_total_hectares=Decimal("1240.00"),
+            car_numero="SP-3543402-09411986423",
+            status="ATIVA",
+        )
+        session.add(prop)
+        await session.flush()
+
+        admin_user = Usuario(
+            email="admin@seed.com",
+            nome_completo="Administrador Seed",
+            senha_hash=hash_password("SenhaForte123!"),
+            role="ADMIN",
+            propriedade_id=prop.id,
+            ativo=True,
+        )
+        session.add(admin_user)
+        await session.commit()
+
+        await seed_fontes_padrao(session, prop.id)
+        await seed_insumos_padrao(session)
+        await seed_notificacoes_padrao(session, prop.id)
+
