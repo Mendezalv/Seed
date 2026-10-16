@@ -2,7 +2,19 @@
  * Cliente HTTP da API do Seed
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+function getBaseUrl(): string {
+  const envUrl = (import.meta.env.VITE_API_URL || '').trim();
+  if (!envUrl) {
+    return '/api/v1';
+  }
+  let normalized = envUrl.replace(/\/+$/, '');
+  if (normalized.startsWith('http') && !normalized.endsWith('/api/v1')) {
+    normalized = `${normalized}/api/v1`;
+  }
+  return normalized;
+}
+
+const API_BASE_URL = getBaseUrl();
 
 export class ApiError extends Error {
   status: number;
@@ -28,10 +40,31 @@ export async function request<T>(
     ...(options.headers as Record<string, string> || {}),
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutMs = 45000; // 45s para tolerar cold-start do plano gratuito do Render
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+      signal: options.signal || controller.signal,
+    });
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiError(
+        504,
+        'O servidor em nuvem gratuito (Render) está acordando da hibernação (Cold Start). Aguarde alguns segundos e tente novamente.'
+      );
+    }
+    throw new ApiError(
+      503,
+      'Não foi possível conectar ao servidor backend. Verifique se o serviço no Render está "Live" ou acesse via Modo Demonstração.'
+    );
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (response.status === 401) {
     if (token === 'demo-token') {
