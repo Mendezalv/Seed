@@ -80,7 +80,7 @@ export const LandingPage: React.FC = () => {
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)')}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)')}
             >
-              Modo Demonstração
+              Fazenda Modelo
             </button>
             <button
               onClick={() => navigate('/login')}
@@ -194,7 +194,7 @@ export const LandingPage: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            Explorar com Dados Demo
+            Conhecer Fazenda Modelo
           </button>
         </div>
 

@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     """
     DATABASE_URL: str = "sqlite+aiosqlite:///./seed.db"
     REDIS_URL: str = "redis://localhost:6379/0"
-    SECRET_KEY: str = "seed-super-secret-production-key-change-in-env-32chars"
+    SECRET_KEY: str = "seed-super-secret-production-key-change-in-env-32chars"  # noqa: S105
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     INMET_BASE_URL: str = "https://apitempo.inmet.gov.br"

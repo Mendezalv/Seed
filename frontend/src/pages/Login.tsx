@@ -6,8 +6,8 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, loginDemo } = useAuth();
 
-  const [email, setEmail] = useState('admin@seed.com');
-  const [senha, setSenha] = useState('SenhaForte123!');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -292,6 +292,12 @@ export const Login: React.FC = () => {
               {loading ? 'Autenticando...' : 'Entrar no Sistema'}
             </button>
 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ou</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+            </div>
+
             <button
               type="button"
               onClick={() => {
@@ -299,18 +305,35 @@ export const Login: React.FC = () => {
                 navigate('/');
               }}
               style={{
-                background: 'transparent',
-                border: '1px dashed var(--border)',
-                color: 'var(--text-muted)',
-                padding: '8px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-secondary)',
+                padding: '10px 14px',
                 borderRadius: 'var(--radius-sm)',
-                fontSize: '12px',
+                fontSize: '12.5px',
+                fontWeight: 500,
                 cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
                 transition: 'all 160ms ease',
               }}
-              title="Acessar com perfil simulado para navegação e testes de UI"
+              title="Acessar com perfil institucional demonstrativo (Fazenda Santa Maria)"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--bg-hover)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
             >
-              Acesso Rápido em Modo Demonstração (UI Mock)
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span>Acessar Demonstração da Fazenda Modelo</span>
             </button>
           </form>
 

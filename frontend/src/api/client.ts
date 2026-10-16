@@ -55,12 +55,12 @@ export async function request<T>(
     if (err instanceof DOMException && err.name === 'AbortError') {
       throw new ApiError(
         504,
-        'O servidor em nuvem gratuito (Render) está acordando da hibernação (Cold Start). Aguarde alguns segundos e tente novamente.'
+        'O servidor em nuvem está inicializando os serviços seguros. Por favor, aguarde alguns instantes e tente novamente.'
       );
     }
     throw new ApiError(
       503,
-      'Não foi possível conectar ao servidor backend. Verifique se o serviço no Render está "Live" ou acesse via Modo Demonstração.'
+      'Não foi possível estabelecer conexão com o servidor da plataforma. Verifique sua conexão ou acesse a Demonstração da Fazenda Modelo.'
     );
   } finally {
     clearTimeout(timeoutId);

@@ -216,7 +216,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       }
 
-      // Mock local
+      // Notificação local demonstrativa (fallback offline)
       const novaNotif: Notification = {
         id: `local-sim-${Date.now()}`,
         propriedade_id: 'local-prop',

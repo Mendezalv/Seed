@@ -15,11 +15,9 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({ isOpen
     isConnected,
     markAsRead,
     markAllAsRead,
-    simulateAlert,
   } = useNotifications();
 
   const [activeTab, setActiveTab] = useState<'TODAS' | 'NAO_LIDAS'>('TODAS');
-  const [isSimulating, setIsSimulating] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -118,37 +116,6 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({ isOpen
     if (notif.link_acao) {
       navigate(notif.link_acao);
     }
-  };
-
-  const handleSimulate = async () => {
-    setIsSimulating(true);
-    const randomAlerts = [
-      {
-        tipo: 'EPIDEMIOLOGICO',
-        titulo: 'Foco de Ferrugem Asiática (Talhão 04)',
-        mensagem: 'Incidência de 14.2% em soja R5.2. Favorabilidade climática crítica.',
-        severidade: 'CRITICA' as NotificationSeverity,
-        link_acao: '/vigilancia',
-      },
-      {
-        tipo: 'MANUTENCAO',
-        titulo: 'Alerta Telemetria: Superaquecimento Pulverizador',
-        mensagem: 'Temperatura do motor excedeu 102°C no Talhão 08. Pare a operação para checagem.',
-        severidade: 'ALTA' as NotificationSeverity,
-        link_acao: '/maquinarios',
-      },
-      {
-        tipo: 'ESTOQUE',
-        titulo: 'Estoque Mínimo de Óleo Diesel S10',
-        mensagem: 'Depósito central atingiu 18% da capacidade nominal. Reabasteça antes do plantio.',
-        severidade: 'MEDIA' as NotificationSeverity,
-        link_acao: '/insumos',
-      },
-    ];
-
-    const pick = randomAlerts[Math.floor(Math.random() * randomAlerts.length)];
-    await simulateAlert(pick.tipo, pick.titulo, pick.mensagem, pick.severidade, pick.link_acao);
-    setIsSimulating(false);
   };
 
   return (
@@ -449,7 +416,7 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({ isOpen
         )}
       </div>
 
-      {/* Rodapé: Botão de Teste em Tempo Real */}
+      {/* Rodapé: Atalho Central de Alertas */}
       <div
         style={{
           padding: '10px 14px',
@@ -465,8 +432,10 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({ isOpen
         </span>
 
         <button
-          onClick={handleSimulate}
-          disabled={isSimulating}
+          onClick={() => {
+            onClose();
+            navigate('/vigilancia');
+          }}
           style={{
             padding: '5px 12px',
             background: 'rgba(16, 185, 129, 0.1)',
@@ -475,13 +444,15 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({ isOpen
             color: 'var(--accent-text)',
             fontSize: '11px',
             fontWeight: 500,
-            cursor: isSimulating ? 'not-allowed' : 'pointer',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
+            transition: 'all 150ms ease',
           }}
-          title="Dispara um alerta em tempo real via WebSocket para teste do ecossistema"
+          title="Acessar a central de vigilância fitossanitária e monitoramento de pragas"
         >
+          <span>Central de Alertas</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="12"
@@ -489,11 +460,10 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({ isOpen
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            style={{ animation: isSimulating ? 'spin 1s linear infinite' : 'none' }}
+            strokeWidth="2"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          <span>{isSimulating ? 'Transmitindo...' : 'Disparar Alerta Teste'}</span>
         </button>
       </div>
     </div>
