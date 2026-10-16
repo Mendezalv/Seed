@@ -73,3 +73,12 @@ plugins = ["pydantic.mypy"]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+

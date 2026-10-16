@@ -2,7 +2,7 @@ services:
   - type: web
     name: seed-api
     runtime: python
-    buildCommand: pip install -e .
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
     plan: free
     region: oregon
@@ -24,7 +24,7 @@ services:
       - key: INMET_BASE_URL
         value: https://apitempo.inmet.gov.br
       - key: BCB_BASE_URL
-        value: https://api.bcb.gov.br/dados/serie/bcdata.sgs
+        value: https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata
       - key: CPTEC_BASE_URL
         value: http://servicos.cptec.inpe.br/XML
       - key: BRAPI_BASE_URL

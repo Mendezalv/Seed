@@ -1,4 +1,5 @@
 import logging
+import re
 from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from src.shared.config import get_settings
@@ -6,20 +7,21 @@ from src.shared.config import get_settings
 logger = logging.getLogger("seed.database")
 settings = get_settings()
 
-db_url = settings.DATABASE_URL
+db_url = settings.DATABASE_URL or "sqlite+aiosqlite:///./seed.db"
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-# Se houver sslmode=require na URL sem ssl=..., ajusta para asyncpg
-if "sslmode=require" in db_url and "ssl=" not in db_url:
-    db_url = db_url.replace("sslmode=require", "ssl=require")
+# Se houver sslmode=... na URL, normaliza para ssl=require para asyncpg
+if "sslmode=" in db_url:
+    db_url = re.sub(r"sslmode=[^&]+", "ssl=require", db_url)
 
+is_sqlite = db_url.startswith("sqlite")
 engine = create_async_engine(
     db_url,
     echo=(settings.LOG_LEVEL == "DEBUG"),
-    pool_pre_ping=True
+    pool_pre_ping=not is_sqlite
 )
 
 async_session_maker = async_sessionmaker(
