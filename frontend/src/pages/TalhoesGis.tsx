@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { operacionalService, type TalhaoApi } from '../services/operacionalService';
 import { epidemiologicoService } from '../services/epidemiologicoService';
@@ -350,6 +350,26 @@ const TALHOES_DATA: Talhao[] = [
   },
 ];
 
+const getTalhaoGridCoords = (idx: number) => {
+  const col = idx % 4;
+  const row = Math.floor(idx / 4);
+  return {
+    x: 50 + col * 205,
+    y: 95 + row * 275,
+    width: 185,
+    height: 225,
+  };
+};
+
+const getCulturaColor = (cultura?: string | null) => {
+  const c = cultura?.toLowerCase() || '';
+  if (c.includes('milho')) return '#f59e0b';
+  if (c.includes('pousio') || c.includes('preparo')) return '#71717a';
+  if (c.includes('algodão') || c.includes('algodao')) return '#38bdf8';
+  if (c.includes('trigo')) return '#eab308';
+  return '#10b981';
+};
+
 export const TalhoesGis: React.FC = () => {
   const { token, propriedade } = useAuth();
   const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
@@ -367,39 +387,65 @@ export const TalhoesGis: React.FC = () => {
   const [modalNovoTalhaoOpen, setModalNovoTalhaoOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  const totalRows = Math.max(2, Math.ceil(talhoes.length / 4));
+  const svgHeight = 95 + totalRows * 275 + 50;
+
+  const roadPathD = useMemo(() => {
+    let d = `M 245 0 L 245 ${svgHeight} M 450 0 L 450 ${svgHeight} M 655 0 L 655 ${svgHeight}`;
+    for (let r = 0; r < totalRows - 1; r++) {
+      const y = 345 + r * 275;
+      d += ` M 0 ${y} L 900 ${y}`;
+    }
+    return d;
+  }, [totalRows, svgHeight]);
+
   // Carregar Talhões reais do Backend
   useEffect(() => {
     async function carregarTalhoes() {
       try {
         const talhoesApi = await operacionalService.getTalhoes();
         if (talhoesApi && talhoesApi.length > 0) {
-          const apiMapped: Talhao[] = talhoesApi.map((t, idx) => ({
-            id: 100 + idx,
-            code: `T-0${idx + 1}`,
-            nome: t.nome,
-            area: `${Number(t.area_hectares).toFixed(1).replace('.', ',')} ha`,
-            areaNum: Number(t.area_hectares),
-            cultura: (t.cultura_atual?.toLowerCase().includes('milho') ? 'milho' : 'soja') as 'soja' | 'milho' | 'pousio',
-            culturaDisplay: t.cultura_atual || 'Soja',
-            variedade: 'BRS 511',
-            estagio: 'V6 Vegetativo',
-            produtividade: '66,0 sc/ha',
-            status: 'NORMAL',
-            plantio: '20/10/2024',
-            colheita: '15/02/2025',
-            geoId: `#TLH-0${idx + 1}`,
-            x: 50 + ((idx * 200) % 550),
-            y: 95 + Math.floor(idx / 3) * 150,
-            width: 185,
-            height: 140,
-            color: '#10b981',
-            ndvi: 0.78,
-            aplicacoes: [],
-          }));
+          const apiMapped: Talhao[] = talhoesApi.map((t, idx) => {
+            const coords = getTalhaoGridCoords(idx);
+            const talhaoNum = idx + 1;
+            const autoCode = talhaoNum < 10 ? `T-0${talhaoNum}` : `T-${talhaoNum}`;
+            const code = t.nome.trim().toUpperCase().startsWith('T-')
+              ? t.nome.trim().split(' ')[0]
+              : autoCode;
+            return {
+              id: typeof t.id === 'number' ? t.id : 100 + idx,
+              code,
+              nome: t.nome,
+              area: `${Number(t.area_hectares).toFixed(1).replace('.', ',')} ha`,
+              areaNum: Number(t.area_hectares),
+              cultura: (t.cultura_atual?.toLowerCase().includes('milho')
+                ? 'milho'
+                : t.cultura_atual?.toLowerCase().includes('pousio')
+                ? 'pousio'
+                : 'soja') as 'soja' | 'milho' | 'pousio',
+              culturaDisplay: t.cultura_atual || 'Soja',
+              variedade: 'BRS 511',
+              estagio: 'V6 Vegetativo',
+              produtividade: '66,0 sc/ha',
+              status: 'NORMAL',
+              plantio: '20/10/2024',
+              colheita: '15/02/2025',
+              geoId: `#TLH-0${talhaoNum}`,
+              x: coords.x,
+              y: coords.y,
+              width: coords.width,
+              height: coords.height,
+              color: getCulturaColor(t.cultura_atual),
+              ndvi: 0.78,
+              aplicacoes: [],
+            };
+          });
 
           setTalhoes((prev) => {
             if (isDemoMode) {
-              return [...apiMapped, ...prev.filter(p => !apiMapped.some(a => a.nome === p.nome))];
+              const existingNames = new Set(prev.map((p) => p.nome));
+              const newItems = apiMapped.filter((a) => !existingNames.has(a.nome));
+              return [...prev, ...newItems];
             }
             return apiMapped;
           });
@@ -426,13 +472,24 @@ export const TalhoesGis: React.FC = () => {
 
   const handleTalhaoCriado = (novo: TalhaoApi) => {
     const idx = talhoes.length;
+    const coords = getTalhaoGridCoords(idx);
+    const talhaoNum = idx + 1;
+    const autoCode = talhaoNum < 10 ? `T-0${talhaoNum}` : `T-${talhaoNum}`;
+    const code = novo.nome.trim().toUpperCase().startsWith('T-')
+      ? novo.nome.trim().split(' ')[0]
+      : autoCode;
+
     const mapped: Talhao = {
-      id: 100 + idx,
-      code: `T-0${idx + 1}`,
+      id: typeof novo.id === 'number' ? novo.id : 100 + idx,
+      code,
       nome: novo.nome,
       area: `${Number(novo.area_hectares).toFixed(1).replace('.', ',')} ha`,
       areaNum: Number(novo.area_hectares),
-      cultura: (novo.cultura_atual?.toLowerCase().includes('milho') ? 'milho' : 'soja') as 'soja' | 'milho' | 'pousio',
+      cultura: (novo.cultura_atual?.toLowerCase().includes('milho')
+        ? 'milho'
+        : novo.cultura_atual?.toLowerCase().includes('pousio')
+        ? 'pousio'
+        : 'soja') as 'soja' | 'milho' | 'pousio',
       culturaDisplay: novo.cultura_atual || 'Soja',
       variedade: 'Variedade Certificada',
       estagio: 'V1 Emergência',
@@ -440,16 +497,16 @@ export const TalhoesGis: React.FC = () => {
       status: 'NORMAL',
       plantio: new Date().toLocaleDateString('pt-BR'),
       colheita: '—',
-      geoId: `#TLH-0${idx + 1}`,
-      x: 50 + ((idx * 200) % 550),
-      y: 95 + Math.floor(idx / 3) * 150,
-      width: 185,
-      height: 140,
-      color: '#10b981',
+      geoId: `#TLH-0${talhaoNum}`,
+      x: coords.x,
+      y: coords.y,
+      width: coords.width,
+      height: coords.height,
+      color: getCulturaColor(novo.cultura_atual),
       ndvi: 0.76,
       aplicacoes: [],
     };
-    setTalhoes((prev) => [mapped, ...prev]);
+    setTalhoes((prev) => [...prev, mapped]);
     setSelectedId(mapped.id);
     showToast(`Talhão "${novo.nome}" cadastrado com sucesso!`);
   };
@@ -899,7 +956,7 @@ export const TalhoesGis: React.FC = () => {
             </div>
 
             {/* SVG Cartográfico dos Polígonos de Talhões */}
-            <svg className="svg-map-canvas" viewBox="0 0 900 700" preserveAspectRatio="xMidYMid meet">
+            <svg className="svg-map-canvas" viewBox={`0 0 900 ${svgHeight}`} preserveAspectRatio="xMidYMid meet">
               <defs>
                 <linearGradient id="ndviGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
@@ -910,7 +967,7 @@ export const TalhoesGis: React.FC = () => {
 
               {/* Estradas de serviço e carreadores internos contínuos de ponta a ponta */}
               <path
-                d="M 0 345 L 900 345 M 245 0 L 245 700 M 450 0 L 450 700 M 655 0 L 655 700"
+                d={roadPathD}
                 stroke="#27272a"
                 strokeWidth="2"
                 strokeDasharray="6 4"
@@ -918,9 +975,10 @@ export const TalhoesGis: React.FC = () => {
               />
 
               {/* Renderização dinâmica dos talhões */}
-              {talhoes.map((t) => {
+              {talhoes.map((t, idx) => {
                 const isSelected = t.id === selectedId;
                 const isDimmed = culturaFilter !== 'all' && t.cultura !== culturaFilter;
+                const coords = getTalhaoGridCoords(idx);
 
                 // Cores dinâmicas com base no status e camada NDVI
                 let fillColor = t.color;
@@ -948,8 +1006,8 @@ export const TalhoesGis: React.FC = () => {
                   fillOpacity = isSelected ? 0.45 : 0.28;
                 }
 
-                const centerX = t.x + t.width / 2;
-                const centerY = t.y + t.height / 2;
+                const centerX = coords.x + coords.width / 2;
+                const centerY = coords.y + coords.height / 2;
 
                 return (
                   <g
@@ -964,10 +1022,10 @@ export const TalhoesGis: React.FC = () => {
                       id={`poly-${t.id}`}
                       className={`talhao-poly ${isSelected ? 'selected' : ''}`}
                       data-cultura={t.cultura}
-                      x={t.x}
-                      y={t.y}
-                      width={t.width}
-                      height={t.height}
+                      x={coords.x}
+                      y={coords.y}
+                      width={coords.width}
+                      height={coords.height}
                       rx="6"
                       ry="6"
                       fill={fillColor}
