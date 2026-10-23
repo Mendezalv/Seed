@@ -22,6 +22,22 @@ export interface Propriedade {
   car_numero?: string | null;
 }
 
+export function isDemoSession(
+  token?: string | null,
+  user?: Usuario | null,
+  propriedade?: Propriedade | null
+): boolean {
+  if (token === 'demo-token') return true;
+  if (!propriedade && !user) return false;
+  if (propriedade?.id === 'demo-property-id') return true;
+  if (propriedade?.id === '00000000-0000-0000-0000-000000000001') return true;
+  if (propriedade?.id?.startsWith('demo-')) return true;
+  if (propriedade?.nome?.toLowerCase().includes('santa maria')) return true;
+  if (user?.email === 'rafael.costa@santamaria.com.br') return true;
+  if (user?.id === '00000000-0000-0000-0000-000000000001') return true;
+  return false;
+}
+
 interface AuthResponse {
   access_token: string;
   token_type: string;
@@ -35,6 +51,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isDemoMode: boolean;
   login: (email: string, senha: string) => Promise<void>;
   registrar: (dados: {
     nome_completo: string;
@@ -251,6 +268,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPropriedade(null);
   };
 
+  const isDemoMode = isDemoSession(token, user, propriedade);
+
   return (
     <AuthContext.Provider
       value={{
@@ -260,6 +279,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         isAuthenticated: !!token && !!user,
         isLoading,
+        isDemoMode,
         login,
         registrar,
         loginDemo,

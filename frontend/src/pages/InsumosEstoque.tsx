@@ -137,8 +137,7 @@ const INITIAL_LOTES: LoteItem[] = [
 
 export const InsumosEstoque: React.FC = () => {
   const { queueOperation } = useSync();
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode } = useAuth();
 
   const [lotes, setLotes] = useState<LoteItem[]>(() => isDemoMode ? INITIAL_LOTES : []);
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');

@@ -53,9 +53,56 @@ interface DashboardData {
   };
 }
 
+const DEMO_DASHBOARD_DATA: DashboardData = {
+  propriedade: {
+    nome: 'Fazenda Santa Maria',
+    municipio: 'Sorriso',
+    estado: 'MT',
+    area_total_hectares: 1420,
+    talhoes_ativos: 18,
+    safras_ativas: 4,
+    culturas: ['Soja', 'Milho', 'Cana'],
+  },
+  clima: {
+    temperatura: 28.4,
+    umidade: 62.8,
+    precipitacao: 12.3,
+    ultima_leitura: 'Hoje, 06:15',
+  },
+  financeiro: {
+    custo_insumos: 247800,
+    lotes_estoque: 23,
+    lotes_baixo_estoque: 3,
+    manutencao_acumulada: 38400,
+    ordens_concluidas: 5,
+  },
+  frota: {
+    ativas: 9,
+    total: 12,
+    em_manutencao: 3,
+    ordens_pendentes: 2,
+  },
+  epidemiologico: {
+    score_risco: 0.52,
+    nivel_risco: 'ALTO',
+    alertas_ativos: 2,
+    ocorrencias_30dias: 7,
+    agentes: [
+      { nome: 'Ferrugem asiática', ocorrencias: 3, severidade: 'ALTA' },
+      { nome: 'Percevejo marrom', ocorrencias: 2, severidade: 'MEDIA' },
+      { nome: 'Lagarta-do-cartucho', ocorrencias: 2, severidade: 'CRITICA' },
+    ],
+  },
+  sustentabilidade: {
+    emissoes_totais: 14.7,
+    emissao_por_hectare: 0.012,
+    energia_renovavel_pct: 68.3,
+    ultimo_relatorio: '2026-09',
+  },
+};
+
 export const Dashboard: React.FC = () => {
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode, propriedade } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -125,103 +172,87 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     async function carregarDashboard() {
       setLoading(true);
+      if (isDemoMode) {
+        try {
+          const res = await api.get<DashboardData>('/propriedades/minha/dashboard/consolidado');
+          if (res && (res.propriedade?.talhoes_ativos || 0) > 0) {
+            setData(res);
+          } else {
+            setData({
+              ...DEMO_DASHBOARD_DATA,
+              propriedade: {
+                ...DEMO_DASHBOARD_DATA.propriedade,
+                nome: propriedade?.nome || DEMO_DASHBOARD_DATA.propriedade!.nome,
+                municipio: propriedade?.municipio || DEMO_DASHBOARD_DATA.propriedade!.municipio,
+                estado: propriedade?.estado || DEMO_DASHBOARD_DATA.propriedade!.estado,
+                area_total_hectares: Number(propriedade?.area_total_hectares) || DEMO_DASHBOARD_DATA.propriedade!.area_total_hectares,
+              },
+            });
+          }
+        } catch {
+          setData({
+            ...DEMO_DASHBOARD_DATA,
+            propriedade: {
+              ...DEMO_DASHBOARD_DATA.propriedade,
+              nome: propriedade?.nome || DEMO_DASHBOARD_DATA.propriedade!.nome,
+              municipio: propriedade?.municipio || DEMO_DASHBOARD_DATA.propriedade!.municipio,
+              estado: propriedade?.estado || DEMO_DASHBOARD_DATA.propriedade!.estado,
+              area_total_hectares: Number(propriedade?.area_total_hectares) || DEMO_DASHBOARD_DATA.propriedade!.area_total_hectares,
+            },
+          });
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         const res = await api.get<DashboardData>('/propriedades/minha/dashboard/consolidado');
         setData(res);
       } catch {
-        if (isDemoMode) {
-          setData({
-            propriedade: {
-              nome: propriedade?.nome || 'Fazenda Santa Clara',
-              municipio: propriedade?.municipio || 'Ribeirão Preto',
-              estado: propriedade?.estado || 'SP',
-              area_total_hectares: Number(propriedade?.area_total_hectares) || 1240,
-              talhoes_ativos: 18,
-              safras_ativas: 4,
-              culturas: ['Soja', 'Milho', 'Cana'],
-            },
-            clima: {
-              temperatura: 28.4,
-              umidade: 62.8,
-              precipitacao: 12.3,
-              ultima_leitura: 'Hoje, 06:15',
-            },
-            financeiro: {
-              custo_insumos: 247800,
-              lotes_estoque: 23,
-              lotes_baixo_estoque: 3,
-              manutencao_acumulada: 38400,
-              ordens_concluidas: 5,
-            },
-            frota: {
-              ativas: 9,
-              total: 12,
-              em_manutencao: 3,
-              ordens_pendentes: 2,
-            },
-            epidemiologico: {
-              score_risco: 0.52,
-              nivel_risco: 'ALTO',
-              alertas_ativos: 2,
-              ocorrencias_30dias: 7,
-              agentes: [
-                { nome: 'Ferrugem asiática', ocorrencias: 3, severidade: 'ALTA' },
-                { nome: 'Percevejo marrom', ocorrencias: 2, severidade: 'MEDIA' },
-                { nome: 'Lagarta-do-cartucho', ocorrencias: 2, severidade: 'CRITICA' },
-              ],
-            },
-            sustentabilidade: {
-              emissoes_totais: 14.7,
-              emissao_por_hectare: 0.012,
-              energia_renovavel_pct: 68.3,
-              ultimo_relatorio: '2026-09',
-            },
-          });
-        } else {
-          setData({
-            propriedade: {
-              nome: propriedade?.nome || 'Minha Fazenda',
-              municipio: propriedade?.municipio || '',
-              estado: propriedade?.estado || '',
-              area_total_hectares: Number(propriedade?.area_total_hectares) || 0,
-              talhoes_ativos: 0,
-              safras_ativas: 0,
-              culturas: [],
-            },
-            clima: {
-              temperatura: 26.5,
-              umidade: 60.0,
-              precipitacao: 0,
-              ultima_leitura: 'Estação Local',
-            },
-            financeiro: {
-              custo_insumos: 0,
-              lotes_estoque: 0,
-              lotes_baixo_estoque: 0,
-              manutencao_acumulada: 0,
-              ordens_concluidas: 0,
-            },
-            frota: {
-              ativas: 0,
-              total: 0,
-              em_manutencao: 0,
-              ordens_pendentes: 0,
-            },
-            epidemiologico: {
-              score_risco: 0.05,
-              nivel_risco: 'BAIXO',
-              alertas_ativos: 0,
-              ocorrencias_30dias: 0,
-              agentes: [],
-            },
-            sustentabilidade: {
-              emissoes_totais: 0,
-              emissao_por_hectare: 0,
-              energia_renovavel_pct: 0,
-              ultimo_relatorio: 'Pendente',
-            },
-          });
-        }
+        setData({
+          propriedade: {
+            nome: propriedade?.nome || 'Minha Fazenda',
+            municipio: propriedade?.municipio || '',
+            estado: propriedade?.estado || '',
+            area_total_hectares: Number(propriedade?.area_total_hectares) || 0,
+            talhoes_ativos: 0,
+            safras_ativas: 0,
+            culturas: [],
+          },
+          clima: {
+            temperatura: 26.5,
+            umidade: 60.0,
+            precipitacao: 0,
+            ultima_leitura: 'Estação Local',
+          },
+          financeiro: {
+            custo_insumos: 0,
+            lotes_estoque: 0,
+            lotes_baixo_estoque: 0,
+            manutencao_acumulada: 0,
+            ordens_concluidas: 0,
+          },
+          frota: {
+            ativas: 0,
+            total: 0,
+            em_manutencao: 0,
+            ordens_pendentes: 0,
+          },
+          epidemiologico: {
+            score_risco: 0.05,
+            nivel_risco: 'BAIXO',
+            alertas_ativos: 0,
+            ocorrencias_30dias: 0,
+            agentes: [],
+          },
+          sustentabilidade: {
+            emissoes_totais: 0,
+            emissao_por_hectare: 0,
+            energia_renovavel_pct: 0,
+            ultimo_relatorio: 'Pendente',
+          },
+        });
       } finally {
         setLoading(false);
       }
@@ -312,7 +343,7 @@ export const Dashboard: React.FC = () => {
   const hasFrota = (data?.frota?.total || 0) > 0;
   const hasInsumo = (data?.financeiro?.lotes_estoque || 0) > 0;
   const completedStepsCount = [hasTalhao, hasSafra, hasFrota, hasInsumo].filter(Boolean).length;
-  const showOnboarding = !hideOnboarding && completedStepsCount < 4;
+  const showOnboarding = !isDemoMode && !hideOnboarding && completedStepsCount < 4;
 
   return (
     <>

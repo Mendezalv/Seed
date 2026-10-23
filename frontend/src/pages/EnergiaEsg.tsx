@@ -106,8 +106,7 @@ const EQUIP_OPTIONS = [
 ];
 
 export const EnergiaEsg: React.FC = () => {
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode, propriedade } = useAuth();
 
   // Filtro de Safra/Período
   const [selectedPeriod, setSelectedPeriod] = useState<string>('2024/25');

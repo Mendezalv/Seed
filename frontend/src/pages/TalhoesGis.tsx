@@ -371,8 +371,7 @@ const getCulturaColor = (cultura?: string | null) => {
 };
 
 export const TalhoesGis: React.FC = () => {
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode } = useAuth();
 
   const [talhoes, setTalhoes] = useState<Talhao[]>(() => isDemoMode ? TALHOES_DATA : []);
   const [selectedId, setSelectedId] = useState<number | null>(() => isDemoMode ? 4 : null);

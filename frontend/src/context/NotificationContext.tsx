@@ -109,8 +109,7 @@ function playNotificationChime(isCritical: boolean) {
 }
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, isAuthenticated, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { token, isAuthenticated, isDemoMode } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>(() =>
     isDemoMode ? DEFAULT_DEMO_NOTIFICATIONS : []
   );

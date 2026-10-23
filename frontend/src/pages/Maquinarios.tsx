@@ -448,8 +448,7 @@ const INITIAL_ORDERS: MaintenanceOrder[] = [
 
 export const Maquinarios: React.FC = () => {
   const { queueOperation } = useSync();
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode } = useAuth();
 
   const [machines, setMachines] = useState<Machine[]>(() => isDemoMode ? INITIAL_MACHINES : []);
   const [orders, setOrders] = useState<MaintenanceOrder[]>(() => isDemoMode ? INITIAL_ORDERS : []);

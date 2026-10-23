@@ -140,8 +140,7 @@ const INITIAL_OCCURRENCES: OccurrenceItem[] = [
 
 export const VigilanciaSanitaria: React.FC = () => {
   const { queueOperation } = useSync();
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode, propriedade } = useAuth();
 
   const [occurrences, setOccurrences] = useState<OccurrenceItem[]>(isDemoMode ? INITIAL_OCCURRENCES : []);
   const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>(isDemoMode ? 'EPI-104' : '');

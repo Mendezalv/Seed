@@ -171,8 +171,7 @@ const INITIAL_SAFRAS_DATA: SafraTalhao[] = [
 ];
 
 export const SafrasPlanejamento: React.FC = () => {
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode } = useAuth();
 
   const [safrasData, setSafrasData] = useState<SafraTalhao[]>(() => isDemoMode ? INITIAL_SAFRAS_DATA : []);
   const [selectedSeason, setSelectedSeason] = useState<string>('Safra Principal 2024/25');

@@ -14,8 +14,7 @@ export const ModalSimuladorViabilidade: React.FC<ModalSimuladorViabilidadeProps>
   onClose,
   onSuccess,
 }) => {
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode } = useAuth();
 
   const [safra, setSafra] = useState(
     isDemoMode ? 'Safra 2026/27 - Soja Verão (1.240 ha)' : 'Safra Atual - Planejamento'

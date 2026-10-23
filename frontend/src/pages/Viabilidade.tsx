@@ -152,8 +152,7 @@ const MATRIX_PRICES = [120, 128, 135, 142, 150, 160];
 const MATRIX_YIELDS = [58, 62, 66, 70, 74, 78];
 
 export const Viabilidade: React.FC = () => {
-  const { token, propriedade } = useAuth();
-  const isDemoMode = token === 'demo-token' || propriedade?.id === 'demo-property-id';
+  const { isDemoMode } = useAuth();
 
   // Parâmetros da Simulação de Sensibilidade
   const [yieldVal, setYieldVal] = useState<number>(68);
