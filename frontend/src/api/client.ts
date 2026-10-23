@@ -73,7 +73,17 @@ export async function request<T>(
     // Limpa token inválido ou expirado
     localStorage.removeItem('seed_token');
     localStorage.removeItem('seed_user');
-    if (!window.location.pathname.includes('/login')) {
+
+    // Nunca redirecionar se o usuário estiver em rotas públicas (Landing, Login, Recuperar Senha, etc.)
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+    const isPublicRoute =
+      pathname === '/' ||
+      pathname === '/landing' ||
+      pathname.includes('/login') ||
+      pathname.includes('/recuperar-senha') ||
+      pathname.includes('/redefinir-senha');
+
+    if (!isPublicRoute && typeof window !== 'undefined') {
       window.location.href = '/login';
     }
     throw new ApiError(401, 'Sessão expirada. Faça login novamente.');

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { syncService } from '../services/syncService';
 import { offlineStorage, type OfflineOperation } from '../services/offlineStorage';
+import { useAuth } from './AuthContext';
 
 interface SyncContextValue {
   isOnline: boolean;
@@ -22,6 +23,7 @@ interface SyncContextValue {
 const SyncContext = createContext<SyncContextValue | undefined>(undefined);
 
 export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, token } = useAuth();
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
@@ -57,6 +59,9 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const syncNow = useCallback(async () => {
     if (isSyncing) return;
+    if (!isAuthenticated || !token || token === 'demo-token') {
+      return;
+    }
     setIsSyncing(true);
     setSyncError(null);
 
@@ -73,7 +78,7 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsSyncing(false);
     }
-  }, [isSyncing, refreshPendingCount]);
+  }, [isSyncing, isAuthenticated, token, refreshPendingCount]);
 
   // Enfileira alteração e tenta sincronizar se online
   const queueOperation = useCallback(
@@ -93,22 +98,24 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       await refreshPendingCount();
 
-      // Se estiver online, tenta enviar imediatamente em segundo plano
-      if (navigator.onLine) {
+      // Se estiver online e autenticado, tenta enviar imediatamente em segundo plano
+      if (navigator.onLine && isAuthenticated && token && token !== 'demo-token') {
         syncNow().catch(() => {});
       }
 
       return queued;
     },
-    [refreshPendingCount, syncNow]
+    [refreshPendingCount, syncNow, isAuthenticated, token]
   );
 
   // Monitoramento de conexão online/offline
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      // Auto-sync automático ao reconectar
-      syncNow();
+      // Auto-sync automático ao reconectar apenas se autenticado
+      if (isAuthenticated && token && token !== 'demo-token') {
+        syncNow();
+      }
     };
 
     const handleOffline = () => {
@@ -120,9 +127,9 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     loadInitialMetadata();
 
-    // Sincronização periódica a cada 60 segundos se online
+    // Sincronização periódica a cada 60 segundos se online e autenticado
     const interval = setInterval(() => {
-      if (navigator.onLine) {
+      if (navigator.onLine && isAuthenticated && token && token !== 'demo-token') {
         syncNow();
       }
     }, 60000);
@@ -132,7 +139,7 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.removeEventListener('offline', handleOffline);
       clearInterval(interval);
     };
-  }, [loadInitialMetadata, syncNow]);
+  }, [loadInitialMetadata, syncNow, isAuthenticated, token]);
 
   return (
     <SyncContext.Provider
