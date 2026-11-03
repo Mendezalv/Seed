@@ -1,25 +1,31 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, update
 
-from src.shared.database.session import get_session
-from src.shared.database.models import Propriedade, Usuario
-from src.shared.auth.schemas import (
-    PropriedadeCreate, PropriedadeResponse, PropriedadeUpdate,
-    UsuarioResponse, UsuarioCreate, MembroCreate, MembroUpdate
-)
-from src.shared.auth.services import AuthService
-from src.shared.auth.dependencies import get_current_user
-from src.shared.auth.rbac import require_permission
-from src.shared.api.dependencies import get_current_propriedade_id
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.energetico.domain.models import RelatorioESG
+from src.epidemiologico.domain.models import AlertaEpidemiologico
 
 # Importar modelos para o dashboard
-from src.operacional.domain.models import Talhao, Safra, Maquinario, OrdemManutencao
-from src.epidemiologico.domain.models import AlertaEpidemiologico
-from src.energetico.domain.models import RelatorioESG
+from src.operacional.domain.models import Maquinario, OrdemManutencao, Safra, Talhao
+from src.shared.api.dependencies import get_current_propriedade_id
+from src.shared.auth.dependencies import get_current_user
+from src.shared.auth.rbac import require_permission
+from src.shared.auth.schemas import (
+    MembroCreate,
+    MembroUpdate,
+    PropriedadeCreate,
+    PropriedadeResponse,
+    PropriedadeUpdate,
+    UsuarioCreate,
+    UsuarioResponse,
+)
+from src.shared.auth.services import AuthService
 from src.shared.dashboard.schemas import DashboardConsolidadoResponse
 from src.shared.dashboard.service import DashboardService
+from src.shared.database.models import Propriedade, Usuario
+from src.shared.database.session import get_session
 
 router = APIRouter(prefix="/propriedades", tags=["Propriedades"])
 
@@ -43,17 +49,17 @@ async def criar_propriedade(
     session.add(nova_propriedade)
     await session.commit()
     await session.refresh(nova_propriedade)
-    
+
     # Associa o usuário que criou à nova propriedade para operação imediata
     user_id = current_user.sub if isinstance(current_user.sub, UUID) else UUID(str(current_user.sub))
     usuario = await session.get(Usuario, user_id)
     if usuario:
         usuario.propriedade_id = nova_propriedade.id
         await session.commit()
-    
+
     from src.shared.database.seed_data import seed_fontes_energia
     await seed_fontes_energia(session, nova_propriedade.id)
-    
+
     return PropriedadeResponse.model_validate(nova_propriedade)
 
 @router.post("/{propriedade_id}/selecionar", response_model=PropriedadeResponse)
@@ -94,11 +100,11 @@ async def atualizar_minha_propriedade(
     propriedade = await session.get(Propriedade, propriedade_id)
     if not propriedade:
         raise HTTPException(status_code=404, detail="Propriedade não encontrada")
-        
+
     update_data = prop_in.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(propriedade, key, value)
-        
+
     await session.commit()
     await session.refresh(propriedade)
     return PropriedadeResponse.model_validate(propriedade)
@@ -111,13 +117,13 @@ async def obter_dashboard(
     """Obtém estatísticas resumidas da propriedade."""
     # Count talhoes
     talhoes_count = await session.scalar(select(func.count()).select_from(Talhao).where(Talhao.propriedade_id == propriedade_id))
-    
+
     # Count safras
     safras_count = await session.scalar(select(func.count()).select_from(Safra).where(Safra.propriedade_id == propriedade_id))
-    
+
     # Count maquinarios
     maquinas_count = await session.scalar(select(func.count()).select_from(Maquinario).where(Maquinario.propriedade_id == propriedade_id))
-    
+
     # Count alertas ativos
     alertas_count = await session.scalar(
         select(func.count()).select_from(AlertaEpidemiologico)

@@ -1,8 +1,19 @@
+import logging
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Path,
+    Query,
+    Response,
+    UploadFile,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.operacional.application.lcdpr_service import LcdprService
@@ -37,6 +48,8 @@ from src.shared.api.dependencies import get_current_propriedade_id
 from src.shared.database.session import get_session
 from src.shared.export.export_engine import ExportEngine
 from src.shared.utils.pagination import PaginatedResponse, PaginationParams, paginate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/operacional", tags=["Operacional"])
 
@@ -203,12 +216,12 @@ async def parsear_nfe_xml(payload: NfeParseRequest):
     try:
         return NfeParser.parse_xml_content(payload.xml_content)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Erro ao processar arquivo XML da NF-e: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/insumos/nfe/upload")
@@ -224,12 +237,12 @@ async def upload_nfe_xml(file: UploadFile = File(...)):
     try:
         return NfeParser.parse_xml_content(xml_content)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)) from e
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Erro ao processar arquivo XML da NF-e: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/insumos/nfe/importar", response_model=NfeImportResponse)
@@ -258,7 +271,7 @@ async def importar_itens_nfe(
     return NfeImportResponse(
         sucesso=True,
         total_itens_importados=len(lotes),
-        lotes_criados=[LoteInsumoResponse.model_validate(l) for l in lotes],
+        lotes_criados=[LoteInsumoResponse.model_validate(lote) for lote in lotes],
         mensagem=f"{len(lotes)} item(ns) da NF-e {payload.numero_nf} incorporados com sucesso ao estoque!",
     )
 
@@ -433,8 +446,8 @@ async def exportar_dre_viabilidade_xlsx(
             )
             resp = await ViabilidadeService.calcular_viabilidade(req, propriedade_id, session)
             viab_data = resp.model_dump()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Falha ao calcular viabilidade para DRE XLSX: %s", e)
 
     xlsx_bytes = ExportEngine.gerar_dre_viabilidade_xlsx(viab_data, propriedade, cultura=cultura)
     return Response(
@@ -467,8 +480,8 @@ async def exportar_dre_viabilidade_pdf(
             )
             resp = await ViabilidadeService.calcular_viabilidade(req, propriedade_id, session)
             viab_data = resp.model_dump()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Falha ao calcular viabilidade para DRE XLSX: %s", e)
 
     pdf_bytes = ExportEngine.gerar_dre_viabilidade_pdf(viab_data, propriedade, cultura=cultura)
     return Response(

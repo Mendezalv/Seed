@@ -1,6 +1,8 @@
+import uuid
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-import uuid
+
 from src.shared.auth.jwt import TokenPayload, decode_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -16,7 +18,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenPayload:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
 async def get_current_tenant(user: TokenPayload = Depends(get_current_user)) -> uuid.UUID:
     """

@@ -1,5 +1,13 @@
+from datetime import date
+from decimal import Decimal
+from uuid import UUID
+
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.operacional.domain.models import Safra
+
 
 @pytest.fixture
 async def auth_token(async_client: AsyncClient) -> str:
@@ -16,7 +24,7 @@ async def auth_token(async_client: AsyncClient) -> str:
 @pytest.mark.asyncio
 async def test_operacional_flow(async_client: AsyncClient, auth_token: str):
     headers = {"Authorization": f"Bearer {auth_token}"}
-    
+
     # 1. Registrar Entrada de Lote de Insumo
     lote_payload = {
         "insumo_id": "01a11481-0000-7000-8000-000000000001",
@@ -31,16 +39,11 @@ async def test_operacional_flow(async_client: AsyncClient, auth_token: str):
     assert data["codigo_lote"] == "LOTE-SEED-001"
     assert float(data["quantidade_inicial"]) == 1000.0
 
-from uuid import UUID
-from datetime import date
-from decimal import Decimal
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.operacional.domain.models import Safra
 
 @pytest.mark.asyncio
 async def test_viabilidade_calculation(async_client: AsyncClient, auth_token: str, session: AsyncSession):
     headers = {"Authorization": f"Bearer {auth_token}"}
-    
+
     # 1. Safra inexistente retorna 404
     payload_inexistente = {
         "safra_id": "01a11481-0000-7000-8000-999999999999",

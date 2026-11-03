@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import TypeVar, Generic, Sequence, Any
+from typing import Any, Generic, TypeVar
+
 from fastapi import Query
-from sqlalchemy import select, func
+from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 T = TypeVar('T')
@@ -26,13 +27,13 @@ class PaginatedResponse(BaseModel, Generic[T]):
 async def paginate(session: AsyncSession, stmt: Any, pagination: PaginationParams) -> dict:
     count_stmt = select(func.count()).select_from(stmt.subquery())
     total = await session.scalar(count_stmt)
-    
+
     paginated_stmt = stmt.offset(pagination.offset).limit(pagination.per_page)
     result = await session.scalars(paginated_stmt)
     items = result.all()
-    
+
     total_pages = (total + pagination.per_page - 1) // pagination.per_page if total > 0 else 0
-    
+
     return {
         "items": items,
         "total": total,

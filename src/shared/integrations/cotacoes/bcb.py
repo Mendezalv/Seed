@@ -1,7 +1,10 @@
 from datetime import date, datetime
+
 from pydantic import BaseModel
-from src.shared.integrations.base_client import BaseAPIClient
+
 from src.shared.config import get_settings
+from src.shared.integrations.base_client import BaseAPIClient
+
 
 class CotacaoPTAX(BaseModel):
     data: date
@@ -23,9 +26,9 @@ class BCBClient(BaseAPIClient):
         """
         data_formatada = data_cotacao.strftime('%m-%d-%Y')
         endpoint = f"/CotacaoDolarDia(dataCotacao=@dataCotacao)?@dataCotacao='{data_formatada}'&$format=json"
-        
+
         response_data = await self.get(endpoint, cache_ttl=86400)
-        
+
         resultados = []
         if isinstance(response_data, dict) and "value" in response_data:
             for item in response_data["value"]:
@@ -47,9 +50,9 @@ class BCBClient(BaseAPIClient):
         dt_ini = data_inicio.strftime('%m-%d-%Y')
         dt_fim = data_fim.strftime('%m-%d-%Y')
         endpoint = f"/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial='{dt_ini}'&@dataFinalCotacao='{dt_fim}'&$format=json"
-        
+
         response_data = await self.get(endpoint, cache_ttl=86400)
-        
+
         resultados = []
         if isinstance(response_data, dict) and "value" in response_data:
             for item in response_data["value"]:
@@ -60,7 +63,7 @@ class BCBClient(BaseAPIClient):
                         d_cotacao = dt_cotacao.date()
                     else:
                         continue
-                        
+
                     resultados.append(CotacaoPTAX(
                         data=d_cotacao,
                         compra=float(item.get("cotacaoCompra", 0.0)),

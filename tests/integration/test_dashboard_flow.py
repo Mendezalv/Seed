@@ -1,14 +1,20 @@
+from datetime import UTC, date, datetime
+from decimal import Decimal
+from uuid import UUID
+
 import pytest
 import pytest_asyncio
-from uuid import UUID
-from datetime import datetime, date, timezone
-from decimal import Decimal
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.operacional.domain.models import Talhao, Safra, Maquinario, OrdemManutencao
-from src.epidemiologico.domain.models import AlertaEpidemiologico, OcorrenciaSanitaria, DadosClimaticoCache
 from src.energetico.domain.models import RelatorioESG
+from src.epidemiologico.domain.models import (
+    AlertaEpidemiologico,
+    DadosClimaticoCache,
+    OcorrenciaSanitaria,
+)
+from src.operacional.domain.models import Maquinario, OrdemManutencao, Safra, Talhao
+
 
 @pytest_asyncio.fixture
 async def produtor_auth(async_client: AsyncClient) -> tuple[str, UUID, UUID]:
@@ -21,7 +27,7 @@ async def produtor_auth(async_client: AsyncClient) -> tuple[str, UUID, UUID]:
     await async_client.post("/api/v1/auth/registro", json=register_payload)
     resp = await async_client.post("/api/v1/auth/login", json={"email": "fazendeiro@seed.agro", "senha": "SenhaForte123!"})
     token = resp.json()["access_token"]
-    
+
     headers = {"Authorization": f"Bearer {token}"}
     me_resp = await async_client.get("/api/v1/auth/me", headers=headers)
     user_id = UUID(me_resp.json()["id"])
@@ -38,8 +44,8 @@ async def test_dashboard_consolidado_flow(
     headers = {"Authorization": f"Bearer {token}"}
 
     # 1. Popula entidades no banco para a propriedade
-    now_utc = datetime.now(timezone.utc)
-    
+    now_utc = datetime.now(UTC)
+
     talhao = Talhao(
         propriedade_id=prop_id,
         nome="Talhão Noroeste",

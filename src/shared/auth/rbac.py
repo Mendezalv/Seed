@@ -1,9 +1,12 @@
-from enum import Enum
-from fastapi import HTTPException, status, Depends
-from src.shared.auth.jwt import TokenPayload
-from src.shared.auth.dependencies import get_current_user
+from enum import StrEnum
 
-class Role(str, Enum):
+from fastapi import Depends, HTTPException, status
+
+from src.shared.auth.dependencies import get_current_user
+from src.shared.auth.jwt import TokenPayload
+
+
+class Role(StrEnum):
     """
     Papéis de usuário no sistema.
     """

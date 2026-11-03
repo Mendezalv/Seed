@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.fixture
 async def gestor_token(async_client: AsyncClient) -> str:
     register_payload = {
@@ -16,7 +17,7 @@ async def gestor_token(async_client: AsyncClient) -> str:
 @pytest.mark.asyncio
 async def test_epidemiologico_heatmap_flow(async_client: AsyncClient, gestor_token: str):
     headers = {"Authorization": f"Bearer {gestor_token}"}
-    
+
     # Obter dados do usuário para pegar user_id
     me_resp = await async_client.get("/api/v1/auth/me", headers=headers)
     user_id = me_resp.json()["id"]

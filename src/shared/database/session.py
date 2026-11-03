@@ -1,7 +1,9 @@
 import logging
 import urllib.parse
 from collections.abc import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from src.shared.config import get_settings
 
 logger = logging.getLogger("seed.database")
@@ -67,15 +69,15 @@ async def init_db() -> None:
     """
     Inicializa conexões e realiza a criação automática de tabelas e seed inicial se necessário.
     """
-    import src.shared.database.models  # noqa: F401
-    import src.operacional.domain.models  # noqa: F401
-    import src.epidemiologico.domain.models  # noqa: F401
+    from sqlalchemy import text
+
     import src.energetico.domain.models  # noqa: F401
+    import src.epidemiologico.domain.models  # noqa: F401
+    import src.operacional.domain.models  # noqa: F401
+    import src.shared.database.models  # noqa: F401
     import src.sync_engine.models  # noqa: F401
     from src.shared.database.base import Base
     from src.shared.database.seed_data import seed_admin_padrao
-
-    from sqlalchemy import text
 
     if not is_sqlite:
         try:

@@ -1,9 +1,11 @@
-from sqlalchemy import Column, String, Integer, Boolean, JSON, DateTime, ForeignKey, Uuid
-from src.shared.database.base import Base, TimestampMixin, TenantMixin, generate_uuid7
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Uuid
+
+from src.shared.database.base import Base, TenantMixin, TimestampMixin, generate_uuid7
+
 
 class SyncLog(Base, TimestampMixin):
     __tablename__ = 'sync_logs'
-    
+
     id = Column(Uuid, primary_key=True, default=generate_uuid7)
     envelope_id = Column(Uuid, unique=True, nullable=False)
     device_id = Column(String, nullable=False)
@@ -16,7 +18,7 @@ class SyncLog(Base, TimestampMixin):
 
 class PendingReview(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'pending_reviews'
-    
+
     id = Column(Uuid, primary_key=True, default=generate_uuid7)
     entity_type = Column(String, nullable=False)
     entity_id = Column(Uuid, nullable=False)
@@ -30,7 +32,7 @@ class PendingReview(Base, TimestampMixin, TenantMixin):
 
 class SyncVersion(Base):
     __tablename__ = 'sync_versions'
-    
+
     id = Column(Uuid, primary_key=True, default=generate_uuid7)
     propriedade_id = Column(Uuid, unique=True, nullable=False)
     current_version = Column(Integer, default=0, nullable=False)

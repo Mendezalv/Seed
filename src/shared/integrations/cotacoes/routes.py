@@ -3,6 +3,7 @@ Rotas da API de Cotações de Commodities e Moedas em Tempo Real.
 """
 
 from typing import Any
+
 from fastapi import APIRouter, Query, Response
 
 from src.shared.export import ExportEngine

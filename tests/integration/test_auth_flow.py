@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient
 
+
 @pytest.mark.asyncio
 async def test_protected_endpoint_rejects_unauthenticated(async_client: AsyncClient):
     response = await async_client.get("/api/v1/auth/me")
@@ -20,7 +21,7 @@ async def test_full_auth_flow(async_client: AsyncClient):
     data = response.json()
     assert "id" in data
     assert data["email"] == "test@seed.agro"
-    
+
     # 2. Login returns valid JWT
     login_payload = {
         "email": "test@seed.agro",
@@ -31,9 +32,9 @@ async def test_full_auth_flow(async_client: AsyncClient):
     token_data = response.json()
     assert "access_token" in token_data
     assert token_data["token_type"] == "bearer"
-    
+
     token = token_data["access_token"]
-    
+
     # 3. /api/v1/auth/me returns user info
     headers = {"Authorization": f"Bearer {token}"}
     response = await async_client.get("/api/v1/auth/me", headers=headers)

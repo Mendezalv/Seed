@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCotacoes } from '../context/CotacoesContext';
+import { SeedBrandLogo } from '../components/common/SeedBrandLogo';
 
 // ─── ICONOGRAFIA VETORIAL MONOCROMÁTICA (PADRÃO LINEAR / LUCIDE) ─────────────
 const Icons = {
@@ -145,152 +146,27 @@ const Icons = {
   ),
 };
 
-interface ProductScreen {
-  id: string;
-  label: string;
-  iconRenderer: () => React.ReactNode;
-  badge: string;
-  route: string;
-  image: string;
-  title: string;
-  tagline: string;
-  description: string;
-  metrics: Array<{ label: string; value: string }>;
-}
-
-const PRODUCT_SCREENS: ProductScreen[] = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard Executivo',
-    iconRenderer: () => <Icons.Dashboard />,
-    badge: 'Visão 360° da Operação',
-    route: 'app.seedagro.com.br/dashboard',
-    image: '/screenshots/dashboard.png',
-    title: 'Painel Central Integrado',
-    tagline: 'Consolidação de safras, finanças e telemetria',
-    description: 'Acompanhe produtividade média por talhão, despesas acumuladas de insumos, telemetria meteorológica CPTEC/INMET em tempo real e score de risco sanitário.',
-    metrics: [
-      { label: 'Área Monitorada', value: '1.420 ha' },
-      { label: 'Safras Ativas', value: '4 ciclos' },
-      { label: 'Margem Op.', value: '+38.4%' },
-    ],
-  },
-  {
-    id: 'talhoes',
-    label: 'Talhões & GIS',
-    iconRenderer: () => <Icons.GisMap />,
-    badge: 'SIRGAS 2000 & Sentinel-2',
-    route: 'app.seedagro.com.br/talhoes',
-    image: '/screenshots/talhoes-gis.png',
-    title: 'Cartografia Vetorial & Índices NDVI',
-    tagline: 'Sensoriamento remoto e estágios fenológicos',
-    description: 'Polígonos vetoriais com georreferenciamento oficial, histórico de cultivares, vigor vegetativo Sentinel-2 NDVI e laudo rápido por talhão.',
-    metrics: [
-      { label: 'Talhões Cadastrados', value: '18 unidades' },
-      { label: 'Produtividade Média', value: '64.5 sc/ha' },
-      { label: 'Vigor NDVI Médio', value: '0.79 (Ótimo)' },
-    ],
-  },
-  {
-    id: 'maquinarios',
-    label: 'Frotas & Telemetria',
-    iconRenderer: () => <Icons.Telemetry />,
-    badge: 'CAN Bus & Horímetro Ativo',
-    route: 'app.seedagro.com.br/maquinarios',
-    image: '/screenshots/maquinarios.png',
-    title: 'Telemetria de Máquinas & Manutenção',
-    tagline: 'Alertas preditivos de revisão e consumo instantâneo',
-    description: 'Rastreamento em tempo real de tratores, pulverizadores e colheitadeiras com leitura direta de horímetro, consumo de diesel L/h e ordens de serviço automatizadas.',
-    metrics: [
-      { label: 'Disponibilidade Frota', value: '75.0% ativa' },
-      { label: 'Consumo Médio', value: '14.2 L/h' },
-      { label: 'Ordens Preventivas', value: '3 ativas' },
-    ],
-  },
-  {
-    id: 'vigilancia',
-    label: 'Vigilância Sanitária IA',
-    iconRenderer: () => <Icons.Surveillance />,
-    badge: 'Visão Computacional 98.4%',
-    route: 'app.seedagro.com.br/vigilancia',
-    image: '/screenshots/vigilancia.png',
-    title: 'Prevenção & Diagnóstico Epidemiológico',
-    tagline: 'Detecção de patógenos com IA e modelo Spore-Cast',
-    description: 'Identificação por visão computacional de pragas (ferrugem asiática, lagartas, percevejos) cruzada com molhamento foliar para prever janelas de esporulação e disparar ordens ISOBUS.',
-    metrics: [
-      { label: 'Confiança IA', value: '98.4%' },
-      { label: 'Pressão Sanitária', value: '0.52 (Controlada)' },
-      { label: 'Área Protegida', value: '72% manejo ativo' },
-    ],
-  },
-  {
-    id: 'viabilidade',
-    label: 'Viabilidade & Breakeven',
-    iconRenderer: () => <Icons.Finance />,
-    badge: 'DRE & LCDPR Homologado',
-    route: 'app.seedagro.com.br/viabilidade',
-    image: '/screenshots/viabilidade.png',
-    title: 'Apuração Econômica por Hectare',
-    tagline: 'Ponto de equilíbrio dinâmico e hedge de commodities',
-    description: 'Cálculo automatizado do breakeven em sacas/ha com base no custo operacional efetivo (COE), travas de preço físico/futuro e exportação em 1 clique para o Livro Caixa Digital (LCDPR).',
-    metrics: [
-      { label: 'Breakeven Soja', value: '41.2 sc/ha' },
-      { label: 'Margem Líquida', value: 'R$ 1.840/ha' },
-      { label: 'Conformidade Fiscal', value: '100% LCDPR' },
-    ],
-  },
-];
-
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { loginDemo } = useAuth();
   const { cotacoes } = useCotacoes();
 
-  const [activeScreenId, setActiveScreenId] = useState<string>('dashboard');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [copiedRoute, setCopiedRoute] = useState<boolean>(false);
-  const [isFading, setIsFading] = useState<boolean>(false);
 
-  const currentScreen = PRODUCT_SCREENS.find((s) => s.id === activeScreenId) || PRODUCT_SCREENS[0];
-
-  const handleSwitchTab = useCallback((id: string) => {
-    if (id === activeScreenId) return;
-    setIsFading(true);
-    setTimeout(() => {
-      setActiveScreenId(id);
-      setIsFading(false);
-    }, 120);
-  }, [activeScreenId]);
-
-  // Teclado: ESC fecha lightbox, setas alternam abas
+  // Teclado: ESC fecha lightbox
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setPreviewImage(null);
-      } else if (!previewImage && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
-        const currentIndex = PRODUCT_SCREENS.findIndex((s) => s.id === activeScreenId);
-        if (e.key === 'ArrowRight') {
-          const nextIndex = (currentIndex + 1) % PRODUCT_SCREENS.length;
-          handleSwitchTab(PRODUCT_SCREENS[nextIndex].id);
-        } else {
-          const prevIndex = (currentIndex - 1 + PRODUCT_SCREENS.length) % PRODUCT_SCREENS.length;
-          handleSwitchTab(PRODUCT_SCREENS[prevIndex].id);
-        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [previewImage, activeScreenId, handleSwitchTab]);
+  }, []);
 
   const handleTestDrive = () => {
     loginDemo();
     navigate('/');
-  };
-
-  const handleCopyRoute = () => {
-    navigator.clipboard?.writeText(`https://${currentScreen.route}`);
-    setCopiedRoute(true);
-    setTimeout(() => setCopiedRoute(false), 2000);
   };
 
   const scrollToSection = (id: string) => {
@@ -350,37 +226,12 @@ export const LandingPage: React.FC = () => {
             justifyContent: 'space-between',
           }}
         >
-          {/* Brand Identity */}
+          {/* Brand Identity com o Logotipo Oficial GIS Radar Seed (Símbolo da Gota) */}
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+            style={{ cursor: 'pointer' }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
-            <div
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '9px',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(16, 185, 129, 0.08) 100%)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
-                display: 'grid',
-                placeItems: 'center',
-                boxShadow: '0 0 16px rgba(16, 185, 129, 0.22)',
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke="#10b981" strokeWidth="2" strokeDasharray="4 2" />
-                <path d="M12 7v10M7 12h10" stroke="#34d399" strokeWidth="2.2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '17px', fontWeight: 800, letterSpacing: '-0.03em', color: '#fff' }}>Seed</span>
-                <span style={{ fontSize: '10px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', padding: '1px 6px', borderRadius: '4px', fontWeight: 700, letterSpacing: '0.04em' }}>OS</span>
-              </div>
-              <span style={{ fontSize: '10.5px', color: '#71717a', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginTop: '-2px' }}>
-                Agro Intelligence
-              </span>
-            </div>
+            <SeedBrandLogo size={24} showBadge={true} boxed="solid" />
           </div>
 
           {/* Desktop Nav Links com Hover Suave */}
@@ -623,236 +474,256 @@ export const LandingPage: React.FC = () => {
           ))}
         </div>
 
-        {/* ─── SEGMENTED CONTROL TABS (EMIL KOWALSKI CRAFT) ─────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-          <div className="segmented-control" role="tablist" aria-label="Módulos do Sistema Seed">
-            {PRODUCT_SCREENS.map((screen) => {
-              const isActive = screen.id === activeScreenId;
-              return (
-                <button
-                  key={screen.id}
-                  onClick={() => handleSwitchTab(screen.id)}
-                  className={`segmented-pill ${isActive ? 'active' : ''}`}
-                  role="tab"
-                  aria-selected={isActive}
-                >
-                  <span style={{ display: 'grid', placeItems: 'center', color: isActive ? '#34d399' : '#a1a1aa' }}>
-                    {screen.iconRenderer()}
-                  </span>
-                  <span>{screen.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* ─── SHOWCASE INTEGRADO EM 2 COLUNAS (DISPOSITIVOS LIMPOS) ───────── */}
+        <style>{`
+          .devices-showcase-grid {
+            display: grid;
+            grid-template-columns: minmax(320px, 1fr) minmax(360px, 1.25fr);
+            gap: 48px;
+            align-items: center;
+            text-align: left;
+            margin-top: 42px;
+            width: 100%;
+          }
+          .devices-showcase-visual {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 30px 10px 40px 40px;
+          }
+          .devices-desktop-mockup {
+            width: 100%;
+            max-width: 580px;
+            border-radius: 12px;
+            background: #0d0e12;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.9), 0 0 40px rgba(16, 185, 129, 0.06);
+            overflow: hidden;
+            position: relative;
+          }
+          .devices-phone-mockup {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: clamp(190px, 20vw, 230px);
+            background: #09090b;
+            border-radius: 38px;
+            border: 4px solid #27272a;
+            padding: 8px 8px 10px;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.95), 0 10px 30px rgba(0, 0, 0, 0.85);
+            z-index: 3;
+            overflow: hidden;
+          }
+          @media (max-width: 960px) {
+            .devices-showcase-grid {
+              grid-template-columns: 1fr;
+              gap: 40px;
+              margin-top: 32px;
+            }
+            .devices-showcase-visual {
+              justify-content: center;
+              padding: 20px 0 30px 20px;
+            }
+            .devices-phone-mockup {
+              left: 5%;
+              bottom: -10px;
+              width: 190px;
+            }
+          }
+          @media (max-width: 520px) {
+            .devices-showcase-visual {
+              padding: 10px 0 20px 10px;
+            }
+            .devices-phone-mockup {
+              left: 0;
+              bottom: -8px;
+              width: 150px;
+              border-width: 3px;
+              border-radius: 28px;
+              padding: 6px 6px 8px;
+            }
+          }
+        `}</style>
 
-        {/* ─── INTERACTIVE BROWSER WINDOW COM SCREENSHOT REAL ─────────────── */}
-        <div
-          style={{
-            maxWidth: '1160px',
-            margin: '0 auto',
-            background: '#0d0e12',
-            borderRadius: '16px',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            boxShadow: '0 24px 70px rgba(0, 0, 0, 0.85), 0 0 50px rgba(16, 185, 129, 0.1)',
-            overflow: 'hidden',
-            textAlign: 'left',
-            position: 'relative',
-          }}
-        >
-          {/* Topbar da Janela com Controles macOS e Barra de URL */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 18px',
-              background: 'rgba(255, 255, 255, 0.03)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-              gap: '12px',
-              flexWrap: 'wrap',
-            }}
-          >
-            {/* Window Traffic Lights */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#ff5f56', boxShadow: 'inset 0 0 2px rgba(0,0,0,0.4)' }} />
-              <span style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#ffbd2e', boxShadow: 'inset 0 0 2px rgba(0,0,0,0.4)' }} />
-              <span style={{ width: '11px', height: '11px', borderRadius: '50%', background: '#27c93f', boxShadow: 'inset 0 0 2px rgba(0,0,0,0.4)' }} />
-            </div>
-
-            {/* URL Dinâmica com Ação de Copiar */}
-            <div
-              onClick={handleCopyRoute}
-              title="Clique para copiar link"
+        <div className="devices-showcase-grid">
+          {/* Coluna Esquerda: Texto Direto e Benefícios */}
+          <div style={{ maxWidth: '520px' }}>
+            <h2
               style={{
-                background: 'rgba(0, 0, 0, 0.55)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                padding: '5px 18px',
-                borderRadius: '7px',
-                fontSize: '11.5px',
+                fontSize: 'clamp(30px, 4vw, 48px)',
+                fontWeight: 800,
+                letterSpacing: '-0.035em',
+                lineHeight: 1.15,
+                color: '#ffffff',
+                marginBottom: '20px',
+              }}
+            >
+              Atualize no celular.<br />
+              Analise no computador.
+            </h2>
+
+            <p
+              style={{
                 color: '#a1a1aa',
-                fontFamily: 'var(--font-mono, monospace)',
-                letterSpacing: '0.015em',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                transition: 'border-color 150ms ease, background 150ms ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.55)';
+                fontSize: '15.5px',
+                lineHeight: 1.65,
+                marginBottom: '32px',
               }}
             >
-              <Icons.Lock style={{ color: '#10b981' }} />
-              <span>{currentScreen.route}</span>
-              <span style={{ fontSize: '11px', color: '#71717a', marginLeft: '4px', display: 'flex', alignItems: 'center' }}>
-                {copiedRoute ? <Icons.Check style={{ color: '#10b981' }} /> : <Icons.Copy />}
-              </span>
-            </div>
+              O assessor ou agrônomo em campo registra a informação pelo celular, mesmo sem internet. A sede acompanha no painel web em tempo real. Sem retrabalho, sem cadernos de campo e sem mensagens no WhatsApp pedindo atualização.
+            </p>
 
-            {/* Ações da Janela */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <button
-                onClick={() => setPreviewImage(currentScreen.image)}
-                className="kowalski-btn"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#e4e4e7',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  fontSize: '11.5px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <Icons.Zoom />
-                <span>Ampliar Tela</span>
-                <kbd style={{ background: 'rgba(255, 255, 255, 0.08)', padding: '1px 4px', borderRadius: '3px', fontSize: '10px', color: '#a1a1aa' }}>ESC</kbd>
-              </button>
-
-              <div style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
-                {currentScreen.badge}
-              </div>
-            </div>
-          </div>
-
-          {/* Superfície do Screenshot Real com Transição Refinada */}
-          <div
-            style={{
-              position: 'relative',
-              background: '#09090b',
-              cursor: 'pointer',
-              overflow: 'hidden',
-              minHeight: '380px',
-            }}
-            onClick={() => setPreviewImage(currentScreen.image)}
-          >
-            <img
-              src={currentScreen.image}
-              alt={`Tela real do sistema Seed - ${currentScreen.label}`}
-              style={{
-                width: '100%',
-                height: 'auto',
-                display: 'block',
-                opacity: isFading ? 0.4 : 1,
-                transform: isFading ? 'scale(0.995)' : 'scale(1)',
-                transition: 'opacity 140ms ease, transform 140ms ease',
-              }}
-            />
-
-            {/* Hover Badge para Ampliar */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '16px',
-                right: '16px',
-                background: 'rgba(9, 9, 11, 0.88)',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                fontSize: '12px',
-                color: '#e4e4e7',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.6)',
-              }}
-            >
-              <Icons.Zoom style={{ color: '#34d399' }} /> Clique para inspecionar em alta resolução
-            </div>
-          </div>
-
-          {/* Barra de Rodapé do Mockup com Métricas Chave do Módulo */}
-          <div
-            style={{
-              padding: '16px 22px',
-              background: 'rgba(16, 17, 21, 0.95)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '16px',
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#fff' }}>
-                  {currentScreen.title}
-                </h4>
-                <span style={{ color: '#71717a' }}>•</span>
-                <span style={{ fontSize: '12.5px', color: '#10b981', fontWeight: 500 }}>
-                  {currentScreen.tagline}
+            {/* Checklist de Benefícios */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    border: '1.5px solid #10b981',
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: '#10b981',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icons.Check style={{ width: '12px', height: '12px' }} />
+                </div>
+                <span style={{ fontSize: '15px', color: '#e4e4e7', fontWeight: 500 }}>
+                  Funciona em qualquer navegador e celular
                 </span>
               </div>
-              <p style={{ fontSize: '12.5px', color: '#a1a1aa', margin: 0, maxWidth: '680px', lineHeight: 1.5 }}>
-                {currentScreen.description}
-              </p>
-            </div>
 
-            {/* Destaque de Métricas Reais do Módulo */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: '14px' }}>
-                {currentScreen.metrics.map((m, i) => (
-                  <div key={i} style={{ borderLeft: '1px solid rgba(255, 255, 255, 0.1)', paddingLeft: '10px' }}>
-                    <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.label}</div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', fontFamily: 'var(--font-mono, monospace)' }}>{m.value}</div>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    border: '1.5px solid #10b981',
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: '#10b981',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icons.Check style={{ width: '12px', height: '12px' }} />
+                </div>
+                <span style={{ fontSize: '15px', color: '#e4e4e7', fontWeight: 500 }}>
+                  Dados sincronizados entre todos os membros
+                </span>
               </div>
 
-              <button
-                onClick={handleTestDrive}
-                className="kowalski-btn"
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    border: '1.5px solid #10b981',
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: '#10b981',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icons.Check style={{ width: '12px', height: '12px' }} />
+                </div>
+                <span style={{ fontSize: '15px', color: '#e4e4e7', fontWeight: 500 }}>
+                  Sem instalação — acesse direto pelo link
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Coluna Direita: Dispositivos Sobrepostos (Computador ao Fundo + Celular na Frente) */}
+          <div className="devices-showcase-visual">
+            {/* Mockup do Computador (Janela Web ao Fundo) */}
+            <div className="devices-desktop-mockup">
+              {/* Barra do Navegador */}
+              <div
                 style={{
-                  background: 'rgba(16, 185, 129, 0.12)',
-                  color: '#34d399',
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
+                  height: '32px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  whiteSpace: 'nowrap',
+                  padding: '0 12px',
+                  gap: '8px',
                 }}
               >
-                Explorar ao Vivo na Fazenda Modelo
-                <span style={{ fontSize: '13px' }}>→</span>
-              </button>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ff5f56', opacity: 0.8 }} />
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbd2e', opacity: 0.8 }} />
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#27c93f', opacity: 0.8 }} />
+                </div>
+                <div
+                  style={{
+                    margin: '0 auto',
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    borderRadius: '5px',
+                    padding: '2px 14px',
+                    fontSize: '10.5px',
+                    color: '#71717a',
+                    fontFamily: 'monospace',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <Icons.Lock style={{ width: '9px', height: '9px', color: '#10b981' }} />
+                  <span>seedagro.com.br/dashboard</span>
+                </div>
+              </div>
+
+              {/* Tela do Painel */}
+              <img
+                src="/screenshots/dashboard.png"
+                alt="Painel Seed no computador"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  display: 'block',
+                }}
+              />
+            </div>
+
+            {/* Mockup do Celular (Smartphone em Destaque na Frente) */}
+            <div className="devices-phone-mockup">
+              {/* Notch / Dynamic Island */}
+              <div
+                style={{
+                  width: '64px',
+                  height: '14px',
+                  background: '#000000',
+                  borderRadius: '10px',
+                  margin: '1px auto 6px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                }}
+              />
+
+              {/* Tela do Aplicativo Mobile */}
+              <div
+                style={{
+                  borderRadius: '26px',
+                  overflow: 'hidden',
+                  background: '#000',
+                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                }}
+              >
+                <img
+                  src="/screenshots/mobile-campo.png"
+                  alt="Aplicativo Seed Mobile no celular"
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1158,7 +1029,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── 5. SEÇÃO: "ATUALIZE NO CAMPO. ANALISE NO ESCRITÓRIO." (PWA) ─── */}
+      {/* ─── 5. SEÇÃO: ARQUITETURA PWA OFFLINE-FIRST ─── */}
       <section id="offline" style={{ padding: '84px 24px', maxWidth: '1240px', margin: '0 auto', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: '48px', alignItems: 'center' }} className="landing-mobile-split">
           <div>
@@ -1181,7 +1052,7 @@ export const LandingPage: React.FC = () => {
             </div>
 
             <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.2, marginBottom: '20px', color: '#fff' }}>
-              Atualize no campo.<br />Analise no escritório.
+              Tecnologia Offline-First:<br />tolerância total à falta de sinal
             </h2>
 
             <p style={{ color: '#a1a1aa', fontSize: '15px', lineHeight: 1.65, marginBottom: '32px' }}>

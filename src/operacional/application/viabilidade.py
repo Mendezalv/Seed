@@ -1,10 +1,16 @@
-from uuid import UUID
 from decimal import Decimal
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from uuid import UUID
 
-from src.operacional.domain.models import Safra, AlocacaoInsumo, LoteInsumo, Insumo
-from src.operacional.domain.schemas import ViabilidadeRequest, ViabilidadeResponse, CenarioViabilidade
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.operacional.domain.models import AlocacaoInsumo, Insumo, LoteInsumo, Safra
+from src.operacional.domain.schemas import (
+    CenarioViabilidade,
+    ViabilidadeRequest,
+    ViabilidadeResponse,
+)
+
 
 class ViabilidadeService:
     @staticmethod
@@ -23,7 +29,7 @@ class ViabilidadeService:
         custo_insumos = result.scalar() or Decimal('0')
 
         custo_total = custo_insumos + request.custo_mao_obra + request.custo_frete + request.custo_impostos
-        
+
         # Obtenção de cotação de mercado em tempo real (CEPEA / Fallback)
         preco_mercado = request.preco_mercado_saca
         if preco_mercado is None:

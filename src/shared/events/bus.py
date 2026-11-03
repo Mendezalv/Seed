@@ -1,9 +1,10 @@
 import asyncio
 import uuid
 from collections import defaultdict
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Callable, Any, Awaitable
+from datetime import UTC, datetime
+
 
 @dataclass
 class DomainEvent:
@@ -11,7 +12,7 @@ class DomainEvent:
     Classe base para todos os eventos de domínio.
     """
     event_id: uuid.UUID = field(default_factory=uuid.uuid4)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     event_type: str = field(default="DomainEvent")
 
 @dataclass

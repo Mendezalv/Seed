@@ -3,9 +3,10 @@ Testes unitários para o Serviço de Cotações de Commodities e Moedas em Tempo
 """
 
 from unittest.mock import AsyncMock, patch
+
 import pytest
 
-from src.shared.integrations.cotacoes.service import CotacoesService, CACHE_KEY_COTACOES
+from src.shared.integrations.cotacoes.service import CACHE_KEY_COTACOES, CotacoesService
 
 
 @pytest.fixture

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+
 from src.main import app
 from tests.unit.test_nfe_parser import XML_NFE_EXEMPLO
 

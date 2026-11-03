@@ -1,18 +1,17 @@
-import pytest
 
 class CalculadoraESG:
     def calcular_co2_diesel(self, litros):
         return litros * 2.68
-        
+
     def percentual_renovavel(self, renovavel, fossil):
         total = renovavel + fossil
         return (renovavel / total * 100) if total > 0 else 0
-        
+
     def gerar_relatorio(self, dados):
         diesel_co2 = self.calcular_co2_diesel(dados.get("diesel_l", 0))
         solar_co2 = 0
         perc_ren = self.percentual_renovavel(dados.get("energia_solar_kwh", 0), dados.get("energia_fossil_kwh", 0))
-        
+
         return {
             "emissoes_totais": diesel_co2 + solar_co2,
             "percentual_renovavel": perc_ren

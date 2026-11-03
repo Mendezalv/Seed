@@ -1,4 +1,3 @@
-import pytest
 
 class MotorAlertasSanitarios:
     def calcular_risco(self, temp, umidade, vizinhos_com_praga):
@@ -9,7 +8,7 @@ class MotorAlertasSanitarios:
             score_climatico = 0.1
         else:
             score_climatico = 0.3
-            
+
         risco_vizinhos = min(vizinhos_com_praga * 0.2, 0.5)
         return score_climatico + risco_vizinhos
 

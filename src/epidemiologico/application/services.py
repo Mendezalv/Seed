@@ -1,17 +1,17 @@
-from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-
 from datetime import datetime
-from typing import Optional
+from uuid import UUID
 
-from src.epidemiologico.domain.models import OcorrenciaSanitaria, AlertaEpidemiologico
-from src.epidemiologico.domain.schemas import (
-    OcorrenciaSanitariaCreate,
-    MapaCalorResponse,
-    MapaCalorPontoResponse
-)
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.epidemiologico.domain.models import AlertaEpidemiologico, OcorrenciaSanitaria
 from src.epidemiologico.domain.motor_alertas import MotorAlertasSanitarios
+from src.epidemiologico.domain.schemas import (
+    MapaCalorPontoResponse,
+    MapaCalorResponse,
+    OcorrenciaSanitariaCreate,
+)
+
 
 class VigilanciaService:
     @staticmethod
@@ -47,7 +47,7 @@ class VigilanciaService:
         if filtros.get('agente'):
             stmt = stmt.where(OcorrenciaSanitaria.agente_identificado == filtros['agente'])
         stmt = stmt.order_by(OcorrenciaSanitaria.observado_em.desc())
-        
+
         result = await session.execute(stmt)
         return list(result.scalars().all())
 
@@ -55,9 +55,9 @@ class VigilanciaService:
     async def listar_alertas(propriedade_id: UUID, session: AsyncSession) -> list[AlertaEpidemiologico]:
         stmt = select(AlertaEpidemiologico).where(
             AlertaEpidemiologico.propriedade_id == propriedade_id,
-            AlertaEpidemiologico.notificado == False
+            AlertaEpidemiologico.notificado.is_(False)
         ).order_by(AlertaEpidemiologico.risco_score.desc())
-        
+
         result = await session.execute(stmt)
         return list(result.scalars().all())
 
@@ -65,21 +65,21 @@ class VigilanciaService:
     async def obter_mapa_calor(
         propriedade_id: UUID,
         session: AsyncSession,
-        agente: Optional[str] = None,
-        severidade: Optional[str] = None,
-        data_inicio: Optional[datetime] = None,
-        data_fim: Optional[datetime] = None,
-        min_lat: Optional[float] = None,
-        max_lat: Optional[float] = None,
-        min_lon: Optional[float] = None,
-        max_lon: Optional[float] = None
+        agente: str | None = None,
+        severidade: str | None = None,
+        data_inicio: datetime | None = None,
+        data_fim: datetime | None = None,
+        min_lat: float | None = None,
+        max_lat: float | None = None,
+        min_lon: float | None = None,
+        max_lon: float | None = None
     ) -> MapaCalorResponse:
         """
         Retorna agregação geoespacial para geração de mapa de calor com filtros
         por agente, período, severidade e delimitação geográfica (Bounding Box).
         """
         stmt = select(OcorrenciaSanitaria).where(OcorrenciaSanitaria.propriedade_id == propriedade_id)
-        
+
         if agente:
             stmt = stmt.where(OcorrenciaSanitaria.agente_identificado == agente)
         if severidade:

@@ -1,27 +1,28 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.shared.database.session import get_session
-from src.shared.auth.schemas import (
-    UsuarioCreate,
-    UsuarioResponse,
-    LoginRequest,
-    LoginResponse,
-    EsqueciSenhaRequest,
-    RedefinirSenhaRequest,
-    MensagemResponse,
-)
-from src.shared.auth.services import AuthService
+from src.shared.api.dependencies import get_current_propriedade_id
 from src.shared.auth.dependencies import get_current_user
 from src.shared.auth.rbac import require_permission
-from src.shared.api.dependencies import get_current_propriedade_id
+from src.shared.auth.schemas import (
+    EsqueciSenhaRequest,
+    LoginRequest,
+    LoginResponse,
+    MensagemResponse,
+    RedefinirSenhaRequest,
+    UsuarioCreate,
+    UsuarioResponse,
+)
+from src.shared.auth.services import AuthService
+from src.shared.database.session import get_session
 
 router = APIRouter(prefix="/auth", tags=["Autenticacao"])
 
 @router.post("/registro", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 async def registrar_usuario(
-    usuario_in: UsuarioCreate, 
+    usuario_in: UsuarioCreate,
     session: AsyncSession = Depends(get_session)
 ):
     """Registra um novo usuário."""

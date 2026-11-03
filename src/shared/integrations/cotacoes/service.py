@@ -2,8 +2,8 @@
 Serviço de Cotações de Commodities e Moedas em Tempo Real com Caching Redis e Broadcast WebSocket.
 """
 
-from datetime import UTC, datetime, timedelta
 import random
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from src.shared.cache import cache_manager

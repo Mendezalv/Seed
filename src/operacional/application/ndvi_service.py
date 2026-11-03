@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+import random
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
-import random
 
 
 class NdviService:
@@ -18,7 +17,7 @@ class NdviService:
         Fornece série temporal de 90 dias com revisitas orbitais a cada 5 dias,
         decomposição de zonas de vigor e diagnóstico de sanidade foliar.
         """
-        hoje = datetime.now(timezone.utc)
+        hoje = datetime.now(UTC)
         revisitas = []
 
         # Gera 18 passagens orbitais (90 dias / 5 dias por ciclo do Sentinel-2)

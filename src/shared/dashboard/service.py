@@ -1,28 +1,37 @@
-from uuid import UUID
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from uuid import UUID
 
-from src.shared.database.models import Propriedade
-from src.operacional.domain.models import (
-    Talhao, Safra, AlocacaoInsumo, LoteInsumo, Insumo,
-    Maquinario, OrdemManutencao
-)
-from src.epidemiologico.domain.models import (
-    OcorrenciaSanitaria, AlertaEpidemiologico, DadosClimaticoCache
-)
+from fastapi import HTTPException, status
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.energetico.domain.models import RelatorioESG
-from src.shared.dashboard.schemas import (
-    DashboardConsolidadoResponse,
-    ResumoPropriedadeGeral,
-    ResumoOperacionalFinanceiro,
-    ResumoEpidemiologico,
-    AgenteResumo,
-    ResumoSustentabilidadeESG,
-    ResumoClimaRecente
+from src.epidemiologico.domain.models import (
+    AlertaEpidemiologico,
+    DadosClimaticoCache,
+    OcorrenciaSanitaria,
 )
+from src.operacional.domain.models import (
+    AlocacaoInsumo,
+    Insumo,
+    LoteInsumo,
+    Maquinario,
+    OrdemManutencao,
+    Safra,
+    Talhao,
+)
+from src.shared.dashboard.schemas import (
+    AgenteResumo,
+    DashboardConsolidadoResponse,
+    ResumoClimaRecente,
+    ResumoEpidemiologico,
+    ResumoOperacionalFinanceiro,
+    ResumoPropriedadeGeral,
+    ResumoSustentabilidadeESG,
+)
+from src.shared.database.models import Propriedade
+
 
 class DashboardService:
     @staticmethod
@@ -81,8 +90,8 @@ class DashboardService:
         lotes = (await session.execute(stmt_lotes)).scalars().all()
         total_lotes = len(lotes)
         lotes_baixo = sum(
-            1 for l in lotes
-            if l.quantidade_atual <= (l.quantidade_inicial * Decimal('0.10'))
+            1 for lote in lotes
+            if lote.quantidade_atual <= (lote.quantidade_inicial * Decimal('0.10'))
         )
 
         stmt_maq = select(Maquinario).where(Maquinario.propriedade_id == propriedade_id)
@@ -108,10 +117,10 @@ class DashboardService:
         )
 
         # 4. Fitossanitário & Alertas
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
         stmt_alertas = select(AlertaEpidemiologico).where(
             AlertaEpidemiologico.propriedade_id == propriedade_id,
-            AlertaEpidemiologico.notificado == False
+            AlertaEpidemiologico.notificado.is_(False)
         )
         alertas = (await session.execute(stmt_alertas)).scalars().all()
         score_risco_max = max((float(a.risco_score) for a in alertas), default=0.0)

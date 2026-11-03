@@ -1,15 +1,16 @@
-from uuid import UUID
 from datetime import date
 from decimal import Decimal
-from typing import Optional, Dict
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
+
 
 class FonteEnergiaBase(BaseModel):
     tipo: str
     categoria: str
     unidade_medida: str
     fator_emissao_co2: float
-    descricao: Optional[str] = None
+    descricao: str | None = None
 
 class FonteEnergiaResponse(FonteEnergiaBase):
     id: UUID
@@ -22,10 +23,10 @@ class ConsumoEnergiaBase(BaseModel):
     periodo_inicio: date
     periodo_fim: date
     quantidade_consumida: Decimal = Field(gt=0)
-    custo_total_brl: Optional[Decimal] = Field(None, ge=0)
-    equipamento_ref: Optional[str] = None
-    metadata_consumo: Optional[dict] = None
-    sync_id: Optional[UUID] = None
+    custo_total_brl: Decimal | None = Field(None, ge=0)
+    equipamento_ref: str | None = None
+    metadata_consumo: dict | None = None
+    sync_id: UUID | None = None
 
 class ConsumoEnergiaCreate(ConsumoEnergiaBase):
     pass
@@ -41,7 +42,7 @@ class RelatorioESGBase(BaseModel):
     emissao_total_co2e_ton: Decimal
     emissao_por_hectare: Decimal
     pct_energia_renovavel: Decimal
-    intensidade_carbono: Optional[Decimal] = None
+    intensidade_carbono: Decimal | None = None
     indicadores_detalhados: dict
     status: str = "RASCUNHO"
 
@@ -55,4 +56,4 @@ class MatrizEnergeticaResponse(BaseModel):
     total_kwh: float
     percentual_renovavel: float
     percentual_fossil: float
-    breakdown_fontes: Dict[str, float]
+    breakdown_fontes: dict[str, float]

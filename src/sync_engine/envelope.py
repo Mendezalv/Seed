@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from uuid import UUID
 from enum import StrEnum
-from typing import Optional, Dict, List, Any
+from typing import Any
+from uuid import UUID
+
 from pydantic import BaseModel, Field
+
 
 class ConflictStrategy(StrEnum):
     LWW = 'LWW'
@@ -44,7 +46,7 @@ class SyncOperationSchema(BaseModel):
     entity_type: str
     operation: OperationType
     entity_id: UUID
-    data: Dict[str, Any]
+    data: dict[str, Any]
     timestamp: datetime
     conflict_strategy: ConflictStrategy
 
@@ -54,12 +56,12 @@ class SyncEnvelopeSchema(BaseModel):
     propriedade_id: UUID
     usuario_id: UUID
     last_known_server_version: int
-    device_version_vector: Dict[str, int]
-    operacoes: List[SyncOperationSchema]
+    device_version_vector: dict[str, int]
+    operacoes: list[SyncOperationSchema]
     checksum_sha256: str
     compressed: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    sent_at: Optional[datetime] = None
+    sent_at: datetime | None = None
 
 class SyncResultSchema(BaseModel):
     envelope_id: UUID
@@ -68,4 +70,4 @@ class SyncResultSchema(BaseModel):
     conflicts_resolved: int
     conflicts_pending_review: int
     new_server_version: int
-    details: List[Dict[str, Any]]
+    details: list[dict[str, Any]]

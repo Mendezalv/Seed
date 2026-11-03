@@ -1,8 +1,9 @@
-from uuid import UUID
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Optional
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
+
 
 # Base schemas
 class InsumoBase(BaseModel):
@@ -15,10 +16,10 @@ class InsumoCreate(InsumoBase):
     pass
 
 class InsumoUpdate(BaseModel):
-    tipo: Optional[str] = None
-    nome: Optional[str] = None
-    unidade_medida: Optional[str] = None
-    preco_unitario: Optional[Decimal] = None
+    tipo: str | None = None
+    nome: str | None = None
+    unidade_medida: str | None = None
+    preco_unitario: Decimal | None = None
 
 class InsumoResponse(InsumoBase):
     id: UUID
@@ -30,17 +31,17 @@ class LoteInsumoBase(BaseModel):
     codigo_lote: str
     quantidade_inicial: Decimal = Field(gt=0)
     quantidade_atual: Decimal = Field(ge=0)
-    data_validade: Optional[date] = None
-    fornecedor: Optional[str] = None
+    data_validade: date | None = None
+    fornecedor: str | None = None
     entrada_em: datetime
 
 class LoteInsumoCreate(LoteInsumoBase):
     pass
 
 class LoteInsumoUpdate(BaseModel):
-    quantidade_atual: Optional[Decimal] = Field(None, ge=0)
-    data_validade: Optional[date] = None
-    fornecedor: Optional[str] = None
+    quantidade_atual: Decimal | None = Field(None, ge=0)
+    data_validade: date | None = None
+    fornecedor: str | None = None
 
 class LoteInsumoResponse(LoteInsumoBase):
     id: UUID
@@ -51,17 +52,17 @@ class LoteInsumoResponse(LoteInsumoBase):
 class TalhaoBase(BaseModel):
     nome: str
     area_hectares: Decimal = Field(gt=0)
-    cultura_atual: Optional[str] = None
+    cultura_atual: str | None = None
     status: str = "ATIVO"
 
 class TalhaoCreate(TalhaoBase):
-    geometria: Optional[str] = None  # WKT representation if needed
+    geometria: str | None = None  # WKT representation if needed
 
 class TalhaoUpdate(BaseModel):
-    nome: Optional[str] = None
-    area_hectares: Optional[Decimal] = Field(None, gt=0)
-    cultura_atual: Optional[str] = None
-    status: Optional[str] = None
+    nome: str | None = None
+    area_hectares: Decimal | None = Field(None, gt=0)
+    cultura_atual: str | None = None
+    status: str | None = None
 
 class TalhaoResponse(TalhaoBase):
     id: UUID
@@ -72,24 +73,24 @@ class TalhaoResponse(TalhaoBase):
 class SafraBase(BaseModel):
     talhao_id: UUID
     cultura: str
-    variedade: Optional[str] = None
+    variedade: str | None = None
     data_plantio: date
-    data_colheita: Optional[date] = None
-    produtividade_estimada: Optional[Decimal] = Field(None, gt=0)
-    produtividade_real: Optional[Decimal] = Field(None, ge=0)
+    data_colheita: date | None = None
+    produtividade_estimada: Decimal | None = Field(None, gt=0)
+    produtividade_real: Decimal | None = Field(None, ge=0)
     status: str = "PLANEJADA"
 
 class SafraCreate(SafraBase):
     pass
 
 class SafraUpdate(BaseModel):
-    cultura: Optional[str] = None
-    variedade: Optional[str] = None
-    data_plantio: Optional[date] = None
-    data_colheita: Optional[date] = None
-    produtividade_estimada: Optional[Decimal] = Field(None, gt=0)
-    produtividade_real: Optional[Decimal] = Field(None, ge=0)
-    status: Optional[str] = None
+    cultura: str | None = None
+    variedade: str | None = None
+    data_plantio: date | None = None
+    data_colheita: date | None = None
+    produtividade_estimada: Decimal | None = Field(None, gt=0)
+    produtividade_real: Decimal | None = Field(None, ge=0)
+    status: str | None = None
 
 class SafraResponse(SafraBase):
     id: UUID
@@ -105,14 +106,14 @@ class AlocacaoInsumoBase(BaseModel):
     area_hectares: Decimal = Field(gt=0)
     operador_id: UUID
     aplicado_em: datetime
-    metadata_campo: Optional[dict] = None
-    sync_id: Optional[UUID] = None
+    metadata_campo: dict | None = None
+    sync_id: UUID | None = None
 
 class AlocacaoInsumoCreate(AlocacaoInsumoBase):
     pass
 
 class AlocacaoInsumoUpdate(BaseModel):
-    metadata_campo: Optional[dict] = None
+    metadata_campo: dict | None = None
 
 class AlocacaoInsumoResponse(AlocacaoInsumoBase):
     id: UUID
@@ -123,22 +124,22 @@ class AlocacaoInsumoResponse(AlocacaoInsumoBase):
 class MaquinarioBase(BaseModel):
     nome: str
     tipo: str
-    modelo: Optional[str] = None
-    ano_fabricacao: Optional[int] = None
+    modelo: str | None = None
+    ano_fabricacao: int | None = None
     horimetro_atual: Decimal = Field(default=Decimal('0'), ge=0)
     intervalo_preventiva: Decimal = Field(default=Decimal('500'), gt=0)
-    proximo_servico_em: Optional[Decimal] = None
+    proximo_servico_em: Decimal | None = None
     status: str = "OPERACIONAL"
 
 class MaquinarioCreate(MaquinarioBase):
     pass
 
 class MaquinarioUpdate(BaseModel):
-    nome: Optional[str] = None
-    tipo: Optional[str] = None
-    horimetro_atual: Optional[Decimal] = Field(None, ge=0)
-    proximo_servico_em: Optional[Decimal] = Field(None, ge=0)
-    status: Optional[str] = None
+    nome: str | None = None
+    tipo: str | None = None
+    horimetro_atual: Decimal | None = Field(None, ge=0)
+    proximo_servico_em: Decimal | None = Field(None, ge=0)
+    status: str | None = None
 
 class MaquinarioResponse(MaquinarioBase):
     id: UUID
@@ -149,21 +150,21 @@ class MaquinarioResponse(MaquinarioBase):
 class OrdemManutencaoBase(BaseModel):
     maquinario_id: UUID
     tipo: str
-    descricao: Optional[str] = None
-    horimetro_na_abertura: Optional[Decimal] = Field(None, ge=0)
+    descricao: str | None = None
+    horimetro_na_abertura: Decimal | None = Field(None, ge=0)
     status: str = "PENDENTE"
     prioridade: str = "MEDIA"
-    concluida_em: Optional[datetime] = None
-    custo_estimado: Optional[Decimal] = Field(None, ge=0)
-    custo_real: Optional[Decimal] = Field(None, ge=0)
+    concluida_em: datetime | None = None
+    custo_estimado: Decimal | None = Field(None, ge=0)
+    custo_real: Decimal | None = Field(None, ge=0)
 
 class OrdemManutencaoCreate(OrdemManutencaoBase):
     pass
 
 class OrdemManutencaoUpdate(BaseModel):
-    status: Optional[str] = None
-    concluida_em: Optional[datetime] = None
-    custo_real: Optional[Decimal] = Field(None, ge=0)
+    status: str | None = None
+    concluida_em: datetime | None = None
+    custo_real: Decimal | None = Field(None, ge=0)
 
 class OrdemManutencaoResponse(OrdemManutencaoBase):
     id: UUID
@@ -183,7 +184,7 @@ class ViabilidadeRequest(BaseModel):
     custo_mao_obra: Decimal = Field(default=Decimal('0'), ge=0)
     custo_frete: Decimal = Field(default=Decimal('0'), ge=0)
     custo_impostos: Decimal = Field(default=Decimal('0'), ge=0)
-    preco_mercado_saca: Optional[Decimal] = Field(None, gt=0)
+    preco_mercado_saca: Decimal | None = Field(None, gt=0)
 
 class ViabilidadeResponse(BaseModel):
     custo_total: Decimal
@@ -192,7 +193,7 @@ class ViabilidadeResponse(BaseModel):
     margem_percentual: Decimal
     receita_bruta: Decimal
     lucro_liquido: Decimal
-    cenarios: List[CenarioViabilidade]
+    cenarios: list[CenarioViabilidade]
 
 
 # ─── NF-e Agro Schemas ────────────────────────────────────────
@@ -206,17 +207,17 @@ class NfeItemImport(BaseModel):
     quantidade: Decimal = Field(gt=0)
     custo_unitario: Decimal = Field(ge=0)
     codigo_lote: str
-    data_validade: Optional[date] = None
-    fornecedor: Optional[str] = None
+    data_validade: date | None = None
+    fornecedor: str | None = None
 
 class NfeImportRequest(BaseModel):
     numero_nf: str
-    chave_acesso: Optional[str] = None
-    fornecedor_padrao: Optional[str] = None
-    itens: List[NfeItemImport]
+    chave_acesso: str | None = None
+    fornecedor_padrao: str | None = None
+    itens: list[NfeItemImport]
 
 class NfeImportResponse(BaseModel):
     sucesso: bool
     total_itens_importados: int
-    lotes_criados: List[LoteInsumoResponse]
+    lotes_criados: list[LoteInsumoResponse]
     mensagem: str

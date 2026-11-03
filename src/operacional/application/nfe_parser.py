@@ -1,8 +1,8 @@
+import re
 import xml.etree.ElementTree as ET
-from datetime import datetime, date
+from datetime import date
 from decimal import Decimal
 from typing import Any
-import re
 
 
 def _clean_tag(tag: str) -> str:
@@ -70,7 +70,7 @@ class NfeParser:
         try:
             root = ET.fromstring(xml_text)
         except Exception as e:
-            raise ValueError(f"Arquivo XML de NF-e inválido ou corrompido: {str(e)}")
+            raise ValueError(f"Arquivo XML de NF-e inválido ou corrompido: {str(e)}") from e
 
         # Busca infNFe
         inf_nfe = _find_elem(root, "infNFe")

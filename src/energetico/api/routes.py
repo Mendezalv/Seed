@@ -1,16 +1,21 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query, Path, Response
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
 
-from src.shared.export.export_engine import ExportEngine
-from src.shared.database.session import get_session
-from src.shared.api.dependencies import get_current_propriedade_id
-from src.energetico.domain.schemas import (
-    ConsumoEnergiaCreate, ConsumoEnergiaResponse,
-    RelatorioESGResponse, MatrizEnergeticaResponse
-)
+from fastapi import APIRouter, Depends, Path, Query, Response
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.energetico.application.services import EnergiaService
+from src.energetico.domain.models import RelatorioESG
+from src.energetico.domain.schemas import (
+    ConsumoEnergiaCreate,
+    ConsumoEnergiaResponse,
+    MatrizEnergeticaResponse,
+    RelatorioESGResponse,
+)
+from src.shared.api.dependencies import get_current_propriedade_id
+from src.shared.database.session import get_session
+from src.shared.export.export_engine import ExportEngine
+from src.shared.utils.pagination import PaginatedResponse, PaginationParams, paginate
 
 router = APIRouter(prefix="/energetico", tags=["Transição Energética"])
 
@@ -39,17 +44,17 @@ async def gerar_relatorio_esg(
 ):
     return await EnergiaService.gerar_relatorio_esg(propriedade_id, periodo, session)
 
-from src.shared.utils.pagination import PaginationParams, PaginatedResponse, paginate
-
 @router.get("/relatorios", response_model=PaginatedResponse[RelatorioESGResponse])
 async def listar_relatorios(
     pagination: PaginationParams = Depends(),
     propriedade_id: UUID = Depends(get_current_propriedade_id),
     session: AsyncSession = Depends(get_session)
 ):
-    from sqlalchemy import select
-    from src.energetico.domain.models import RelatorioESG
-    stmt = select(RelatorioESG).where(RelatorioESG.propriedade_id == propriedade_id).order_by(RelatorioESG.created_at.desc())
+    stmt = (
+        select(RelatorioESG)
+        .where(RelatorioESG.propriedade_id == propriedade_id)
+        .order_by(RelatorioESG.created_at.desc())
+    )
     return await paginate(session, stmt, pagination)
 
 @router.patch("/relatorios/{id}/publicar", response_model=RelatorioESGResponse)

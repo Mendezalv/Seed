@@ -1,8 +1,8 @@
+from typing import Any
+
 import httpx
 import structlog
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
-from typing import Any, Optional
-import time
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from src.shared.cache import cache_manager
 
@@ -18,13 +18,13 @@ class BaseAPIClient:
     """
     Cliente HTTP base para realizar requisições a APIs externas com retry e cache em memória.
     """
-    def __init__(self, base_url: str, headers: Optional[dict[str, str]] = None, timeout: float = 10.0):
+    def __init__(self, base_url: str, headers: dict[str, str] | None = None, timeout: float = 10.0):
         self.base_url = base_url.rstrip("/")
         self.headers = headers or {}
         self.timeout = timeout
         self._cache: dict[str, dict[str, Any]] = {}
 
-    def _get_cache_key(self, method: str, url: str, params: Optional[dict[str, Any]] = None) -> str:
+    def _get_cache_key(self, method: str, url: str, params: dict[str, Any] | None = None) -> str:
         param_str = str(sorted(params.items())) if params else ""
         return f"{method}:{url}:{param_str}"
 
@@ -34,7 +34,7 @@ class BaseAPIClient:
         retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
         reraise=True
     )
-    async def get(self, endpoint: str, params: Optional[dict[str, Any]] = None, cache_ttl: Optional[int] = None) -> dict[str, Any] | str | list[Any]:
+    async def get(self, endpoint: str, params: dict[str, Any] | None = None, cache_ttl: int | None = None) -> dict[str, Any] | str | list[Any]:
         """
         Realiza requisição GET com tratamento de erro, retry e cache.
         """
@@ -76,7 +76,7 @@ class BaseAPIClient:
         retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
         reraise=True
     )
-    async def post(self, endpoint: str, json_data: Optional[dict[str, Any]] = None) -> dict[str, Any] | str:
+    async def post(self, endpoint: str, json_data: dict[str, Any] | None = None) -> dict[str, Any] | str:
         """
         Realiza requisição POST com tratamento de erro e retry.
         """
@@ -86,7 +86,7 @@ class BaseAPIClient:
             try:
                 response = await client.post(url, json=json_data)
                 response.raise_for_status()
-                
+
                 content_type = response.headers.get("content-type", "")
                 if "application/json" in content_type:
                     return response.json()

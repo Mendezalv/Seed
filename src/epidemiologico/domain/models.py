@@ -1,6 +1,8 @@
 from datetime import date, datetime
 from uuid import UUID
+
 from sqlalchemy import (
+    JSON,
     Boolean,
     Date,
     DateTime,
@@ -8,12 +10,13 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
+
 from src.shared.database.base import Base, TenantMixin, TimestampMixin, generate_uuid7
+
 
 class OcorrenciaSanitaria(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'ocorrencias_sanitarias'

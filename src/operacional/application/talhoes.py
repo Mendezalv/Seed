@@ -1,6 +1,8 @@
+import logging
 from decimal import Decimal
-from typing import Any, List, Optional
+from typing import Any
 from uuid import UUID
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,13 +11,14 @@ from src.operacional.domain.schemas import (
     SafraCreate,
     SafraUpdate,
     TalhaoCreate,
-    TalhaoUpdate,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TalhoesService:
     @staticmethod
-    async def listar_talhoes(propriedade_id: UUID, session: AsyncSession) -> List[Talhao]:
+    async def listar_talhoes(propriedade_id: UUID, session: AsyncSession) -> list[Talhao]:
         stmt = select(Talhao).where(Talhao.propriedade_id == propriedade_id).order_by(Talhao.nome)
         result = await session.execute(stmt)
         return list(result.scalars().all())
@@ -29,7 +32,7 @@ class TalhoesService:
         return novo_talhao
 
     @staticmethod
-    async def obter_talhao(talhao_id: UUID, propriedade_id: UUID, session: AsyncSession) -> Optional[Talhao]:
+    async def obter_talhao(talhao_id: UUID, propriedade_id: UUID, session: AsyncSession) -> Talhao | None:
         stmt = select(Talhao).where(Talhao.id == talhao_id, Talhao.propriedade_id == propriedade_id)
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
@@ -70,8 +73,8 @@ class TalhoesService:
             found = result.scalar_one_or_none()
             if found:
                 return found
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("ST_Contains falhou ou não suportado no dialeto atual, usando fallback: %s", e)
 
         # Fallback para propriedades com talhões sem polígonos cadastrados ou testes
         stmt_fb = (
@@ -119,7 +122,7 @@ class TalhoesService:
 
 class SafrasService:
     @staticmethod
-    async def listar_safras(propriedade_id: UUID, session: AsyncSession) -> List[Safra]:
+    async def listar_safras(propriedade_id: UUID, session: AsyncSession) -> list[Safra]:
         stmt = select(Safra).where(Safra.propriedade_id == propriedade_id).order_by(Safra.data_plantio.desc())
         result = await session.execute(stmt)
         return list(result.scalars().all())
@@ -132,15 +135,15 @@ class SafrasService:
         return nova_safra
 
     @staticmethod
-    async def atualizar_safra(safra_id: UUID, safra_in: SafraUpdate, propriedade_id: UUID, session: AsyncSession) -> Optional[Safra]:
+    async def atualizar_safra(safra_id: UUID, safra_in: SafraUpdate, propriedade_id: UUID, session: AsyncSession) -> Safra | None:
         stmt = select(Safra).where(Safra.id == safra_id, Safra.propriedade_id == propriedade_id)
         result = await session.execute(stmt)
         safra = result.scalar_one_or_none()
         if not safra:
             return None
-        
+
         for k, v in safra_in.model_dump(exclude_unset=True).items():
             setattr(safra, k, v)
-        
+
         await session.flush()
         return safra

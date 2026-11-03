@@ -1,10 +1,12 @@
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.energetico.domain.calculadora_esg import CalculadoraESG
 from src.energetico.domain.models import ConsumoEnergia, RelatorioESG
 from src.energetico.domain.schemas import ConsumoEnergiaCreate
-from src.energetico.domain.calculadora_esg import CalculadoraESG
+
 
 class EnergiaService:
     @staticmethod
@@ -33,7 +35,7 @@ class EnergiaService:
         relatorio = await session.get(RelatorioESG, relatorio_id)
         if not relatorio or relatorio.propriedade_id != propriedade_id:
             raise ValueError("Relatório não encontrado.")
-            
+
         relatorio.status = "PUBLICADO"
         await session.flush()
         return relatorio

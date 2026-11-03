@@ -3,11 +3,12 @@ Serviço emissor de Laudos e Relatórios de Sustentabilidade e Crédito Verde (P
 Gera dados estruturados e exportação formatada para apresentação junto a agentes financeiros.
 """
 
-from uuid import UUID
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+
 from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.energetico.domain.models import RelatorioESG
 from src.shared.database.models import Propriedade
@@ -61,7 +62,7 @@ class RelatorioESGExportService:
             "documento": {
                 "tipo": "Laudo Técnico de Conformidade ESG e Eficiência Energética",
                 "versao_normativa": "Plano ABC+ / GHG Protocol Agrícola 2026",
-                "emitido_em": datetime.now(timezone.utc).isoformat(),
+                "emitido_em": datetime.now(UTC).isoformat(),
                 "status_relatorio": relatorio.status,
             },
             "propriedade": {

@@ -1,22 +1,23 @@
+from datetime import date, datetime
 from uuid import UUID
-from datetime import datetime, date
-from typing import Optional, List
+
 from pydantic import BaseModel, ConfigDict, Field
 
+
 class OcorrenciaSanitariaBase(BaseModel):
-    talhao_id: Optional[UUID] = None
+    talhao_id: UUID | None = None
     tipo_cultura: str
     categoria: str
     agente_identificado: str
     severidade: str
     latitude: float = Field(ge=-33.0, le=5.0)
     longitude: float = Field(ge=-74.0, le=-35.0)
-    fotos_urls: Optional[List[str]] = None
-    dados_extras: Optional[dict] = None
+    fotos_urls: list[str] | None = None
+    dados_extras: dict | None = None
     reportado_por: UUID
     observado_em: datetime
     origem: str
-    sync_id: Optional[UUID] = None
+    sync_id: UUID | None = None
 
 class OcorrenciaSanitariaCreate(OcorrenciaSanitariaBase):
     pass
@@ -24,20 +25,20 @@ class OcorrenciaSanitariaCreate(OcorrenciaSanitariaBase):
 class OcorrenciaSanitariaResponse(OcorrenciaSanitariaBase):
     id: UUID
     propriedade_id: UUID
-    sincronizado_em: Optional[datetime] = None
+    sincronizado_em: datetime | None = None
     model_config = ConfigDict(from_attributes=True)
 
 class DadosClimaticosBase(BaseModel):
     latitude: float
     longitude: float
     data_referencia: date
-    temp_media_c: Optional[float] = None
-    temp_max_c: Optional[float] = None
-    temp_min_c: Optional[float] = None
-    umidade_relativa_pct: Optional[float] = None
-    precipitacao_mm: Optional[float] = None
-    velocidade_vento_ms: Optional[float] = None
-    horas_molhamento_foliar: Optional[int] = None
+    temp_media_c: float | None = None
+    temp_max_c: float | None = None
+    temp_min_c: float | None = None
+    umidade_relativa_pct: float | None = None
+    precipitacao_mm: float | None = None
+    velocidade_vento_ms: float | None = None
+    horas_molhamento_foliar: int | None = None
     fonte: str
 
 class DadosClimaticosResponse(DadosClimaticosBase):
@@ -53,7 +54,7 @@ class AlertaEpidemiologicoBase(BaseModel):
     longitude_centro: float
     raio_km: float
     notificado: bool = False
-    valido_ate: Optional[datetime] = None
+    valido_ate: datetime | None = None
 
 class AlertaEpidemiologicoResponse(AlertaEpidemiologicoBase):
     id: UUID
@@ -65,16 +66,16 @@ class MapaCalorPontoResponse(BaseModel):
     longitude: float
     intensidade: int
     peso_severidade: float
-    agentes: List[str] = Field(default_factory=list)
+    agentes: list[str] = Field(default_factory=list)
 
 class MapaCalorResponse(BaseModel):
     total_pontos: int
     total_ocorrencias: int
-    pontos: List[MapaCalorPontoResponse]
+    pontos: list[MapaCalorPontoResponse]
 
 
 class CopilotoConsultaRequest(BaseModel):
     pergunta: str
     cultura: str = "Soja"
-    talhao_nome: Optional[str] = None
-    insumos_estoque: Optional[List[str]] = None
+    talhao_nome: str | None = None
+    insumos_estoque: list[str] | None = None

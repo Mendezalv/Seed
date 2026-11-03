@@ -1,6 +1,11 @@
+import logging
 from datetime import date
-from pydantic import BaseModel
+
 import agrobr
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
 
 class CotacaoCommodity(BaseModel):
     produto: str
@@ -13,7 +18,7 @@ class CEPEAClient:
     """
     Cliente para buscar cotações do CEPEA utilizando a biblioteca agrobr.
     """
-    
+
     async def obter_cotacao_soja(self) -> CotacaoCommodity:
         """
         Obtém a cotação mais recente da Soja.
@@ -53,9 +58,9 @@ class CEPEAClient:
                     variacao_pct=float(latest.get('variacao', 0.0)),
                     unidade=unidade
                 )
-        except Exception:
-            pass
-        
+        except Exception as e:
+            logger.warning("Falha ao obter cotação CEPEA para %s via agrobr: %s", produto, e)
+
         return CotacaoCommodity(
             produto=produto.capitalize(),
             preco_brl=0.0,

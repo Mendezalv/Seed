@@ -4,9 +4,10 @@ Integrado aos catálogos oficiais do Ministério da Agricultura (Agrofit / MAPA)
 Embrapa, comitês científicos de resistência (FRAC, IRAC, HRAC) e manuais técnicos de solos e mecanização.
 """
 
-from typing import Any, Optional
-import unicodedata
 import re
+import unicodedata
+from typing import Any
+
 
 def _normalizar(texto: str) -> str:
     """Remove acentos, pontuações e converte para minúsculas."""
@@ -323,8 +324,8 @@ class CopilotoAgroService:
     def responder_consulta(
         pergunta: str,
         cultura: str = "Soja",
-        talhao_nome: Optional[str] = None,
-        insumos_estoque: Optional[list[str]] = None,
+        talhao_nome: str | None = None,
+        insumos_estoque: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Processa consultas agronômicas de produtores e engenheiros agrônomos,
@@ -344,7 +345,7 @@ class CopilotoAgroService:
             alvo_norm = _normalizar(item["alvo"])
             if alvo_norm in texto_limpo:
                 score += 15
-            
+
             # Match de nome científico
             nome_cie_norm = _normalizar(item["nome_cientifico"])
             if any(part in texto_limpo for part in nome_cie_norm.split() if len(part) > 4):

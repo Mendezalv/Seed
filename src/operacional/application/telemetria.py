@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
-from typing import Any
 import random
+from datetime import UTC, datetime
+from typing import Any
 
 
 class TelemetriaService:
@@ -11,7 +11,7 @@ class TelemetriaService:
         coordenadas georreferenciadas, velocidade de deslocamento, consumo instantâneo,
         pressão de barra de pulverização e diagnóstico de risco de deriva.
         """
-        agora = datetime.now(timezone.utc).isoformat()
+        agora = datetime.now(UTC).isoformat()
 
         maquinas_telemetria = [
             {

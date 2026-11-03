@@ -1,4 +1,3 @@
-import pytest
 
 class ViabilidadeService:
     def calcular_basico(self, custo, preco, produtividade):
@@ -6,14 +5,14 @@ class ViabilidadeService:
         lucro = receita - custo
         ponto_equilibrio = custo / preco if preco > 0 else 0
         return {"receita": receita, "lucro": lucro, "ponto_equilibrio": ponto_equilibrio, "margem": lucro/receita if receita > 0 else 0}
-        
+
     def gerar_cenarios(self, basico):
         return {
             "pessimista": {"lucro": basico["lucro"] * 0.8},
             "base": {"lucro": basico["lucro"]},
             "otimista": {"lucro": basico["lucro"] * 1.2}
         }
-        
+
     def calcular_custo_por_saca(self, custo, sacas):
         return custo / sacas if sacas > 0 else 0
 

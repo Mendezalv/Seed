@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import pytest
 from uuid import uuid4
 
+from src.epidemiologico.application.copiloto_agro import CopilotoAgroService
+from src.operacional.application.lcdpr_service import LcdprService
 from src.operacional.application.ndvi_service import NdviService
 from src.operacional.application.telemetria import TelemetriaService
-from src.operacional.application.lcdpr_service import LcdprService
-from src.epidemiologico.application.copiloto_agro import CopilotoAgroService
 
 
 def test_ndvi_service_gerar_serie():

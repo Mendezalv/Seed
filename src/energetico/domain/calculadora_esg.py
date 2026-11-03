@@ -1,10 +1,12 @@
-from uuid import UUID
 from decimal import Decimal
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from uuid import UUID
 
-from src.energetico.domain.models import FonteEnergia, ConsumoEnergia, RelatorioESG
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.energetico.domain.models import ConsumoEnergia, FonteEnergia, RelatorioESG
 from src.operacional.domain.models import Talhao
+
 
 class CalculadoraESG:
     FATORES_EMISSAO = {
@@ -58,12 +60,12 @@ class CalculadoraESG:
             qtd = float(consumo.quantidade_consumida)
             kwh = CalculadoraESG._converter_para_kwh(qtd, fonte.tipo, fonte.unidade_medida)
             total_kwh += kwh
-            
+
             if fonte.categoria == 'RENOVAVEL':
                 kwh_renovavel += kwh
             else:
                 kwh_fossil += kwh
-                
+
             breakdown[fonte.tipo] = breakdown.get(fonte.tipo, 0.0) + kwh
 
         for k in breakdown:
@@ -81,7 +83,7 @@ class CalculadoraESG:
         stmt = select(ConsumoEnergia, FonteEnergia).join(
             FonteEnergia, ConsumoEnergia.fonte_id == FonteEnergia.id
         ).where(ConsumoEnergia.propriedade_id == propriedade_id)
-        
+
         if periodo:
             stmt = stmt.where(func.to_char(ConsumoEnergia.periodo_inicio, 'YYYY-MM') == periodo)
 
@@ -125,6 +127,6 @@ class CalculadoraESG:
         # Simplificacao: 1 CBIO = 1 ton CO2 evitada
         # Assume baseline fossil de 1000 ton
         relatorio = await CalculadoraESG.gerar_relatorio(propriedade_id, periodo, session)
-        baseline_fossil = float(relatorio.emissao_total_co2e_ton) * 1.5 
+        baseline_fossil = float(relatorio.emissao_total_co2e_ton) * 1.5
         evitado = baseline_fossil - float(relatorio.emissao_total_co2e_ton)
         return max(evitado, 0.0)

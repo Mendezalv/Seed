@@ -5,25 +5,22 @@ Usa SQLite async em memória para testes unitários,
 evitando dependência de PostgreSQL/PostGIS nos testes locais.
 """
 
+from uuid import UUID
+
 import pytest
 import pytest_asyncio
-from uuid import UUID
-from datetime import datetime, timezone
-
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from src.main import app
+from src.shared.auth.jwt import create_access_token
 from src.shared.database.base import Base
 from src.shared.database.session import get_session
-from src.shared.auth.jwt import create_access_token
-from src.main import app
-
 
 SAMPLE_PROPRIEDADE_ID = UUID("12345678-1234-5678-1234-567812345678")
 SAMPLE_USER_ID = UUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
 
-
-from sqlalchemy import event
 
 @pytest_asyncio.fixture
 async def engine():
@@ -32,7 +29,7 @@ async def engine():
         "sqlite+aiosqlite:///:memory:",
         echo=False,
     )
-    
+
     @event.listens_for(engine.sync_engine, "connect")
     def register_sqlite_spatial_mocks(dbapi_connection, connection_record):
         dbapi_connection.create_function("GeomFromEWKT", 1, lambda x: x)

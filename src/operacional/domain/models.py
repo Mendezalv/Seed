@@ -1,10 +1,13 @@
-from uuid import UUID
 from datetime import date, datetime
 from decimal import Decimal
-from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, JSON, Numeric, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from uuid import UUID
+
 from geoalchemy2 import Geometry
+from sqlalchemy import JSON, Date, DateTime, ForeignKey, Index, Integer, Numeric, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from src.shared.database.base import Base, TenantMixin, TimestampMixin, generate_uuid7
+
 
 class Insumo(Base, TimestampMixin):
     __tablename__ = 'insumos'

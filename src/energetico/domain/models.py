@@ -1,9 +1,12 @@
-from uuid import UUID
 from datetime import date
 from decimal import Decimal
-from sqlalchemy import String, Date, Float, Numeric, JSON, ForeignKey
+from uuid import UUID
+
+from sqlalchemy import JSON, Date, Float, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column
-from src.shared.database.base import Base, TimestampMixin, TenantMixin, generate_uuid7
+
+from src.shared.database.base import Base, TenantMixin, TimestampMixin, generate_uuid7
+
 
 class FonteEnergia(Base, TimestampMixin, TenantMixin):
     __tablename__ = 'fontes_energia'

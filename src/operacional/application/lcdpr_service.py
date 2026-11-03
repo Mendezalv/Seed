@@ -1,7 +1,5 @@
-from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
-from uuid import UUID
 
 
 class LcdprService:
@@ -133,7 +131,7 @@ class LcdprService:
         linhas.append("0010|1")
 
         # Registro 0030: Dados Cadastrais do Contribuinte
-        linhas.append(f"0030|Av. dos Pioneiros, 1500|Centro|MT|5107909|78890000|66999887766|contato@fazendasantamaria.com.br")
+        linhas.append("0030|Av. dos Pioneiros, 1500|Centro|MT|5107909|78890000|66999887766|contato@fazendasantamaria.com.br")
 
         # Registro 0040: Cadastro dos Imóveis Rurais
         linhas.append(f"0040|001|BR|{cafir}|{car_registro}|{propriedade_nome[:50]}|Rodovia BR-163 Km 742|Zona Rural|MT|5107909|78890000|1|10000")

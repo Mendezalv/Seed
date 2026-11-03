@@ -1,19 +1,19 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
-from jose import jwt, JWTError
-from passlib.context import CryptContext
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-from fastapi import HTTPException, status
-
-from src.shared.config import get_settings
-from src.shared.database.models import Propriedade, Usuario
-from src.shared.auth.schemas import UsuarioCreate, UsuarioResponse, LoginRequest, LoginResponse
-from src.shared.auth.jwt import create_access_token
-from src.shared.auth.rbac import ROLE_PERMISSIONS, Role
 
 import bcrypt
+from fastapi import HTTPException, status
+from jose import JWTError, jwt
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.shared.auth.jwt import create_access_token
+from src.shared.auth.rbac import ROLE_PERMISSIONS, Role
+from src.shared.auth.schemas import LoginRequest, LoginResponse, UsuarioCreate, UsuarioResponse
+from src.shared.config import get_settings
+from src.shared.database.models import Propriedade, Usuario
+
 
 def hash_password(password: str) -> str:
     """Gera hash seguro da senha com bcrypt."""
@@ -49,11 +49,11 @@ class AuthService:
             session.add(nova_propriedade)
             await session.flush()
             prop_id = nova_propriedade.id
-            
+
             # Popula fontes de energia padrão para a nova propriedade
             from src.shared.database.seed_data import seed_fontes_energia
             await seed_fontes_energia(session, prop_id)
-        
+
         novo_usuario = Usuario(
             email=usuario_in.email,
             nome_completo=usuario_in.nome_completo,
@@ -64,7 +64,7 @@ class AuthService:
         session.add(novo_usuario)
         await session.commit()
         await session.refresh(novo_usuario)
-        
+
         return UsuarioResponse.model_validate(novo_usuario)
 
     @staticmethod
@@ -72,17 +72,17 @@ class AuthService:
         query = select(Usuario).where(Usuario.email == login.email)
         result = await session.execute(query)
         usuario = result.scalar_one_or_none()
-        
+
         if not usuario or not verify_password(login.senha, usuario.senha_hash):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais inválidas")
-            
+
         if not usuario.ativo:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Usuário inativo")
-            
-        usuario.ultimo_login = datetime.now(timezone.utc)
+
+        usuario.ultimo_login = datetime.now(UTC)
         await session.commit()
         await session.refresh(usuario)
-        
+
         permissions = ROLE_PERMISSIONS.get(Role(usuario.role), [])
         token_data = {
             "sub": str(usuario.id),
@@ -90,9 +90,9 @@ class AuthService:
             "role": usuario.role,
             "permissions": permissions
         }
-        
+
         access_token = create_access_token(token_data)
-        
+
         return LoginResponse(
             access_token=access_token,
             usuario=UsuarioResponse.model_validate(usuario)
@@ -116,17 +116,17 @@ class AuthService:
         query = select(Usuario).where(Usuario.id == user_id, Usuario.propriedade_id == propriedade_id)
         result = await session.execute(query)
         usuario = result.scalar_one_or_none()
-        
+
         if not usuario:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado nesta propriedade")
-            
+
         if "senha" in data:
             data["senha_hash"] = hash_password(data.pop("senha"))
-            
+
         for key, value in data.items():
             if hasattr(usuario, key):
                 setattr(usuario, key, value)
-                
+
         await session.commit()
         await session.refresh(usuario)
         return usuario
@@ -136,10 +136,10 @@ class AuthService:
         query = select(Usuario).where(Usuario.id == user_id, Usuario.propriedade_id == propriedade_id)
         result = await session.execute(query)
         usuario = result.scalar_one_or_none()
-        
+
         if not usuario:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado nesta propriedade")
-            
+
         usuario.ativo = False
         await session.commit()
         await session.refresh(usuario)
@@ -197,11 +197,11 @@ class AuthService:
             user_id = UUID(str(payload.get("sub")))
         except HTTPException:
             raise
-        except (JWTError, Exception):
+        except (JWTError, Exception) as err:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Token de recuperação inválido ou expirado.",
-            )
+            ) from err
 
         query = select(Usuario).where(Usuario.id == user_id)
         result = await session.execute(query)

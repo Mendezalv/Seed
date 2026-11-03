@@ -1,10 +1,12 @@
-from uuid import UUID
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.operacional.domain.models import Maquinario, OrdemManutencao
+
 
 class ManutencaoService:
     @staticmethod
@@ -16,7 +18,7 @@ class ManutencaoService:
         )
         result = await session.execute(stmt)
         maquinas = result.scalars().all()
-        
+
         novas_ordens = []
         for maq in maquinas:
             om = OrdemManutencao(
@@ -32,7 +34,7 @@ class ManutencaoService:
             maq.proximo_servico_em = maq.horimetro_atual + maq.intervalo_preventiva
             session.add(om)
             novas_ordens.append(om)
-            
+
         await session.flush()
         return novas_ordens
 
@@ -41,7 +43,7 @@ class ManutencaoService:
         maq = await session.get(Maquinario, maquinario_id)
         if not maq or maq.propriedade_id != propriedade_id:
             raise ValueError("Maquinário não encontrado.")
-        
+
         maq.horimetro_atual += horas
         await session.flush()
         return maq
@@ -51,15 +53,15 @@ class ManutencaoService:
         om = await session.get(OrdemManutencao, ordem_id)
         if not om or om.propriedade_id != propriedade_id:
             raise ValueError("Ordem não encontrada.")
-            
+
         om.status = "CONCLUIDA"
-        om.concluida_em = datetime.now(timezone.utc)
+        om.concluida_em = datetime.now(UTC)
         om.custo_real = custo_real
-        
+
         maq = await session.get(Maquinario, om.maquinario_id)
         if maq:
             maq.status = "OPERACIONAL"
-            
+
         await session.flush()
         return om
 
@@ -69,7 +71,7 @@ class ManutencaoService:
         if status:
             stmt = stmt.where(OrdemManutencao.status == status)
         stmt = stmt.order_by(OrdemManutencao.created_at.desc())
-        
+
         result = await session.execute(stmt)
         return list(result.scalars().all())
 

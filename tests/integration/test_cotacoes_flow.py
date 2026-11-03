@@ -3,6 +3,7 @@ Testes de integração para as rotas de Cotações em Tempo Real e Simulação d
 """
 
 from unittest.mock import AsyncMock, patch
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 

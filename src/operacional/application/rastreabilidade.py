@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.operacional.domain.models import AlocacaoInsumo, LoteInsumo
 from src.operacional.domain.schemas import AlocacaoInsumoCreate, LoteInsumoCreate
+
 
 class RastreabilidadeService:
     @staticmethod
@@ -29,7 +31,7 @@ class RastreabilidadeService:
             raise ValueError(f"Quantidade insuficiente no lote. Atual: {lote.quantidade_atual}")
 
         lote.quantidade_atual -= alocacao_in.quantidade
-        
+
         nova_alocacao = AlocacaoInsumo(**alocacao_in.model_dump(), propriedade_id=propriedade_id)
         session.add(nova_alocacao)
         await session.flush()
@@ -41,7 +43,7 @@ class RastreabilidadeService:
             AlocacaoInsumo.talhao_id == talhao_id,
             AlocacaoInsumo.propriedade_id == propriedade_id
         ).order_by(AlocacaoInsumo.aplicado_em.desc())
-        
+
         result = await session.execute(stmt)
         return list(result.scalars().all())
 
@@ -68,7 +70,8 @@ class RastreabilidadeService:
         propriedade_id: UUID,
         session: AsyncSession,
     ) -> list[LoteInsumo]:
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         from src.operacional.domain.models import Insumo
 
         lotes_criados: list[LoteInsumo] = []
@@ -96,7 +99,7 @@ class RastreabilidadeService:
                 quantidade_atual=item.quantidade,
                 data_validade=item.data_validade,
                 fornecedor=item.fornecedor or fornecedor_padrao or "NF-e Fornecedor",
-                entrada_em=datetime.now(timezone.utc),
+                entrada_em=datetime.now(UTC),
                 propriedade_id=propriedade_id,
             )
             session.add(lote)

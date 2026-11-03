@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+
 from src.operacional.application.nfe_parser import NfeParser
 
 XML_NFE_EXEMPLO = """<?xml version="1.0" encoding="UTF-8"?>

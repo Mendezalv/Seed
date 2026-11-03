@@ -1,11 +1,14 @@
-import math
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
-from datetime import datetime, timezone, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, or_
-from typing import Dict, Any
 
-from src.epidemiologico.domain.models import OcorrenciaSanitaria, AlertaEpidemiologico, DadosClimaticoCache
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.epidemiologico.domain.models import (
+    DadosClimaticoCache,
+    OcorrenciaSanitaria,
+)
 
 REGRAS_RISCO = {
     'ferrugem_asiatica': {'temp_ideal': (20, 25), 'umidade_ideal': 90, 'peso_clima': 0.6, 'peso_hist': 0.4},
@@ -29,7 +32,7 @@ class MotorAlertasSanitarios:
         ).order_by(DadosClimaticoCache.data_referencia.desc()).limit(7)
         res_clima = await session.execute(stmt_clima)
         climas = res_clima.scalars().all()
-        
+
         score_clima = MotorAlertasSanitarios._score_climatico(climas, regra)
 
         # Historico (raio 50km nos ultimos 30 dias)
@@ -40,7 +43,7 @@ class MotorAlertasSanitarios:
         return min(max(risco_final, 0.0), 1.0)
 
     @staticmethod
-    def _score_climatico(climas: list[DadosClimaticoCache], regra: Dict[str, Any]) -> float:
+    def _score_climatico(climas: list[DadosClimaticoCache], regra: dict[str, Any]) -> float:
         if not climas:
             return 0.5
         score_total = 0.0
@@ -48,10 +51,10 @@ class MotorAlertasSanitarios:
             t = c.temp_media_c or 25.0
             u = c.umidade_relativa_pct or 70.0
             t_min, t_max = regra['temp_ideal']
-            
+
             s_t = 1.0 if t_min <= t <= t_max else max(0.0, 1.0 - abs((t_min + t_max)/2 - t) / 10.0)
             s_u = 1.0 if u >= regra['umidade_ideal'] else max(0.0, u / regra['umidade_ideal'])
-            
+
             score_total += (s_t + s_u) / 2
         return score_total / len(climas)
 
@@ -67,8 +70,8 @@ class MotorAlertasSanitarios:
     @staticmethod
     async def buscar_ocorrencias_raio(session: AsyncSession, lat: float, lon: float, raio_km: float, agente: str, dias: int) -> list[OcorrenciaSanitaria]:
         delta_deg = raio_km / 111.0 # Aproximacao
-        data_limite = datetime.now(timezone.utc) - timedelta(days=dias)
-        
+        data_limite = datetime.now(UTC) - timedelta(days=dias)
+
         stmt = select(OcorrenciaSanitaria).where(
             OcorrenciaSanitaria.agente_identificado == agente,
             OcorrenciaSanitaria.latitude.between(lat - delta_deg, lat + delta_deg),

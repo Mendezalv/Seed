@@ -5,18 +5,18 @@ Gerencia o envio e recebimento de dados entre dispositivos de campo
 e o servidor central, incluindo resolução de conflitos.
 """
 
+from datetime import UTC, datetime
 from uuid import UUID
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.shared.database.session import get_session
 from src.shared.api.dependencies import get_current_propriedade_id
-from src.sync_engine.envelope import SyncEnvelopeSchema, SyncResultSchema
+from src.shared.database.session import get_session
 from src.sync_engine.conflict_resolver import ConflictResolver
-from src.sync_engine.models import SyncVersion, PendingReview
+from src.sync_engine.envelope import SyncEnvelopeSchema, SyncResultSchema
+from src.sync_engine.models import PendingReview, SyncVersion
 
 router = APIRouter(prefix="/sync", tags=["Sincronização Offline"])
 
@@ -187,7 +187,7 @@ async def resolve_review(
         raise HTTPException(status_code=409, detail="Revisão já foi resolvida")
 
     review.resolved = True
-    review.resolved_at = datetime.now(timezone.utc)
+    review.resolved_at = datetime.now(UTC)
     review.resolution = resolution_data.get("resolution", "MERGED")
     review.resolved_by = resolution_data.get("resolved_by")
 

@@ -6,8 +6,8 @@ usados nos routers dos módulos de domínio.
 """
 
 from src.shared.auth.dependencies import (
-    get_current_user,
     get_current_tenant,
+    get_current_user,
     oauth2_scheme,
 )
 
